@@ -42,13 +42,30 @@ Service yang berjalan:
 
 ## ⚙️ Environment Variables
 
+Wajib (backend):
 ```
-ROBOFLOW_API_KEY=<your_key>
 MONGODB_URI=<Your MongoDB URI>
+MONGODB_DB_NAME=smartbin
+ROBOFLOW_API_KEY=<your_key>
+ROBOFLOW_MODEL_ID=klasifikasi-per-merk/3
+JWT_SECRET_KEY=<jwt_secret>
+GOOGLE_CLIENT_ID=<oauth_client_id>
+GOOGLE_CLIENT_SECRET=<oauth_client_secret>
+GOOGLE_REDIRECT_URI=<https://.../api/auth/google/callback>
+ADMIN_EMAILS=user@admin.com,another@admin.com
 IOT_WS_URL=ws://iot_simulator:8080
+MIN_WITHDRAWAL_POINTS=20000
 ```
 
-`ROBOFLOW_API_KEY` bisa didapat dari halaman model [klasifikasi-per-merk/3](https://universe.roboflow.com/uascv/klasifikasi-per-merk/model/3).
+Frontend (build/runtime):
+```
+NEXT_PUBLIC_BROWSER_API_URL=http://localhost:8000
+NEXT_PUBLIC_CONTAINER_API_URL=http://backend:8000
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=<oauth_client_id>
+NEXT_PUBLIC_GOOGLE_REDIRECT_URI=<http://localhost:3000/auth/callback>
+```
+
+`ROBOFLOW_API_KEY` bisa didapat dari halaman model [klasifikasi-per-merk/3](https://universe.roboflow.com/uascv/klasifikasi-per-merk/model/3). `MIN_WITHDRAWAL_POINTS` mengatur minimal poin untuk penarikan dan dipakai oleh backend dan frontend (via metadata endpoint).
 
 ---
 
@@ -118,6 +135,32 @@ Perintah JSON:
 * `{ "cmd": "open" }` – membuka tutup, akan mengirim event berurutan (`lid_opened`, `sensor_triggered`, `lid_closed`).
 * `{ "cmd": "close" }` – langsung menutup tutup.
 
+Lihat juga dokumen hardware/firmware ESP32 yang lebih lengkap di `ESP32_SmartBin_Design.md`.
+
+---
+
+## 🏧 Payout (Penarikan Poin)
+
+Endpoint (semua butuh autentikasi Bearer):
+
+- `GET /payout/method` → detail metode payout user (bank/ewallet) atau `null`.
+- `POST /payout/method` → set sekali (tidak bisa diubah):
+  ```json
+  { "method_type": "bank", "bank_code": "BCA", "bank_account_number": "12345678", "bank_account_name": "Nama" }
+  // atau
+  { "method_type": "ewallet", "ewallet_provider": "OVO", "phone_number": "08xxxxxxxxxx" }
+  ```
+- `GET /payout/metadata` → daftar bank/ewallet yang didukung dan `min_withdrawal_points`.
+- `GET /payout/withdrawals` → riwayat pengajuan penarikan.
+- `POST /payout/withdrawals` → ajukan penarikan:
+  ```json
+  { "amount_points": 20000 }
+  ```
+
+Catatan:
+- Minimal penarikan mengikuti env `MIN_WITHDRAWAL_POINTS` dan juga diekspos di `GET /payout/metadata`.
+- Frontend menjaga agar poin tidak turun karena respons backend yang flakey.
+
 ---
 
 ## 🧪 Testing
@@ -131,3 +174,25 @@ Unit test berada di `backend/tests/` dan mencakup validation engine.
 
 ## 📄 Lisensi
 MIT © 2025 SmartBin Team
+
+---
+
+## 🧹 Cleanup (Opsional)
+
+Untuk menghemat storage lokal:
+
+- Hapus artefak build/caches proyek:
+  ```bash
+  rm -rf .next .turbo dist build node_modules **/__pycache__ .pytest_cache .mypy_cache .ruff_cache htmlcov .coverage* .ipynb_checkpoints .cache
+  ```
+- Prune Docker (hapus images/containers/volumes yang tidak terpakai – destruktif!):
+  ```bash
+  docker compose down --volumes --remove-orphans --rmi all
+  docker system prune -a --volumes -f
+  docker builder prune -a -f
+  ```
+- Cleanup cache umum (opsional):
+  ```bash
+  npm cache clean --force
+  pip cache purge
+  ```
