@@ -26,7 +26,7 @@ class Settings:
 
     # Admin and payouts
     ADMIN_EMAILS: str = os.getenv("ADMIN_EMAILS", "")  # comma-separated
-    MIN_WITHDRAWAL_POINTS: int = int(os.getenv("MIN_WITHDRAWAL_POINTS", ""))
+    MIN_WITHDRAWAL_POINTS: int = int(os.getenv("MIN_WITHDRAWAL_POINTS", "20000"))
 
 
 @lru_cache

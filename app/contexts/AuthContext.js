@@ -52,7 +52,7 @@ export function AuthProvider({ children }) {
 
   const hydratePointsFromSummary = async (validToken, existingUser) => {
     try {
-      const resp = await fetch(`${process.env.NEXT_PUBLIC_BROWSER_API_URL || 'http://localhost:8000'}/scan/transactions/summary`, {
+      const resp = await fetch(`${process.env.NEXT_PUBLIC_BROWSER_API_URL || 'http://localhost:8000'}/api/scan/transactions/summary`, {
         headers: {
           'Authorization': `Bearer ${validToken}`,
           'Content-Type': 'application/json',
@@ -96,7 +96,7 @@ export function AuthProvider({ children }) {
   const syncPointsFromBackend = async (validToken, existingUser) => {
     if (!validToken) return;
     try {
-      const resp = await fetch(`${process.env.NEXT_PUBLIC_BROWSER_API_URL || 'http://localhost:8000'}/scan/transactions/summary`, {
+      const resp = await fetch(`${process.env.NEXT_PUBLIC_BROWSER_API_URL || 'http://localhost:8000'}/api/scan/transactions/summary`, {
         headers: {
           'Authorization': `Bearer ${validToken}`,
           'Content-Type': 'application/json',

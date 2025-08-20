@@ -38,7 +38,9 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) 
         return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError:
+    except jwt.InvalidTokenError as e:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception as e:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 

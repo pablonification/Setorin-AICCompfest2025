@@ -20,13 +20,26 @@ import base64, binascii
 from pathlib import Path
 from uuid import uuid4
 
-router = APIRouter(prefix="/scan", tags=["scan"])
+router = APIRouter(prefix="/api/scan", tags=["scan"])
 logger = logging.getLogger(__name__)
 
 bottle_measurer = BottleMeasurer()  # default settings; could be injected
 roboflow_client = RoboflowClient()
 smartbin_client = SmartBinClient()
 transaction_service = get_transaction_service()  # Get transaction service instance
+
+
+# Add OPTIONS handlers for CORS preflight
+@router.options("")
+async def scan_options_no_slash():
+    """Handle CORS preflight for scan endpoint without slash."""
+    return {"message": "OK"}
+
+
+@router.options("/")
+async def scan_options_with_slash():
+    """Handle CORS preflight for scan endpoint with slash."""
+    return {"message": "OK"}
 
 
 @router.post("/", response_model=ScanResponse, status_code=status.HTTP_200_OK)
@@ -43,6 +56,7 @@ async def scan_bottle(
     5. Store result in MongoDB.
     6. Return validation payload.
     """
+    logger.info("Scan request received from user: %s", payload.get("email", "unknown"))
 
     content = await image.read()
     if not content:
@@ -155,7 +169,7 @@ async def scan_bottle(
             # Don't fail the scan if transaction creation fails
 
     # 7. Broadcast to connected WS clients
-    await manager.broadcast({
+    await manager.broadcast_notification({
         "type": "scan_result",
         "data": {
             "scan_id": scan_id,
@@ -208,6 +222,17 @@ async def scan_bottle(
     except Exception:
         pass
     return resp
+
+
+# Add route without trailing slash to prevent 307 redirects
+@router.post("", response_model=ScanResponse, status_code=status.HTTP_200_OK)
+async def scan_bottle_no_slash(
+    image: UploadFile = File(...),
+    payload: dict = Depends(verify_token),
+) -> Any:
+    """Alias for scan_bottle to handle calls without trailing slash."""
+    logger.info("Scan request (no-slash) received from user: %s", payload.get("email", "unknown"))
+    return await scan_bottle(image=image, payload=payload)
 
 
 @router.get("/transactions", response_model=List[dict])

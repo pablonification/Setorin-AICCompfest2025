@@ -31,10 +31,19 @@ Path("debug_images").mkdir(exist_ok=True)
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, restrict this to your frontend domain
-    allow_credentials=False,  # Must be False when allow_origins is "*" or CORS header is omitted
-    allow_methods=["*"],
+    allow_origins=[
+        "http://localhost:3000",  # Frontend dev
+        "http://127.0.0.1:3000",  # Frontend dev alternative
+        "http://localhost:8081",   # RAG test frontend
+        "http://127.0.0.1:8081",  # RAG test frontend alternative
+        "http://smartbin-frontend:3000",  # Frontend container
+        "http://smartbin-frontend:8081",  # RAG frontend container
+    ],
+    allow_credentials=False,  # Set to False to avoid conflicts with allow_origins
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=86400,  # Cache preflight for 24 hours
 )
 
 app.include_router(health.router)

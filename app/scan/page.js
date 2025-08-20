@@ -317,7 +317,7 @@ export default function ScanPage() {
       const formData = new FormData();
       formData.append('image', capturedImage, 'bottle.jpg');
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BROWSER_API_URL || 'http://localhost:8000'}/scan`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BROWSER_API_URL || 'http://localhost:8000'}/api/scan`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

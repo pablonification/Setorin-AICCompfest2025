@@ -146,7 +146,7 @@ async def scan_bottle(
     })
 
     # Return response
-    return ScanResponse(
+    resp = ScanResponse(
         scan_id=scan_id,
         transaction_id=transaction_id,
         is_valid=validation_result.is_valid,
@@ -161,6 +161,34 @@ async def scan_bottle(
         debug_image=preview_b64,
         debug_url=debug_url,
     )
+    
+    # Add payout transparency fields
+    try:
+        from ..services.payout_service import compute_payout
+        payout_ctx = compute_payout(validation_result.measurement, predictions, cleanliness_key="clean_dry", cap_label_key="mixed")
+        if payout_ctx.payout_rp is not None:
+            resp.size_key = payout_ctx.size_key
+            resp.weight_g_used = payout_ctx.weight_g_used
+            resp.price_per_kg = payout_ctx.price_per_kg
+            resp.k_brand = payout_ctx.k_brand
+            resp.k_conf = payout_ctx.k_conf if payout_ctx.k_conf is not None else None
+            resp.k_clean = payout_ctx.k_clean
+            resp.k_cap = payout_ctx.k_cap
+            resp.base_rp = payout_ctx.base_rp
+    except Exception:
+        pass
+    
+    return resp
+
+
+# Add route without trailing slash to prevent 307 redirects
+@router.post("", response_model=ScanResponse, status_code=status.HTTP_200_OK)
+async def scan_bottle_no_slash(
+    image: UploadFile = File(...),
+    payload: dict = Depends(verify_token),
+) -> Any:
+    """Alias for scan_bottle to handle calls without trailing slash."""
+    return await scan_bottle(image=image, payload=payload)
 
 
 @router.get("/transactions", response_model=List[dict])
