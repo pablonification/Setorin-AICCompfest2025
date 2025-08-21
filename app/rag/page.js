@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 export default function RagPage() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute userOnly={true}>
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-3xl mx-auto py-10 px-4">
           <h1 className="text-3xl font-bold text-gray-900 mb-6">💬 RAG Chat</h1>

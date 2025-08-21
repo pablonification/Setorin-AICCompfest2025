@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List, Optional, Literal
 
 from pydantic import Field
 
@@ -11,6 +11,7 @@ class User(MongoBaseModel):
     email: str
     name: Optional[str] = None
     points: int = 0
+    role: Literal["user", "admin"] = "user"  # Default role is user
 
     # List of scan ids (ObjectId) for reference – could be populated if needed
     scan_ids: List[PyObjectId] = Field(default_factory=list)

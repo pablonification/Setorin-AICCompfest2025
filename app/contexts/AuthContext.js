@@ -203,6 +203,15 @@ export function AuthProvider({ children }) {
     return isValid && !!user;
   };
 
+  // Role-based access control
+  const isAdmin = () => {
+    return isAuthenticated() && user?.role === 'admin';
+  };
+
+  const isUser = () => {
+    return isAuthenticated() && user?.role === 'user';
+  };
+
   const value = {
     user,
     token,
@@ -211,6 +220,8 @@ export function AuthProvider({ children }) {
     logout,
     updateUser,
     isAuthenticated,
+    isAdmin,
+    isUser,
     getAuthHeaders,
     getJsonHeaders,
   };

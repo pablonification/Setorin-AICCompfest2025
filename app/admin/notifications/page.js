@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -443,9 +443,9 @@ export default function AdminNotifications() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <span className="text-2xl mr-2">
-                          {notification.notification_type === 'bin_status' ? '🗑️' :
-                           notification.notification_type === 'achievement' ? '🏆' :
-                           notification.notification_type === 'reward' ? '🎁' : 'ℹ️'}
+                          {notification.notification_type === 'bin_status' ? 'ðŸ—‘ï¸' :
+                           notification.notification_type === 'achievement' ? 'ðŸ†' :
+                           notification.notification_type === 'reward' ? 'ðŸŽ' : 'â„¹ï¸'}
                         </span>
                         <span className="text-sm font-medium text-gray-900 capitalize">
                           {notification.notification_type.replace('_', ' ')}
@@ -511,3 +511,4 @@ export default function AdminNotifications() {
     </div>
   );
 }
+

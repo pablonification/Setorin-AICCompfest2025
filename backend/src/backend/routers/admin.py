@@ -8,7 +8,7 @@ from io import StringIO
 from datetime import datetime, timedelta
 from bson import ObjectId
 
-from ..routers.auth import verify_token
+from ..routers.auth import require_admin
 from ..db.mongo import ensure_connection
 from ..models.user import User
 from ..models.scan import BottleScan
@@ -38,20 +38,9 @@ def _serialize_mongo_doc(doc: dict) -> dict:
     return serialized
 
 
-def _is_admin(payload: dict) -> bool:
-    """Check if the user is an admin based on email configuration."""
-    from ..core.config import get_settings
-    settings = get_settings()
-    admin_emails = getattr(settings, "ADMIN_EMAILS", "")
-    email = payload.get("email")
-    return bool(email and any(e.strip().lower() == email.lower() for e in admin_emails.split(",") if e.strip()))
-
-
 @router.get("/users/count")
-async def get_users_count(payload: dict = Depends(verify_token)):
+async def get_users_count(payload: dict = Depends(require_admin)):
     """Get total users count and total points for admin dashboard."""
-    if not _is_admin(payload):
-        raise HTTPException(status_code=403, detail="Admin only")
     
     try:
         db = await ensure_connection()
@@ -83,11 +72,9 @@ async def get_users(
     offset: int = Query(default=0, ge=0),
     sort_by: str = Query(default="points", regex="^(points|created_at|email)$"),
     sort_order: str = Query(default="desc", regex="^(asc|desc)$"),
-    payload: dict = Depends(verify_token)
+    payload: dict = Depends(require_admin)
 ):
     """Get paginated list of users for admin management."""
-    if not _is_admin(payload):
-        raise HTTPException(status_code=403, detail="Admin only")
     
     try:
         db = await ensure_connection()
@@ -129,10 +116,8 @@ async def get_users(
 
 
 @router.get("/users/export.csv")
-async def export_users_csv(payload: dict = Depends(verify_token)):
+async def export_users_csv(payload: dict = Depends(require_admin)):
     """Export users data as CSV."""
-    if not _is_admin(payload):
-        raise HTTPException(status_code=403, detail="Admin only")
     
     try:
         db = await ensure_connection()
@@ -167,10 +152,8 @@ async def export_users_csv(payload: dict = Depends(verify_token)):
 
 
 @router.get("/scans/count")
-async def get_scans_count(payload: dict = Depends(verify_token)):
+async def get_scans_count(payload: dict = Depends(require_admin)):
     """Get total scans count for admin dashboard."""
-    if not _is_admin(payload):
-        raise HTTPException(status_code=403, detail="Admin only")
     
     try:
         db = await ensure_connection()
@@ -189,11 +172,9 @@ async def get_scans_count(payload: dict = Depends(verify_token)):
 async def export_scans_csv(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
-    payload: dict = Depends(verify_token)
+    payload: dict = Depends(require_admin)
 ):
     """Export scans data as CSV."""
-    if not _is_admin(payload):
-        raise HTTPException(status_code=403, detail="Admin only")
     
     try:
         db = await ensure_connection()
@@ -246,11 +227,9 @@ async def export_scans_csv(
 async def export_transactions_csv(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
-    payload: dict = Depends(verify_token)
+    payload: dict = Depends(require_admin)
 ):
     """Export transactions data as CSV."""
-    if not _is_admin(payload):
-        raise HTTPException(status_code=403, detail="Admin only")
     
     try:
         db = await ensure_connection()
@@ -296,11 +275,9 @@ async def export_transactions_csv(
 async def export_statistics_csv(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
-    payload: dict = Depends(verify_token)
+    payload: dict = Depends(require_admin)
 ):
     """Export aggregated statistics as CSV."""
-    if not _is_admin(payload):
-        raise HTTPException(status_code=403, detail="Admin only")
     
     try:
         db = await ensure_connection()
@@ -354,11 +331,9 @@ async def export_statistics_csv(
 async def export_notifications_csv(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
-    payload: dict = Depends(verify_token)
+    payload: dict = Depends(require_admin)
 ):
     """Export notifications data as CSV."""
-    if not _is_admin(payload):
-        raise HTTPException(status_code=403, detail="Admin only")
     
     try:
         db = await ensure_connection()

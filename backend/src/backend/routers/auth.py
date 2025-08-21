@@ -44,6 +44,20 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) 
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
+def require_admin(payload: dict = Depends(verify_token)) -> dict:
+    """Require admin role for access"""
+    if payload.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return payload
+
+
+def require_user_role(payload: dict = Depends(verify_token)) -> dict:
+    """Require user role (non-admin) for access"""
+    if payload.get("role") == "admin":
+        raise HTTPException(status_code=403, detail="User access only - admins cannot access this endpoint")
+    return payload
+
+
 @router.get("/google/login")
 async def google_login():
     """Redirect user to Google OAuth2 consent screen"""
@@ -92,15 +106,34 @@ async def google_callback(code: str):
         existing_user = await users_collection.find_one({"email": user_info["email"]})
         
         if existing_user:
+            # Determine role from ADMIN_EMAILS on every login
+            admin_emails = getattr(settings, "ADMIN_EMAILS", "")
+            is_admin = bool(admin_emails and any(e.strip().lower() == user_info["email"].lower() for e in admin_emails.split(",") if e.strip()))
+            desired_role = "admin" if is_admin else "user"
+
+            # Ensure role is present and up-to-date in DB
+            current_role = existing_user.get("role", "user")
+            if current_role != desired_role:
+                await users_collection.update_one(
+                    {"_id": existing_user["_id"]},
+                    {"$set": {"role": desired_role}}
+                )
+                existing_user["role"] = desired_role
+
             user = User(**existing_user)
             user_id = str(existing_user["_id"])
         else:
+            # Check if user should be admin based on email configuration
+            admin_emails = getattr(settings, "ADMIN_EMAILS", "")
+            is_admin = bool(admin_emails and any(e.strip().lower() == user_info["email"].lower() for e in admin_emails.split(",") if e.strip()))
+            
             # Create new user
             user = User(
                 email=user_info["email"],
                 name=user_info.get("name", ""),
                 points=0,
-                scan_ids=[]
+                scan_ids=[],
+                role="admin" if is_admin else "user"
             )
             # Insert user and get the inserted ID
             result = await users_collection.insert_one(user.dict())
@@ -108,9 +141,9 @@ async def google_callback(code: str):
             # Update the user object with the actual ID from database
             user.id = result.inserted_id
         
-        # Create JWT token with the correct user ID
+        # Create JWT token with the correct user ID and role
         access_token = create_access_token(
-            data={"sub": user_id, "email": user.email}
+            data={"sub": user_id, "email": user.email, "role": user.role}
         )
         
         return TokenResponse(
@@ -120,7 +153,8 @@ async def google_callback(code: str):
                 id=user_id,
                 email=user.email,
                 name=user.name,
-                points=user.points
+                points=user.points,
+                role=user.role
             )
         )
         
@@ -148,7 +182,8 @@ async def get_current_user(payload: dict = Depends(verify_token)):
         id=str(user["_id"]),
         email=user["email"],
         name=user.get("name", ""),
-        points=user.get("points", 0)
+        points=user.get("points", 0),
+        role=user.get("role", "user")
     )
 
 
@@ -157,7 +192,7 @@ async def refresh_token(payload: dict = Depends(verify_token)):
     """Refresh JWT token"""
     # Create new token with same user data
     access_token = create_access_token(
-        data={"sub": payload["sub"], "email": payload["email"]}
+        data={"sub": payload["sub"], "email": payload["email"], "role": payload.get("role", "user")}
     )
     
     return TokenResponse(

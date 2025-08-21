@@ -15,6 +15,7 @@ import {
   FiShield 
 } from 'react-icons/fi';
 import AdminNav from '../components/AdminNav';
+import AdminRoute from '../components/AdminRoute';
 
 export default function AdminPage() {
   const { token, user } = useAuth();
@@ -158,150 +159,152 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-          <p className="text-gray-600">Manage your SmartBin system and monitor performance</p>
-        </div>
-
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 text-red-700 border border-red-200 rounded-lg">
-            {error}
+    <AdminRoute>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+            <p className="text-gray-600">Manage your SmartBin system and monitor performance</p>
           </div>
-        )}
 
-        {/* Statistics Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <FiUsers className="h-6 w-6 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Users</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalUsers.toLocaleString()}</p>
-              </div>
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 text-red-700 border border-red-200 rounded-lg">
+              {error}
             </div>
-          </div>
+          )}
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <FiTrendingUp className="h-6 w-6 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Scans</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalScans.toLocaleString()}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <FiDollarSign className="h-6 w-6 text-yellow-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Points</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalPoints.toLocaleString()}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <FiActivity className="h-6 w-6 text-orange-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Pending Withdrawals</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.pendingWithdrawals}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <FiShield className="h-6 w-6 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Active Connections</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.activeConnections}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-indigo-100 rounded-lg">
-                <FiSettings className="h-6 w-6 text-indigo-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">System Status</p>
-                <p className="text-lg font-semibold text-green-600">Healthy</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Admin Navigation */}
-        <AdminNav />
-
-        {/* Admin Sections */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {adminSections.map((section, index) => {
-            const IconComponent = section.icon;
-            return (
-              <div
-                key={index}
-                className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-200 cursor-pointer"
-                onClick={() => router.push(section.href)}
-              >
-                <div className="p-6">
-                  <div className={`inline-flex p-3 rounded-lg ${section.color} mb-4`}>
-                    <IconComponent className="h-6 w-6 text-white" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    {section.title}
-                  </h3>
-                  <p className="text-gray-600 text-sm">
-                    {section.description}
-                  </p>
+          {/* Statistics Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <FiUsers className="h-6 w-6 text-blue-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Total Users</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalUsers.toLocaleString()}</p>
                 </div>
               </div>
-            );
-          })}
-        </div>
+            </div>
 
-        {/* Quick Actions */}
-        <div className="mt-8 bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => router.push('/admin/withdrawals')}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              Process Withdrawals
-            </button>
-            <button
-              onClick={() => router.push('/admin/notifications')}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Send Notification
-            </button>
-            <button
-              onClick={() => router.push('/admin/export')}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              Export Data
-            </button>
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <FiTrendingUp className="h-6 w-6 text-green-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Total Scans</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalScans.toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-yellow-100 rounded-lg">
+                  <FiDollarSign className="h-6 w-6 text-yellow-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Total Points</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalPoints.toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <FiActivity className="h-6 w-6 text-orange-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Pending Withdrawals</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.pendingWithdrawals}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <FiShield className="h-6 w-6 text-purple-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Active Connections</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.activeConnections}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-indigo-100 rounded-lg">
+                  <FiSettings className="h-6 w-6 text-indigo-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">System Status</p>
+                  <p className="text-lg font-semibold text-green-600">Healthy</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Admin Navigation */}
+          <AdminNav />
+
+          {/* Admin Sections */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {adminSections.map((section, index) => {
+              const IconComponent = section.icon;
+              return (
+                <div
+                  key={index}
+                  className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-200 cursor-pointer"
+                  onClick={() => router.push(section.href)}
+                >
+                  <div className="p-6">
+                    <div className={`inline-flex p-3 rounded-lg ${section.color} mb-4`}>
+                      <IconComponent className="h-6 w-6 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      {section.title}
+                    </h3>
+                    <p className="text-gray-600 text-sm">
+                      {section.description}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Quick Actions */}
+          <div className="mt-8 bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => router.push('/admin/withdrawals')}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Process Withdrawals
+              </button>
+              <button
+                onClick={() => router.push('/admin/notifications')}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Send Notification
+              </button>
+              <button
+                onClick={() => router.push('/admin/export')}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                Export Data
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </AdminRoute>
   );
 }
 

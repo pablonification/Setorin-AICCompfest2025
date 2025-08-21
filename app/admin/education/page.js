@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -361,7 +361,7 @@ export default function AdminEducation() {
                 }}
                 className="text-gray-400 hover:text-gray-600"
               >
-                ✕
+                âœ•
               </button>
             </div>
             
@@ -505,3 +505,4 @@ export default function AdminEducation() {
     </div>
   );
 }
+
