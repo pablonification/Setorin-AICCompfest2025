@@ -142,7 +142,7 @@ class MongoDBTransactionRepository(TransactionRepository):
     async def get_user_transaction_count(self, user_id: str) -> int:
         """Get total number of transactions for a user."""
         try:
-            collection = self._get_collection()
+            collection = await self._get_collection()
             
             # Convert string ID to ObjectId
             object_id = ObjectId(user_id)
@@ -160,7 +160,7 @@ class MongoDBTransactionRepository(TransactionRepository):
     async def get_user_transaction_summary(self, user_id: str) -> dict:
         """Get aggregated transaction statistics for a user."""
         try:
-            collection = self._get_collection()
+            collection = await self._get_collection()
             
             # Convert string ID to ObjectId
             object_id = ObjectId(user_id)

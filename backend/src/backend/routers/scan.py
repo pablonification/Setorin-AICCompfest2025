@@ -4,7 +4,7 @@ import logging
 from typing import Any, Optional, List
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, File, UploadFile, HTTPException, status, Header, Depends
+from fastapi import APIRouter, File, UploadFile, HTTPException, status, Header, Depends, Query
 
 from ..services.opencv_service import BottleMeasurer, MeasurementError, MeasurementResult
 from ..services.roboflow_service import RoboflowClient
@@ -146,9 +146,12 @@ async def scan_bottle(
     transaction_id = None
     if scan_id and validation_result.is_valid and user_email and validation_result.points_awarded > 0:
         try:
-            # Get user ID from email (we'll need to implement this)
-            # For now, we'll use the email as user_id since that's what we have
-            user_id = user_email  # TODO: Get actual user ID from email
+            # Resolve user's ObjectId by email for transactions
+            user_doc = await db["users"].find_one({"email": user_email})
+            user_id = str(user_doc["_id"]) if user_doc else None
+            if not user_id:
+                logger.warning("Could not resolve user_id for email %s; skipping transaction creation", user_email)
+                raise RuntimeError("User not found for transaction creation")
             
             # Create transaction record
             created_transaction = await transaction_service.create_transaction_after_scan(
@@ -236,7 +239,11 @@ async def scan_bottle_no_slash(
 
 
 @router.get("/transactions", response_model=List[dict])
-async def get_user_transactions(payload: dict = Depends(verify_token)):
+async def get_user_transactions(
+    payload: dict = Depends(verify_token),
+    limit: int = Query(default=50, ge=1, le=100),
+    success: bool = Query(default=False, description="Only successful/valid scans")
+):
     """Get user's scan and reward history"""
     try:
         user_email = payload.get("email")
@@ -244,9 +251,10 @@ async def get_user_transactions(payload: dict = Depends(verify_token)):
             raise HTTPException(status_code=401, detail="Invalid user token")
         
         db = await ensure_connection()
-        cursor = db["scans"].find(
-            {"user_email": user_email}
-        ).sort("timestamp", -1).limit(50)  # Get last 50 scans, sorted by newest first
+        query: dict = {"user_email": user_email}
+        if success:
+            query.update({"valid": True, "points": {"$gt": 0}})
+        cursor = db["scans"].find(query).sort("timestamp", -1).limit(limit)
         
         scans = []
         async for scan in cursor:

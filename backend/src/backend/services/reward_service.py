@@ -3,10 +3,22 @@ from __future__ import annotations
 import logging
 
 from ..db.mongo import ensure_connection
+from datetime import datetime
 from ..models.user import User
 from .notification_service import get_notification_service
 
 logger = logging.getLogger(__name__)
+
+
+def compute_tier(total_points: int) -> str:
+    """Compute tier name based on total points."""
+    if total_points >= 75000:
+        return "Pewaris"
+    if total_points >= 50000:
+        return "Panutan"
+    if total_points >= 20000:
+        return "Penjelajah"
+    return "Perintis"
 
 
 async def add_points(email: str, points: int, bottle_count: int = 1) -> int:
@@ -41,6 +53,17 @@ async def add_points(email: str, points: int, bottle_count: int = 1) -> int:
     
     final_points = int(result.get("points", 0)) if result else 0
     logger.info(f"Final points returned: {final_points}")
+    
+    # Update user tier based on final points
+    try:
+        if result and result.get("_id"):
+            tier = compute_tier(final_points)
+            await collection.update_one(
+                {"_id": result["_id"]},
+                {"$set": {"tier": tier, "tier_updated_at": datetime.utcnow()}},
+            )
+    except Exception as e:
+        logger.warning(f"Failed to update user tier: {e}")
     
     # Create reward notification
     try:

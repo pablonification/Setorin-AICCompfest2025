@@ -11,7 +11,7 @@ class GoogleAuthResponse(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str
-    user: "UserResponse"
+    user: Optional["UserResponse"] = None
 
 
 class UserResponse(BaseModel):
@@ -20,6 +20,7 @@ class UserResponse(BaseModel):
     name: str
     points: int
     role: str = "user"  # Default role for backward compatibility
+    tier: Optional[str] = None
 
 
 class LoginRequest(BaseModel):

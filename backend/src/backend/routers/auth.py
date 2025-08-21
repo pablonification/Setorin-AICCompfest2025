@@ -154,7 +154,8 @@ async def google_callback(code: str):
                 email=user.email,
                 name=user.name,
                 points=user.points,
-                role=user.role
+                role=user.role,
+                tier=getattr(user, "tier", None)
             )
         )
         
@@ -183,7 +184,8 @@ async def get_current_user(payload: dict = Depends(verify_token)):
         email=user["email"],
         name=user.get("name", ""),
         points=user.get("points", 0),
-        role=user.get("role", "user")
+        role=user.get("role", "user"),
+        tier=user.get("tier")
     )
 
 

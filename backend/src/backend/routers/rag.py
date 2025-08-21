@@ -5,11 +5,11 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from langchain_core.messages import HumanMessage, AIMessage
 
-# Import RAG agent optionally to avoid circular imports
+# Import RAG agent optionally; tolerate any initialization failure
 try:
-    from rag_agent import app
+    from rag_agent import app  # noqa: F401
     RAG_AVAILABLE = True
-except ImportError:
+except Exception:  # Catch all to prevent crashing the API if RAG setup fails
     RAG_AVAILABLE = False
     app = None
 

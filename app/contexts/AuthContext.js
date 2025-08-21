@@ -118,6 +118,14 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Compute tier based on points client-side as a fallback for UI; backend persists too
+  const computeTier = (totalPoints) => {
+    if (totalPoints >= 75000) return 'Pewaris';
+    if (totalPoints >= 50000) return 'Panutan';
+    if (totalPoints >= 20000) return 'Penjelajah';
+    return 'Perintis';
+  };
+
   const logout = () => {
     console.log('Logging out user');
     setUser(null);

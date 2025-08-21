@@ -7,6 +7,7 @@ import BalanceCard from './components/BalanceCard';
 import ActionGrid from './components/ActionGrid';
 import HeroCarousel from './components/HeroCarousel';
 import HistoryList from './components/HistoryList';
+import HeaderBar from './components/HeaderBar';
 
 export default function HomePage() {
   const { user, token, loading } = useAuth();
@@ -33,6 +34,7 @@ export default function HomePage() {
       {/* Green header background area */}
       <div className="bg-[var(--color-primary-700)] pb-20">
         <div className="px-4 pt-4 space-y-4">
+          <HeaderBar />
           <BalanceCard />
           <ActionGrid />
         </div>

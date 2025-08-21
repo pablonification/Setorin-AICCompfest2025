@@ -14,41 +14,57 @@ export default function BottomNav() {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50">
       <div className="mx-auto max-w-[430px]">
-        <div className="relative bg-white border-t [box-shadow:var(--shadow-card)] rounded-t-[16px]">
-          <div className="flex items-end justify-between px-8 pt-2 pb-4">
+        <div className="relative bg-white border-t border-gray-200 rounded-t-[24px] [box-shadow:var(--shadow-card)] pb-[env(safe-area-inset-bottom)]">
+          {/* Center FAB, floating above the bar */}
+          <Link
+            href="/scan"
+            aria-label="Pindai"
+            className="absolute left-1/2 -translate-x-1/2 -top-12"
+          >
+            <span
+              className="flex items-center justify-center w-24 h-24 rounded-full border border-gray-200 [box-shadow:var(--shadow-fab)]"
+              style={{ background: "var(--color-primary-700)" }}
+            >
+              <img
+                src="/scan-yellow.svg"
+                alt=""
+                className="w-10 h-10"
+                aria-hidden="true"
+                draggable="false"
+              />
+            </span>
+          </Link>
+
+          {/* Tabs row (space for the FAB) */}
+          <div className="flex items-end justify-between px-16 pt-3 pb-3">
             {/* Left: Home */}
             <Link href="/" className="flex flex-col items-center text-xs">
-              <div
-                className={`w-7 h-7 rounded-md ${
-                  isActive("/") ? "bg-[var(--color-primary-700)]" : "bg-gray-300"
-                }`}
-                aria-hidden
-              />
+              <div aria-hidden>
+                <img
+                  src={isActive("/") ? "/beranda.svg" : "/beranda-nonactive.svg"}
+                  alt=""
+                  className="w-8 h-8"
+                  aria-hidden="true"
+                  draggable="false"
+                />
+              </div>
               <span className={`mt-1 ${isActive("/") ? "text-[var(--color-primary-700)]" : "text-gray-600"}`}>
                 Beranda
               </span>
             </Link>
-
-            {/* Center FAB: Scan */}
-            <Link
-              href="/scan"
-              className="-mt-8 w-16 h-16 rounded-full flex items-center justify-center [box-shadow:var(--shadow-fab)]"
-              style={{ backgroundImage: "var(--gradient-primary)" }}
-              aria-label="Pindai"
-            >
-              <div className="w-7 h-7 bg-white/90 rounded-md" aria-hidden />
-            </Link>
-
             {/* Right: Saya */}
             <Link href="/profile" className="flex flex-col items-center text-xs">
-              <div
-                className={`w-7 h-7 rounded-md ${
-                  isActive("/profile") ? "bg-[var(--color-primary-700)]" : "bg-gray-300"
-                }`}
-                aria-hidden
-              />
+              <div aria-hidden>
+                <img
+                  src={isActive("/history") ? "/profile.svg" : "/profile-nonactive.svg"}
+                  alt=""
+                  className="w-8 h-8"
+                  aria-hidden="true"
+                  draggable="false"
+                />
+              </div>
               <span className={`mt-1 ${isActive("/profile") ? "text-[var(--color-primary-700)]" : "text-gray-600"}`}>
-                Profil
+                Profile
               </span>
             </Link>
           </div>
