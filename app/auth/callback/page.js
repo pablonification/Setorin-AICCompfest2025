@@ -47,7 +47,12 @@ function AuthCallbackContent() {
         });
 
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          let details = '';
+          try {
+            const err = await response.json();
+            details = err?.error || err?.detail || JSON.stringify(err);
+          } catch {}
+          throw new Error(`Auth failed (${response.status}): ${details || 'Unknown error'}`);
         }
 
         const data = await response.json();

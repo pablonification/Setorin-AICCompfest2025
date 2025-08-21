@@ -100,6 +100,8 @@ async def get_users(
             serialized_user = _serialize_mongo_doc(user)
             serialized_user["total_scans"] = scan_count
             serialized_user["id"] = user_id
+            if "tier" in user:
+                serialized_user["tier"] = user.get("tier")
             serialized_users.append(serialized_user)
         
         return {
@@ -129,7 +131,7 @@ async def export_users_csv(payload: dict = Depends(require_admin)):
         buffer = StringIO()
         writer = csv.writer(buffer)
         writer.writerow([
-            "id", "email", "name", "points", "created_at", "scan_ids_count"
+            "id", "email", "name", "points", "tier", "created_at", "scan_ids_count"
         ])
         
         for user in users:
@@ -139,6 +141,7 @@ async def export_users_csv(payload: dict = Depends(require_admin)):
                 user.get("email", ""),
                 user.get("name", ""),
                 user.get("points", 0),
+                user.get("tier", ""),
                 user.get("created_at", ""),
                 scan_count
             ])

@@ -7,6 +7,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from ..services.transaction_service import get_transaction_service
+from ..db.mongo import ensure_connection
 from ..routers.auth import verify_token
 from ..models.transaction import TransactionResponse
 
@@ -28,9 +29,12 @@ async def get_user_transactions(
         if not user_email:
             raise HTTPException(status_code=401, detail="Invalid user token")
         
-        # For now, use email as user_id since that's what we have
-        # TODO: Get actual user ID from email
-        user_id = user_email
+        # Resolve user's ObjectId by email
+        db = await ensure_connection()
+        user_doc = await db.users.find_one({"email": user_email})
+        if not user_doc:
+            raise HTTPException(status_code=404, detail="User not found")
+        user_id = str(user_doc["_id"])  # Use ObjectId string for repository
         
         transactions = await transaction_service.get_user_transactions(
             user_id=user_id,
@@ -59,9 +63,12 @@ async def get_transaction_details(
         if not user_email:
             raise HTTPException(status_code=401, detail="Invalid user token")
         
-        # For now, use email as user_id since that's what we have
-        # TODO: Get actual user ID from email
-        user_id = user_email
+        # Resolve user's ObjectId by email
+        db = await ensure_connection()
+        user_doc = await db.users.find_one({"email": user_email})
+        if not user_doc:
+            raise HTTPException(status_code=404, detail="User not found")
+        user_id = str(user_doc["_id"])  # Use ObjectId string
         
         # Get transaction by scan_id (since we don't have direct transaction ID lookup yet)
         transaction = await transaction_service.get_transaction_by_scan_id(transaction_id)
@@ -92,9 +99,12 @@ async def get_user_transaction_summary(
         if not user_email:
             raise HTTPException(status_code=401, detail="Invalid user token")
         
-        # For now, use email as user_id since that's what we have
-        # TODO: Get actual user ID from email
-        user_id = user_email
+        # Resolve user's ObjectId by email
+        db = await ensure_connection()
+        user_doc = await db.users.find_one({"email": user_email})
+        if not user_doc:
+            raise HTTPException(status_code=404, detail="User not found")
+        user_id = str(user_doc["_id"])  # Use ObjectId string
         
         summary = await transaction_service.get_user_transaction_summary(user_id)
         count = await transaction_service.get_user_transaction_count(user_id)
@@ -121,9 +131,12 @@ async def get_user_transaction_count(
         if not user_email:
             raise HTTPException(status_code=401, detail="Invalid user token")
         
-        # For now, use email as user_id since that's what we have
-        # TODO: Get actual user ID from email
-        user_id = user_email
+        # Resolve user's ObjectId by email
+        db = await ensure_connection()
+        user_doc = await db.users.find_one({"email": user_email})
+        if not user_doc:
+            raise HTTPException(status_code=404, detail="User not found")
+        user_id = str(user_doc["_id"])  # Use ObjectId string
         
         count = await transaction_service.get_user_transaction_count(user_id)
         

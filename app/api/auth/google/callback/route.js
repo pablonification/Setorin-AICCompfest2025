@@ -13,21 +13,40 @@ export async function GET(request) {
     }
 
     // Proxy the request to the backend
-    const backendUrl = `${process.env.NEXT_PUBLIC_CONTAINER_API_URL || 'http://localhost:8000'}/auth/google/callback?code=${code}`;
-    
-    const backendResponse = await fetch(backendUrl, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    // Try multiple bases to support both local dev and Docker networks
+    const candidates = [
+      process.env.NEXT_PUBLIC_CONTAINER_API_URL,
+      'http://backend:8000',
+      process.env.NEXT_PUBLIC_BROWSER_API_URL,
+      'http://localhost:8000',
+    ].filter(Boolean);
 
-    if (!backendResponse.ok) {
-      const errorData = await backendResponse.json();
-      return NextResponse.json(errorData, { status: backendResponse.status });
+    let lastNetworkError = null;
+    let data = null;
+    for (const base of candidates) {
+      const backendUrl = `${base}/auth/google/callback?code=${code}`;
+      try {
+        const backendResponse = await fetch(backendUrl, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (!backendResponse.ok) {
+          const errorData = await backendResponse.json().catch(() => ({ error: `Status ${backendResponse.status}` }));
+          return NextResponse.json(errorData, { status: backendResponse.status });
+        }
+        data = await backendResponse.json();
+        // Success
+        break;
+      } catch (err) {
+        lastNetworkError = err;
+        continue;
+      }
     }
 
-    const data = await backendResponse.json();
+    if (!data) {
+      const message = lastNetworkError?.message || 'Auth backend unreachable';
+      return NextResponse.json({ error: message }, { status: 502 });
+    }
     
     // Return response with cache control headers
     const response = NextResponse.json(data);
@@ -39,9 +58,7 @@ export async function GET(request) {
     
   } catch (error) {
     console.error('Auth callback proxy error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    const message = error?.message || 'Internal server error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
