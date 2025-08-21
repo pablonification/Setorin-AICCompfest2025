@@ -2,12 +2,13 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function LoginPage() {
+function LoginContent() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
@@ -19,6 +20,11 @@ export default function LoginPage() {
       googleAuthUrl.searchParams.set('response_type', 'code');
       googleAuthUrl.searchParams.set('scope', 'openid email profile');
       googleAuthUrl.searchParams.set('access_type', 'offline');
+      // Preserve intended next page (default '/') using OAuth 'state'
+      const next = searchParams.get('next') || '/';
+      // Only allow internal relative paths
+      const safeNext = next.startsWith('/') ? next : '/';
+      googleAuthUrl.searchParams.set('state', encodeURIComponent(safeNext));
       
       // Redirect to Google OAuth
       window.location.href = googleAuthUrl.toString();
@@ -33,15 +39,13 @@ export default function LoginPage() {
       <div className="max-w-md w-full space-y-8">
         <div>
           <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-green-100">
-            <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-            </svg>
+            <img src="/logo.svg" alt="Setorin Logo" className="h-8 w-8" />
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            SmartBin Login
+            Setorin Login
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Sign in to start recycling and earning rewards
+            Sign in to start recycling and earning points
           </p>
         </div>
         
@@ -82,5 +86,19 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+        </div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import List, Optional, Literal
+from datetime import datetime
 
 from pydantic import Field
 
@@ -14,7 +15,7 @@ class User(MongoBaseModel):
     points: int = 0
     role: Literal["user", "admin"] = "user"  # Default role is user
     tier: Optional[str] = None
-    tier_updated_at: Optional[str] = None
+    tier_updated_at: Optional[datetime] = None
 
     # List of scan ids (ObjectId) for reference – could be populated if needed
     scan_ids: List[PyObjectId] = Field(default_factory=list)

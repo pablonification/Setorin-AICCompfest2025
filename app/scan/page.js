@@ -6,8 +6,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '../components/ProtectedRoute';
-import NotificationBell from '../components/NotificationBell';
-import WebSocketTest from '../components/WebSocketTest';
+import MobileScanResult from '../components/MobileScanResult';
 
 export default function ScanPage() {
   const { user, token, logout, updateUser } = useAuth();
@@ -20,6 +19,7 @@ export default function ScanPage() {
   
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const attemptedAutoStartRef = useRef(false);
 
   // Debug user state changes
   useEffect(() => {
@@ -62,6 +62,14 @@ export default function ScanPage() {
       }
     };
   }, [cameraStream]);
+
+  // Auto-start camera on mount
+  useEffect(() => {
+    if (!attemptedAutoStartRef.current) {
+      attemptedAutoStartRef.current = true;
+      startCamera().catch(() => {});
+    }
+  }, []);
 
   // Check camera permissions and available devices
   useEffect(() => {
@@ -272,39 +280,106 @@ export default function ScanPage() {
     }
   };
 
-  const captureImage = () => {
-    if (!videoRef.current || !canvasRef.current) return;
-    
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    const context = canvas.getContext('2d');
-    
-    // Check if video is ready
-    if (video.videoWidth === 0 || video.videoHeight === 0) {
-      setStatus('Video not ready yet');
-      return;
-    }
-    
-    // Set canvas dimensions to match video
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    
-    // Clear canvas first
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // Draw video frame to canvas
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    
-    // Convert to blob with better quality
-    canvas.toBlob((blob) => {
-      if (blob) {
-        setCapturedImage(blob);
-        setStatus('Image captured');
-        console.log('Image captured:', blob.size, 'bytes');
-      } else {
+  const captureAndScan = async () => {
+    try {
+      if (!videoRef.current || !canvasRef.current) return;
+      setStatus('Mengambil gambar...');
+
+      const getFrameBlob = async () => {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        const context = canvas.getContext('2d');
+
+        // Try ImageCapture/grabFrame when available for more reliable capture
+        try {
+          // @ts-ignore - ImageCapture may not exist on all browsers
+          if (cameraStream && typeof ImageCapture !== 'undefined') {
+            const track = cameraStream.getVideoTracks()[0];
+            // @ts-ignore
+            const ic = new ImageCapture(track);
+            if (ic.grabFrame) {
+              const bitmap = await ic.grabFrame();
+              canvas.width = bitmap.width;
+              canvas.height = bitmap.height;
+              context.drawImage(bitmap, 0, 0);
+              const blobViaGrab = await new Promise((res) => canvas.toBlob(res, 'image/jpeg', 0.9));
+              if (blobViaGrab) return blobViaGrab;
+            }
+          }
+        } catch (e) {
+          // fall back to canvas path below
+          console.warn('grabFrame failed, falling back to canvas draw', e);
+        }
+
+        // Fallback to drawing current video frame
+        if (video.readyState < 2 || video.videoWidth === 0 || video.videoHeight === 0) {
+          await new Promise((r) => setTimeout(r, 200));
+        }
+        if (video.videoWidth === 0 || video.videoHeight === 0) return null;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        return await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+      };
+
+      const blob = await getFrameBlob();
+      if (!blob) {
         setStatus('Failed to capture image');
+        return;
       }
-    }, 'image/jpeg', 0.9);
+      setCapturedImage(blob);
+      // Immediately navigate to result page with processing state
+      try {
+        localStorage.setItem('smartbin_scan_processing', '1');
+        localStorage.removeItem('smartbin_last_scan');
+      } catch {}
+      setIsScanning(true);
+      setStatus('Processing...');
+      // Navigate to result screen while processing continues
+      router.push('/scan/result');
+      await scanWithBlob(blob);
+    } catch (e) {
+      console.error('captureAndScan error:', e);
+      setStatus('Capture failed');
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  const scanWithBlob = async (blob) => {
+    if (!token || !blob) return;
+    try {
+      const formData = new FormData();
+      formData.append('image', blob, 'bottle.jpg');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BROWSER_API_URL || 'http://localhost:8000'}/api/scan`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData,
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      setResult(data);
+      try {
+        localStorage.setItem('smartbin_last_scan', JSON.stringify(data));
+        localStorage.setItem('smartbin_scan_processing', '0');
+      } catch {}
+      if (data && user) {
+        const current = user?.points ?? 0;
+        const totalFromServer = typeof data.total_points === 'number' ? data.total_points : null;
+        const awarded = typeof data.points === 'number' ? data.points : (
+          typeof data.points_awarded === 'number' ? data.points_awarded : null
+        );
+        let candidate = current;
+        if (totalFromServer !== null) candidate = Math.max(candidate, totalFromServer);
+        if (awarded !== null) candidate = Math.max(candidate, current + awarded);
+        if (candidate > current) updateUser({ ...user, points: candidate });
+      }
+      setStatus('Scan completed');
+    } catch (err) {
+      console.error('scanWithBlob error:', err);
+      setStatus('Scan failed');
+    }
   };
 
   const handleScan = async () => {
@@ -399,249 +474,73 @@ export default function ScanPage() {
 
   return (
     <ProtectedRoute userOnly={true}>
-      <div className="min-h-screen bg-gray-50">
-        {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Camera Section */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-medium text-gray-900">Scan Bottle</h2>
-              
-              {!cameraStream ? (
-                <div className="space-y-3">
-                  <button
-                    onClick={startCamera}
-                    className="w-full py-3 px-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors"
-                  >
-                    <div className="text-center">
-                      <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                      <p className="mt-2 text-sm text-gray-600">Click to start camera</p>
-                    </div>
-                  </button>
-                  
-                  <button
-                    onClick={testCamera}
-                    className="w-full py-2 px-4 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-sm"
-                  >
-                    Test Camera
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="w-full rounded-lg border border-gray-300 bg-black"
-                    style={{ minHeight: '300px' }}
-                  />
-                  
-                  <div className="flex space-x-3">
-                    <button
-                      onClick={captureImage}
-                      className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
-                    >
-                      Capture
-                    </button>
-                    <button
-                      onClick={stopCamera}
-                      className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors"
-                    >
-                      Stop Camera
-                    </button>
-                  </div>
-                  
-                  <div className="flex space-x-3">
-                    <button
-                      onClick={() => {
-                        stopCamera();
-                        setTimeout(startCamera, 500);
-                      }}
-                      className="flex-1 bg-yellow-600 text-white py-2 px-4 rounded-md hover:bg-yellow-700 transition-colors text-sm"
-                    >
-                      Restart Camera
-                    </button>
-                  </div>
-                  
-                  {/* Camera Status Indicator */}
-                  <div className="text-center text-sm text-gray-600">
-                    <div className="flex items-center justify-center space-x-2">
-                      <div className={`w-2 h-2 rounded-full ${cameraStream ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-                      <span>{cameraStream ? 'Camera Active' : 'Camera Inactive'}</span>
-                    </div>
-                    {videoRef.current && (
-                      <div className="mt-1 text-xs text-gray-500">
-                        Resolution: {videoRef.current.videoWidth || 0} x {videoRef.current.videoHeight || 0}
-                      </div>
-                    )}
-                    {cameraStream && (
-                      <div className="mt-1 text-xs text-gray-500">
-                        {(() => {
-                          const track = cameraStream.getVideoTracks()[0];
-                          if (track) {
-                            const settings = track.getSettings();
-                            return `FPS: ${settings.frameRate || 'N/A'}, Device: ${track.label || 'Unknown'}`;
-                          }
-                          return '';
-                        })()}
-                      </div>
-                    )}
-                  </div>
-                  
-                  {capturedImage && (
-                    <div className="space-y-3">
-                      <img
-                        src={URL.createObjectURL(capturedImage)}
-                        alt="Captured bottle"
-                        className="w-full rounded-lg border border-gray-300"
-                      />
-                      <button
-                        onClick={handleScan}
-                        disabled={isScanning}
-                        className="w-full bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        {isScanning ? 'Scanning...' : 'Scan Bottle'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              <div className="text-sm text-gray-600">
-                Status: <span className="font-medium">{status}</span>
-              </div>
-              
-              {/* Debug Info */}
-              <details className="mt-2 text-xs text-gray-500">
-                <summary className="cursor-pointer hover:text-gray-700">Debug Info</summary>
-                <div className="mt-2 space-y-1">
-                  <div>Camera Stream: {cameraStream ? 'Active' : 'None'}</div>
-                  <div>Video Element: {videoRef.current ? 'Ready' : 'Not Ready'}</div>
-                  {videoRef.current && (
-                    <>
-                      <div>Video Width: {videoRef.current.videoWidth || 'Not Set'}</div>
-                      <div>Video Height: {videoRef.current.videoHeight || 'Not Set'}</div>
-                      <div>Video Ready State: {videoRef.current.readyState || 'Unknown'}</div>
-                    </>
-                  )}
-                  <div>Captured Image: {capturedImage ? `${capturedImage.size} bytes` : 'None'}</div>
-                  
-                  {/* Test Notification Button */}
-                  <div className="mt-3 pt-3 border-t border-gray-300">
-                    <button
-                      onClick={async () => {
-                        try {
-                          const response = await fetch('/api/notifications/test-create-sample', {
-                            method: 'POST',
-                            headers: {
-                              'Content-Type': 'application/json',
-                              'Authorization': `Bearer ${token}`,
-                            },
-                            body: JSON.stringify({ type: 'system', count: 1 })
-                          });
-                          if (response.ok) {
-                            const result = await response.json();
-                            alert(`Test notification created: ${result.message}`);
-                          } else {
-                            alert('Failed to create test notification');
-                          }
-                        } catch (error) {
-                          console.error('Error creating test notification:', error);
-                          alert('Error creating test notification');
-                        }
-                      }}
-                      className="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
-                    >
-                      Test Notification
-                    </button>
-                  </div>
-                </div>
-              </details>
-            </div>
-
-            {/* Results Section */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-medium text-gray-900">Scan Results</h2>
-              
-              {result ? (
-                <div className="bg-white p-6 rounded-lg border border-gray-200 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium text-gray-900">
-                      {result.brand || 'Unknown Brand'}
-                    </h3>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      result.is_valid ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {result.is_valid ? 'Valid' : 'Invalid'}
-                    </span>
-                  </div>
-                  
-                  {result.is_valid && (
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-500">Points Awarded:</span>
-                        <p className="font-medium text-green-600">{result.points_awarded}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Total Points:</span>
-                        <p className="font-medium">{result.total_points}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Volume:</span>
-                        <p className="font-medium">{result.volume_ml?.toFixed(1)} ml</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Confidence:</span>
-                        <p className="font-medium">{(result.confidence * 100).toFixed(1)}%</p>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {result.reason && (
-                    <div>
-                      <span className="text-gray-500 text-sm">Reason:</span>
-                      <p className="text-sm">{result.reason}</p>
-                    </div>
-                  )}
-                  
-                  {result.debug_url && (
-                    <div>
-                      <span className="text-gray-500 text-sm">Debug Image:</span>
-                      <img
-                        src={`${process.env.NEXT_PUBLIC_BROWSER_API_URL}${result.debug_url}`}
-                        alt="Debug preview"
-                        className="mt-2 w-full rounded border"
-                        onError={(e) => {
-                          console.error('Failed to load debug image:', e.target.src);
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'block';
-                        }}
-                      />
-                      <div className="mt-2 p-2 bg-gray-100 text-gray-600 text-sm rounded border" style={{display: 'none'}}>
-                        Debug image failed to load. URL: {`${process.env.NEXT_PUBLIC_BROWSER_API_URL}${result.debug_url}`}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="bg-white p-6 rounded-lg border border-gray-200 text-center text-gray-500">
-                  No scan results yet. Capture an image and scan to see results here.
-                </div>
-              )}
+      <div className="container max-w-[430px] mx-auto min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter pt-4 pb-24">
+        {/* Header */}
+        <div className="sticky top-0 z-10 bg-[var(--color-primary-700)] text-white rounded-b-[var(--radius-lg)] -mx-4 px-4 py-6 [box-shadow:var(--shadow-card)]">
+          <div className="flex items-center justify-center gap-3 relative">
+            <button
+              onClick={() => router.back()}
+              aria-label="Kembali"
+              className="w-9 h-9 flex items-center justify-center absolute left-0"
+              style={{ zIndex: 1 }}
+            >
+              <img src="/back.svg" alt="Back" className="w-6 h-6" />
+            </button>
+            <div className="flex-1 flex justify-center">
+              <div className="text-xl leading-7 font-semibold">Duitin</div>
             </div>
           </div>
-          
-          {/* Hidden canvas for image capture */}
-          <canvas ref={canvasRef} className="hidden" />
         </div>
-        
-        {/* WebSocket Test Component for Debugging */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <WebSocketTest />
+
+        {/* Camera preview */}
+        <div className="flex flex-col items-center mt-6 px-4">
+          <div className="w-full max-w-[320px] h-[420px] bg-black rounded-[var(--radius-md)] flex items-center justify-center overflow-hidden relative">
+            {cameraStream ? (
+              <video ref={videoRef} autoPlay playsInline muted className="object-cover w-full h-full" />
+            ) : (
+              <img src="/scan-yellow.svg" alt="Placeholder" className="w-20 h-20 opacity-60" />
+            )}
+            <div className="absolute inset-0 border-4 border-white/60 rounded-[var(--radius-md)] pointer-events-none" />
+          </div>
+
+          {/* Shutter control */}
+          <div className="mt-6 w-full max-w-[320px] flex items-center justify-center">
+            {!cameraStream ? (
+              <button
+                onClick={startCamera}
+                className="w-full py-3 rounded-[var(--radius-pill)] bg-[var(--color-primary-600)] text-white font-medium active:opacity-80"
+              >
+                Nyalakan Kamera
+              </button>
+            ) : (
+              <button
+                onClick={captureAndScan}
+                disabled={isScanning}
+                aria-label="Ambil gambar"
+                className="flex items-center justify-center w-24 h-24 rounded-full [box-shadow:var(--shadow-fab)] active:scale-95 disabled:opacity-60"
+                style={{ background: 'var(--color-primary-700)' }}
+              >
+                <img src="/shutter.svg" alt="Shutter" className="w-12 h-12 select-none" draggable="false" />
+              </button>
+            )}
+          </div>
+
+          {cameraStream && (
+            <div className="mt-3 w-full max-w-[320px] flex justify-center">
+              <button onClick={stopCamera} className="px-4 py-2 text-xs text-gray-700 bg-gray-200 rounded-[var(--radius-pill)] active:opacity-80">
+                Matikan Kamera
+              </button>
+            </div>
+          )}
         </div>
+
+        {/* Scan result */}
+        <div className="px-4">
+          <MobileScanResult result={result} />
+        </div>
+
+        {/* Hidden canvas for image capture */}
+        <canvas ref={canvasRef} className="hidden" />
       </div>
     </ProtectedRoute>
   );

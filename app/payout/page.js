@@ -148,21 +148,33 @@ export default function PayoutPage() {
 
   return (
     <ProtectedRoute userOnly={true}>
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-3xl mx-auto px-4 py-8">
-          <h1 className="text-2xl font-bold mb-4">Pencairan</h1>
+      <div className="pb-10 max-w-[430px] mx-auto min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
+        {/* Top section */}
+        <div className="sticky top-0 z-10 bg-[var(--color-primary-700)] text-white rounded-b-[var(--radius-lg)] px-4 py-6 [box-shadow:var(--shadow-card)]">
+          <div className="flex items-center justify-center relative">
+            <button
+              onClick={() => router.back()}
+              aria-label="Kembali"
+              className="w-9 h-9 flex items-center justify-center absolute left-0"
+            >
+              <img src="/back.svg" alt="Back" className="w-6 h-6" />
+            </button>
+            <div className="text-xl leading-7 font-semibold">Pencairan</div>
+          </div>
+        </div>
+
+        {/* Safe area */}
+        <div className="pt-4 pb-24 px-4">
           {error && (
-            <div className="mb-4 p-3 bg-red-50 text-red-700 border border-red-200 rounded">{error}</div>
+            <div className="mb-4 p-3 rounded-[var(--radius-sm)] bg-red-50 text-red-700 border border-red-200">{error}</div>
           )}
 
-          {/* User Info moved to Navbar */}
-
           {/* Payout method setup (one-time) */}
-          <div className="bg-white rounded border p-4 mb-6">
-            <h2 className="font-semibold mb-2">Metode Pencairan</h2>
+          <div className="bg-[var(--color-card)] rounded-[var(--radius-md)] [box-shadow:var(--shadow-card)] p-4 mb-6">
+            <div className="text-[14px] leading-5 font-semibold mb-2">Metode Pencairan</div>
             {method ? (
-              <div className="text-sm text-gray-700">
-                <div>Jenis: <span className="font-medium uppercase">{method.method_type}</span></div>
+              <div className="text-[14px] leading-5 text-[color:var(--color-muted)]">
+                <div>Jenis: <span className="font-medium uppercase text-[var(--foreground)]">{method.method_type}</span></div>
                 {method.method_type === 'bank' ? (
                   <div>
                     <div>Bank: {method.bank_code}</div>
@@ -175,7 +187,7 @@ export default function PayoutPage() {
                     <div>No. HP: {method.phone_number}</div>
                   </div>
                 )}
-                <div className="text-xs text-gray-500 mt-1">Sudah diset dan tidak bisa diubah.</div>
+                <div className="text-[12px] leading-4 mt-1">Sudah diset dan tidak bisa diubah.</div>
               </div>
             ) : (
               <form onSubmit={handleSetMethod} className="space-y-3">
@@ -190,72 +202,72 @@ export default function PayoutPage() {
                   </label>
                 </div>
                 {methodType === 'bank' ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3">
                     <div>
-                      <label className="block text-sm text-gray-700 mb-1">Bank</label>
-                      <select className="w-full border rounded p-2" value={bankCode} onChange={e=>setBankCode(e.target.value)}>
+                      <label className="block text-[12px] leading-4 text-[color:var(--color-muted)] mb-1">Bank</label>
+                      <select className="w-full border rounded-[var(--radius-sm)] p-2" value={bankCode} onChange={e=>setBankCode(e.target.value)}>
                         {banks.map(b => (
                           <option key={b} value={b}>{b}</option>
                         ))}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm text-gray-700 mb-1">No. Rekening</label>
-                      <input className="w-full border rounded p-2" value={bankAcc} onChange={e=>setBankAcc(e.target.value)} required />
+                      <label className="block text-[12px] leading-4 text-[color:var(--color-muted)] mb-1">No. Rekening</label>
+                      <input className="w-full border rounded-[var(--radius-sm)] p-2" value={bankAcc} onChange={e=>setBankAcc(e.target.value)} required />
                     </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm text-gray-700 mb-1">Nama Pemilik Rekening</label>
-                      <input className="w-full border rounded p-2" value={bankName} onChange={e=>setBankName(e.target.value)} required />
+                    <div>
+                      <label className="block text-[12px] leading-4 text-[color:var(--color-muted)] mb-1">Nama Pemilik Rekening</label>
+                      <input className="w-full border rounded-[var(--radius-sm)] p-2" value={bankName} onChange={e=>setBankName(e.target.value)} required />
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 gap-3">
                     <div>
-                      <label className="block text-sm text-gray-700 mb-1">Provider</label>
-                      <select className="w-full border rounded p-2" value={ewalletProvider} onChange={e=>setEwalletProvider(e.target.value)}>
+                      <label className="block text-[12px] leading-4 text-[color:var(--color-muted)] mb-1">Provider</label>
+                      <select className="w-full border rounded-[var(--radius-sm)] p-2" value={ewalletProvider} onChange={e=>setEwalletProvider(e.target.value)}>
                         {ewallets.map(w => (
                           <option key={w} value={w}>{w}</option>
                         ))}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm text-gray-700 mb-1">No. HP</label>
-                      <input className="w-full border rounded p-2" value={phoneNumber} onChange={e=>setPhoneNumber(e.target.value)} required />
+                      <label className="block text-[12px] leading-4 text-[color:var(--color-muted)] mb-1">No. HP</label>
+                      <input className="w-full border rounded-[var(--radius-sm)] p-2" value={phoneNumber} onChange={e=>setPhoneNumber(e.target.value)} required />
                     </div>
                   </div>
                 )}
-                <button className="px-4 py-2 bg-green-600 text-white rounded" type="submit">Simpan Metode</button>
+                <button className="text-sm h-12 px-5 rounded-[var(--radius-pill)] bg-[var(--color-primary-700)] text-white" type="submit">Simpan Metode</button>
               </form>
             )}
           </div>
 
           {/* Withdraw */}
-          <div className="bg-white rounded border p-4 mb-6">
-            <h2 className="font-semibold mb-2">Tarik Poin</h2>
+          <div className="bg-[var(--color-card)] rounded-[var(--radius-md)] [box-shadow:var(--shadow-card)] p-4 mb-6">
+            <div className="text-[14px] leading-5 font-semibold mb-2">Tarik Poin</div>
             <form onSubmit={handleWithdraw} className="flex items-end gap-3">
-              <div>
-                <label className="block text-sm text-gray-700 mb-1">Jumlah Poin</label>
-                <input type="number" min={minWithdrawal} className="border rounded p-2" value={amount} onChange={e=>setAmount(e.target.value)} />
+              <div className="flex-1">
+                <label className="block text-[12px] leading-4 text-[color:var(--color-muted)] mb-1">Jumlah Poin</label>
+                <input type="number" min={minWithdrawal} className="w-full border rounded-[var(--radius-sm)] p-2" value={amount} onChange={e=>setAmount(e.target.value)} />
               </div>
-              <button className="px-4 py-2 bg-blue-600 text-white rounded" type="submit" disabled={!method}>Ajukan</button>
+              <button className="text-sm h-12 px-5 rounded-[var(--radius-pill)] bg-[var(--color-primary-700)] text-white" type="submit" disabled={!method}>Ajukan</button>
             </form>
-            <div className="text-xs text-gray-500 mt-2">Minimal {minWithdrawal} poin. Dana ditransfer manual oleh admin.</div>
+            <div className="text-[12px] leading-4 text-[color:var(--color-muted)] mt-2">Minimal {minWithdrawal} poin. Dana ditransfer manual oleh admin.</div>
           </div>
 
           {/* List */}
-          <div className="bg-white rounded border p-4">
-            <h2 className="font-semibold mb-2">Riwayat Pencairan</h2>
+          <div className="bg-[var(--color-card)] rounded-[var(--radius-md)] [box-shadow:var(--shadow-card)] p-4">
+            <div className="text-[14px] leading-5 font-semibold mb-2">Riwayat Pencairan</div>
             {withdrawals.length === 0 ? (
-              <div className="text-sm text-gray-600">Belum ada pengajuan</div>
+              <div className="text-[14px] leading-5 text-[color:var(--color-muted)]">Belum ada pengajuan</div>
             ) : (
               <div className="divide-y">
                 {withdrawals.map(w => (
                   <div key={w.id} className="py-2 flex items-center justify-between">
                     <div>
                       <div className="font-medium">{w.amount_points} poin</div>
-                      <div className="text-xs text-gray-500">{new Date(w.created_at).toLocaleString('id-ID')}</div>
+                      <div className="text-[12px] leading-4 text-[color:var(--color-muted)]">{new Date(w.created_at).toLocaleString('id-ID')}</div>
                     </div>
-                    <div className={`text-sm font-semibold ${w.status==='completed'?'text-green-600':w.status==='rejected'?'text-red-600':'text-yellow-600'}`}>{w.status}</div>
+                    <div className={`text-sm font-semibold ${w.status==='completed'?'text-[color:var(--color-success)]':w.status==='rejected'?'text-[color:var(--color-danger)]':'text-yellow-600'}`}>{w.status}</div>
                   </div>
                 ))}
               </div>
