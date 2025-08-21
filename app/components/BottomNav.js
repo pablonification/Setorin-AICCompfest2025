@@ -39,16 +39,16 @@ export default function BottomNav() {
               <div className="w-7 h-7 bg-white/90 rounded-md" aria-hidden />
             </Link>
 
-            {/* Right: Saya (History for now) */}
-            <Link href="/history" className="flex flex-col items-center text-xs">
+            {/* Right: Saya */}
+            <Link href="/profile" className="flex flex-col items-center text-xs">
               <div
                 className={`w-7 h-7 rounded-md ${
-                  isActive("/history") ? "bg-[var(--color-primary-700)]" : "bg-gray-300"
+                  isActive("/profile") ? "bg-[var(--color-primary-700)]" : "bg-gray-300"
                 }`}
                 aria-hidden
               />
-              <span className={`mt-1 ${isActive("/history") ? "text-[var(--color-primary-700)]" : "text-gray-600"}`}>
-                Saya
+              <span className={`mt-1 ${isActive("/profile") ? "text-[var(--color-primary-700)]" : "text-gray-600"}`}>
+                Profil
               </span>
             </Link>
           </div>
