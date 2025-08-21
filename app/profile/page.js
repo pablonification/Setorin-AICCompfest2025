@@ -83,9 +83,7 @@ export default function SayaPage() {
           <SectionHeader title="Akun Saya" />
           <div className="mt-3 space-y-2">
             <SettingsRow href="/notifications" label="Notifikasi" badge={unreadCount} icon="/profile/notifikasi.svg" />
-            <SettingsRow href="#" label="Alamat Pengiriman" icon="/profile/alamat-pengiriman.svg" />
-            <SettingsRow href="#" label="Metode Pembayaran" icon="/profile/metode-pembayaran.svg" />
-            <SettingsRow href="#" label="Ubah Bahasa" icon="/profile/ubah-bahasa.svg" />
+            <SettingsRow href="/statistics" label="Statistics" icon="/profile/alamat-pengiriman.svg" />
           </div>
         </div>
 
