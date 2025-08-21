@@ -7,7 +7,12 @@ export default function BottomNav() {
   const pathname = usePathname();
 
   // Hide on login page
-  if (pathname === "/login") return null;
+  if (
+    pathname === "/login" ||
+    pathname.startsWith("/profile/edit") ||
+    pathname.startsWith("/tentang-kami")
+  )
+    return null;
 
   const isActive = (href) => pathname === href;
 

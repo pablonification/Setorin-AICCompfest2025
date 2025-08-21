@@ -94,7 +94,7 @@ export default function SayaPage() {
           <div className="mt-3 space-y-2">
             <SettingsRow href="#" label="Bantuan" icon="/profile/bantuan.svg" />
             <SettingsRow href="#" label="Lapor Masalah" icon="/profile/lapor-masalah.svg" />
-            <SettingsRow href="#" label="Tentang Kami" icon="/profile/tentang-kami.svg" />
+            <SettingsRow href="/tentang-kami" label="Tentang Kami" icon="/profile/tentang-kami.svg" />
           </div>
         </div>
       </div>
