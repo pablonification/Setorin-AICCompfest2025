@@ -52,9 +52,9 @@ export default function EditProfilePage() {
       <TopBar title="Edit Profil" />
 
       {/* Avatar */}
-      <div className="px-4 -mt-8">
+      <div className="px-4 -mt-16">
         <div className="relative mx-auto w-max">
-          <div className="w-28 h-28 rounded-full border-4 border-[var(--color-primary-700)] bg-white flex items-center justify-center [box-shadow:var(--shadow-card)] overflow-hidden">
+          <div className="w-36 h-36 rounded-full border-4 border-[var(--color-primary-700)] bg-white flex items-center justify-center [box-shadow:var(--shadow-card)] overflow-hidden">
             <img src="/profile/default-profile.jpg" alt="Avatar" />
           </div>
           <button
@@ -68,7 +68,7 @@ export default function EditProfilePage() {
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="px-4 pt-6 pb-28 space-y-4">
+      <form onSubmit={handleSubmit} className="px-4 pt-6 pb-28 space-y-5">
         <Field label="Nama">
           <input
             type="text"
@@ -80,33 +80,23 @@ export default function EditProfilePage() {
         </Field>
 
         <Field label="Email">
-          <div className="flex items-center gap-3">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="flex-1 px-4 py-3 rounded-[var(--radius-sm)] bg-gray-50 outline-none text-[var(--color-primary-700)] font-semibold"
-              placeholder="email@contoh.com"
-            />
-            <button type="button" aria-label="Pengaturan email" className="w-9 h-9 rounded-md bg-[var(--color-primary-700)]/10 text-[var(--color-primary-700)] flex items-center justify-center">
-              <span role="img" aria-hidden>⚙️</span>
-            </button>
-          </div>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-3 rounded-[var(--radius-sm)] bg-gray-50 outline-none text-[var(--color-primary-700)] font-semibold"
+            placeholder="email@contoh.com"
+          />
         </Field>
 
-        <Field label="Nomor Handphone" meta="Verifikasi Nomor">
-          <div className="flex items-center gap-3">
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="flex-1 px-4 py-3 rounded-[var(--radius-sm)] bg-gray-50 outline-none text-[var(--color-primary-700)] font-semibold"
-              placeholder="08xxxxxxxxxx"
-            />
-            <button type="button" aria-label="Keamanan nomor" className="w-9 h-9 rounded-md bg-[var(--color-primary-700)]/10 text-[var(--color-primary-700)] flex items-center justify-center">
-              <span role="img" aria-hidden>🔒</span>
-            </button>
-          </div>
+        <Field label="Nomor Handphone">
+          <input
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="w-full px-4 py-3 rounded-[var(--radius-sm)] bg-gray-50 outline-none text-[var(--color-primary-700)] font-semibold"
+            placeholder="08xxxxxxxxxx"
+          />
         </Field>
 
         <Field label="Tanggal lahir">
@@ -170,6 +160,22 @@ export default function EditProfilePage() {
                 </div>
                 <button type="button" className="px-3 py-1 rounded-[var(--radius-pill)] border border-[var(--color-primary-700)] text-[var(--color-primary-700)] text-xs">
                   Terhubung
+                </button>
+              </div>
+
+              {/* Apple row */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center">
+                    <span className="text-xl text-[var(--color-primary-700)]" aria-hidden></span>
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-[var(--color-primary-700)]">Apple</div>
+                    <div className="text-xs text-gray-600">Tidak terhubung</div>
+                  </div>
+                </div>
+                <button type="button" className="px-3 py-1 rounded-[var(--radius-pill)] bg-[var(--color-primary-700)] text-white text-xs">
+                  Hubungkan
                 </button>
               </div>
             </div>

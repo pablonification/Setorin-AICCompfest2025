@@ -44,7 +44,7 @@ export default function SayaPage() {
           <div className="rounded-[16px] bg-white [box-shadow:var(--shadow-card)] p-4">
             <div className="flex items-center gap-4">
               <div className="w-20 h-20 rounded-full border-4 border-[var(--color-primary-700)] flex items-center justify-center overflow-hidden bg-white">
-                <img src="/profile/default-profile.jpg" alt="Avatar" />
+                <img src={user?.photo_url || "/profile/default-profile.jpg"} alt="Avatar" referrerPolicy="no-referrer" />
               </div>
               <div className="flex-1">
                 <div className="flex items-start justify-between gap-2">

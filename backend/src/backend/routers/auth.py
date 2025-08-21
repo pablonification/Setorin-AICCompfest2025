@@ -120,6 +120,15 @@ async def google_callback(code: str):
                 )
                 existing_user["role"] = desired_role
 
+            # Sync latest Google profile picture into DB if changed
+            latest_photo = user_info.get("picture")
+            if latest_photo and existing_user.get("photo_url") != latest_photo:
+                await users_collection.update_one(
+                    {"_id": existing_user["_id"]},
+                    {"$set": {"photo_url": latest_photo}}
+                )
+                existing_user["photo_url"] = latest_photo
+
             user = User(**existing_user)
             user_id = str(existing_user["_id"])
         else:
@@ -131,6 +140,7 @@ async def google_callback(code: str):
             user = User(
                 email=user_info["email"],
                 name=user_info.get("name", ""),
+                photo_url=user_info.get("picture"),
                 points=0,
                 scan_ids=[],
                 role="admin" if is_admin else "user"
@@ -153,6 +163,7 @@ async def google_callback(code: str):
                 id=user_id,
                 email=user.email,
                 name=user.name,
+                photo_url=getattr(user, "photo_url", None),
                 points=user.points,
                 role=user.role,
                 tier=getattr(user, "tier", None)
@@ -183,6 +194,7 @@ async def get_current_user(payload: dict = Depends(verify_token)):
         id=str(user["_id"]),
         email=user["email"],
         name=user.get("name", ""),
+        photo_url=user.get("photo_url"),
         points=user.get("points", 0),
         role=user.get("role", "user"),
         tier=user.get("tier")

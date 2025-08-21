@@ -61,7 +61,7 @@ export default function BottomNav() {
             <Link href="/profile" className="flex flex-col items-center text-xs">
               <div aria-hidden>
                 <img
-                  src={isActive("/history") ? "/profile.svg" : "/profile-nonactive.svg"}
+                  src={isActive("/profile") ? "/profile.svg" : "/profile-nonactive.svg"}
                   alt=""
                   className="w-8 h-8"
                   aria-hidden="true"
