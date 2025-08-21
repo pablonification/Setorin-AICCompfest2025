@@ -1,162 +1,112 @@
-### SmartBin Cursor Rules
+### SmartBin UI/UX Cursor Rules
 
-These rules are enforced across the repo to avoid recurring issues, especially MongoDB connectivity and points reset in the UI.
+These rules align the mobile‑first hi‑fi Figma with the existing Next.js/Tailwind app. Follow them to keep styles, components, and flows consistent. Do not ship features that break these rules.
 
-## MongoDB Connection Policy (MANDATORY)
-- All MongoDB access MUST go through `backend/src/backend/db/mongo.py`.
-- DO NOT import or use `client`/`mongo_db` directly from other modules.
-- ALWAYS use `ensure_connection()` before any DB operation.
-- Initialize and close connections only via FastAPI lifespan in `backend/src/backend/main.py`.
-- Use robust pooling and timeouts to avoid connection drop stalls.
+## Principles
+- **Mobile‑first**: Target 390–430px width. Use `max-w-[430px] mx-auto` wrappers. Desktop just centers the mobile frame.
+- **Single source of tokens**: All colors, radii, shadows, spacing live in CSS variables inside `app/globals.css` under `:root`/`@theme inline`.
+- **Typography**: Use Inter for UI text. Apply with the utility class `font-inter`.
+- **Atomic components**: Build reusable, testable components in `app/components/`.
+- **Accessible**: Contrast ratio ≥ 4.5 for text; focus styles visible.
 
-### Canonical MongoDB Client (use verbatim)
-```python
-# backend/src/backend/db/mongo.py
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
-from pymongo.server_api import ServerApi
-from ..core.config import get_settings
-import asyncio
-import logging
-import random
+## Design Tokens (extendable)
+Declare tokens in `app/globals.css` only. Reference tokens in Tailwind via CSS variables.
 
-logger = logging.getLogger(__name__)
+- **Colors**
+  - `--color-primary-700`: Dark Green (for headers/cards)
+  - `--color-primary-600`: Green (buttons/CTAs)
+  - `--color-primary-500`: Light Green (accent)
+  - `--color-accent-amber`: Amber (highlight words like “rupiah!”)
+  - `--color-card`: Surface card bg
+  - `--color-muted`: Muted text/icon
+  - `--color-success`: Positive amounts
+  - `--color-danger`: Negative amounts
+  - `--gradient-primary`: Green gradient used on balance slider card
 
-client: AsyncIOMotorClient | None = None
-mongo_db: AsyncIOMotorDatabase | None = None
+  Temporary hex suggestions (replace with Figma later):
+  - `--color-primary-700: #0b5d3b`
+  - `--color-primary-600: #0e7f4e`
+  - `--color-primary-500: #14a160`
+  - `--color-accent-amber: #ffbf3b`
+  - `--color-card: #ffffff`
+  - `--color-muted: #7a8b87`
+  - `--color-success: #19c37d`
+  - `--color-danger: #e24a4a`
+  - `--gradient-primary: linear-gradient(90deg, #3aa55c 0%, #a8d672 100%)`
 
-async def connect_to_mongo() -> None:
-    global client, mongo_db
-    if client is not None:
-        return
-    settings = get_settings()
-    client = AsyncIOMotorClient(
-        settings.MONGODB_URI,               # mongodb+srv://.../?retryWrites=true&w=majority&appName=SmartBin
-        server_api=ServerApi('1'),
-        maxPoolSize=10,
-        minPoolSize=1,
-        maxIdleTimeMS=30000,
-        connectTimeoutMS=10000,
-        serverSelectionTimeoutMS=10000,
-        heartbeatFrequencyMS=10000,
-    )
-    await client.admin.command('ping')
-    mongo_db = client[settings.MONGODB_DB_NAME]
-    logger.info("✅ MongoDB connected. DB=%s", settings.MONGODB_DB_NAME)
+- **Radii**
+  - `--radius-sm: 8px`  (list items)
+  - `--radius-md: 12px` (cards)
+  - `--radius-lg: 16px` (hero cards)
+  - `--radius-pill: 999px` (chip/fab)
 
-async def close_mongo_connection() -> None:
-    global client
-    if client is not None:
-        client.close()
-        client = None
+- **Shadows**
+  - `--shadow-card: 0 6px 18px rgba(0,0,0,0.08)`
+  - `--shadow-fab: 0 8px 24px rgba(0,0,0,0.16)`
 
-async def ensure_connection(max_retries: int = 3) -> AsyncIOMotorDatabase:
-    global mongo_db, client
-    for attempt in range(1, max_retries + 1):
-        try:
-            if client is None or mongo_db is None:
-                await connect_to_mongo()
-            await client.admin.command('ping')
-            return mongo_db
-        except Exception as e:
-            wait = min(2 ** attempt, 8) + random.random()
-            logger.warning(
-                "Mongo ping failed (attempt %d/%d): %s. Retrying in %.1fs",
-                attempt, max_retries, e, wait
-            )
-            await asyncio.sleep(wait)
-            client = None
-            mongo_db = None
-    raise RuntimeError("MongoDB connection unavailable after retries")
+- **Typography**
+  - Title/Large: `text-[22px] leading-7 font-semibold`
+  - Body: `text-[14px] leading-5`
+  - Label/Meta: `text-[12px] leading-4 text-[color:var(--color-muted)]`
 
-def get_database() -> AsyncIOMotorDatabase:
-    if mongo_db is None:
-        raise RuntimeError("MongoDB not initialized. Call connect_to_mongo() first.")
-    return mongo_db
-```
+## Layout Conventions
+- **Page frame**: Wrap each page with `div.container` using `max-w-[430px] mx-auto min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter`.
+- **Safe area**: Padding `pt-4 pb-24 px-4` to leave room for the bottom nav.
+- **Bottom tab bar**: Fixed at bottom, elevated, notch FAB for Scan.
 
-### FastAPI Lifespan (required)
-```python
-# backend/src/backend/main.py
-from contextlib import asynccontextmanager
-from .db.mongo import connect_to_mongo, close_mongo_connection
+## Core Components (placeholders allowed)
+- `BottomNav`: 3 tabs (Home, Scan, Saya). Center contains FAB (`Scan`), others are standard buttons. Keep labels under icons.
+- `BalanceCard`: Shows balance, top up/withdraw buttons, progress slider, and points.
+- `ActionGrid`: 4 circular actions (Duitin, Temuin, Anterin, Tukerin).
+- `HeroCarousel`: Banner with image/illustration and pagination dots.
+- `HistoryList`: Transaction list with icon, title, time, amount delta and points delta.
+- `SectionHeader`: Title with optional right‑aligned small CTA.
+- `Tag/Chip`: Small rounded labels.
 
-@asynccontextmanager
-async def lifespan(app):
-    await connect_to_mongo()
-    yield
-    await close_mongo_connection()
-```
+Place components under `app/components/` using clear names and props. Keep logic separate from rendering when possible.
 
-### Usage Pattern (allowed vs forbidden)
-```python
-# ✅ Allowed: always obtain DB via ensure_connection()
-from ..db.mongo import ensure_connection
+## Routing Map (proposed, matches existing)
+- `/` → Home (dashboard + shortcuts)
+- `/scan` → Camera/scan flow
+- `/history` → Transaction history
+- `/statistics` → Stats dashboard
+- `/education` → Education grid
+- `/payout` → Withdraw/Top‑up flows
+- `/notifications` → List + settings
+- `/rag` → Smarten AI Agent
+- `/admin/*` → Admin screens
 
-async def some_operation():
-    db = await ensure_connection()
-    await db['collection'].insert_one({...})
-```
-```python
-# ❌ Forbidden: using mongo_db/client directly
-from ..db.mongo import mongo_db  # Do not do this
-```
+## State/Networking
+- Reuse existing contexts and APIs. Do not change backend contracts.
+- When updating points, follow the front‑end guard: only update with non‑decreasing numeric totals.
+- Use placeholders for images/icons in `public/` until assets are delivered (`public/placeholders/*.svg|png`).
 
-### Environment
-- Required env vars for backend container:
-  - `MONGODB_URI` (Atlas SRV, include `retryWrites=true&w=majority&appName=SmartBin`)
-  - `MONGODB_DB_NAME` (e.g., `smartbin`)
-- Do NOT hardcode credentials. Use Docker Compose env or secrets.
+## Tailwind Usage
+- Prefer utilities. For repeating patterns, create tiny components with class presets instead of new CSS.
+- Gradients via inline style or `bg-[var(--gradient-primary)]` using `background-image: var(--gradient-primary)`.
+- Rounded: `rounded-[var(--radius-md)]` etc.
+- Shadow: `shadow-[var(--shadow-card)]` via `[box-shadow:var(--shadow-card)]` utility.
 
-### Error Handling and Resilience
-- If a DB write fails during scan/points update, DO NOT return `total_points=0`.
-  - Prefer returning `total_points=None` or omitting the field.
-  - Frontend must ignore zero/regressive totals.
-- Log DB failures with context (no secrets) and continue non-critical flows.
+## Accessibility
+- Touch targets ≥ 44px.
+- Buttons must have `aria-label` when icon‑only.
+- Color contrast >= WCAG AA.
 
-## Reward/Points Policy
-- `reward_service.add_points` MUST:
-  - Use `ensure_connection()`
-  - Use `upsert=True` when increasing points
-  - Return the final points from DB if available; if not available, DO NOT return 0 unless user truly has 0.
+## Testing
+- Snapshot visual tests for components where feasible.
+- Interaction tests around bottom nav, scan CTA, and list scrolling.
 
-### Canonical add_points shape
-```python
-# backend/src/backend/services/reward_service.py (key points)
-from ..db.mongo import ensure_connection
+## Implementation Checklist (do in order)
+1. Ensure tokens exist in `app/globals.css` (add/adjust variables only; keep theme block intact).
+2. Create `BottomNav` with center FAB and wire to `/scan`.
+3. Build `BalanceCard`, `ActionGrid`, `HeroCarousel`, `HistoryList` using placeholders.
+4. Apply the mobile frame and safe‑area paddings across pages.
+5. Replace legacy UI in `app/page.js` and related routes with new components, preserving existing data hooks.
+6. Verify points update guard and error states.
+7. QA pass at widths 360–430px.
 
-async def add_points(email: str, points: int, bottle_count: int = 1) -> int:
-    db = await ensure_connection()
-    collection = db["users"]
-    result = await collection.find_one_and_update(
-        {"email": email},
-        {"$inc": {"points": points}},
-        return_document=True,
-        upsert=True,
-    )
-    if result is None:
-        result = await collection.find_one({"email": email})
-    return int(result.get("points", 0)) if result else 0
-```
+## Notes
+- Inter font is already wired via `.font-inter`. Use it globally on the container and override only when necessary.
+- Keep code changes scoped; do not modify backend connection rules.
 
-## Frontend Points Update Guard
-- Never overwrite points with a lower number (especially 0) from a flaky response.
-- Only update when the new total is a valid non-decreasing number.
-
-```javascript
-// Example guard when handling scan result or summary
-const newTotal = data?.total_points;
-if (typeof newTotal === 'number' && newTotal >= (user?.points ?? 0)) {
-  updateUser({ ...user, points: newTotal });
-} // else ignore
-```
-
-## Health/Readiness
-- Health endpoint should `ping` MongoDB; readiness is 200 only if ping succeeds.
-
-## PR Checklist (must pass)
-- [ ] All DB access via `ensure_connection()`
-- [ ] No imports of `mongo_db`/`client` outside `db/mongo.py`
-- [ ] Frontend does not regress user points when backend returns 0/None
-- [ ] Env vars documented and used (no hardcoded URIs)
-- [ ] Logs have no secrets
 
