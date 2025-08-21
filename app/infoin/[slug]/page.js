@@ -29,11 +29,11 @@ export default function InfoinDetailPage() {
     <div className="max-w-[430px] mx-auto min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
       <div className="pt-4 pb-24 px-4">
         <div className="sticky top-0 z-10 bg-[var(--color-primary-700)] text-white rounded-b-[var(--radius-lg)] -mx-4 px-4 py-6 [box-shadow:var(--shadow-card)]">
-          <div className="flex items-center gap-3">
-            <button onClick={() => router.back()} aria-label="Kembali" className="w-9 h-9 flex items-center justify-center">
+          <div className="flex items-center gap-3 justify-center">
+            <button onClick={() => router.back()} aria-label="Kembali" className="absolute left-4 w-9 h-9 flex items-center justify-center">
               <img src="/back.svg" alt="Back" className="w-6 h-6" />
             </button>
-            <div className="text-[22px] leading-7 font-semibold">Infoin</div>
+            <div className="text-xl leading-7 font-semibold text-center w-full">Infoin</div>
           </div>
         </div>
 
@@ -59,5 +59,4 @@ export default function InfoinDetailPage() {
     </div>
   );
 }
-
 

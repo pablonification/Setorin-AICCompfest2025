@@ -13,6 +13,8 @@ export default function MobileScanResult({ result }) {
   const points = result.points_awarded ?? result.points ?? 0;
   const total = result.total_points ?? undefined;
   const volume = result.volume_ml?.toFixed(1);
+  const previewB64 = result.debug_image;
+  const previewUrl = result.debug_url;
 
   return (
     <div className="rounded-[var(--radius-md)] bg-white p-4 shadow-md mt-6">
@@ -54,6 +56,25 @@ export default function MobileScanResult({ result }) {
         <div className="mt-3 text-xs text-gray-600">
           <p className="text-gray-500">Alasan:</p>
           <p>{result.reason}</p>
+        </div>
+      )}
+
+      {(previewB64 || previewUrl) && (
+        <div className="mt-4">
+          <div className="text-sm font-medium mb-2">Preview</div>
+          {previewB64 ? (
+            <img
+              src={`data:image/jpeg;base64,${previewB64}`}
+              alt="Preview hasil pengukuran"
+              className="w-full rounded-[var(--radius-sm)]"
+            />
+          ) : (
+            <img
+              src={previewUrl}
+              alt="Preview hasil pengukuran"
+              className="w-full rounded-[var(--radius-sm)]"
+            />
+          )}
         </div>
       )}
     </div>
