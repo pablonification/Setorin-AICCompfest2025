@@ -101,8 +101,8 @@ export default function HistoryList({ items = [] }) {
   return (
     <div className="rounded-[16px] bg-[var(--color-primary-700)] text-white [box-shadow:var(--shadow-card)] p-4">
       <div className="flex items-center justify-between">
-        <div className="text-[15px] leading-6 font-semibold">Riwayat Setoran</div>
-        <Link href="/history" className="text-[11px] px-2.5 py-1 rounded-[999px] border border-white/60 text-white/90">
+        <div className="text-base leading-6 font-semibold">Riwayat Setoran</div>
+        <Link href="/history" className="text-xs px-2.5 py-1 rounded-[999px] border border-white/60 text-white/90">
           Lihat semua →
         </Link>
       </div>
@@ -120,13 +120,13 @@ export default function HistoryList({ items = [] }) {
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-semibold truncate">{it.title}</div>
-                <div className="text-[11px] text-white/80">{it.time}</div>
+                <div className="text-sm font-semibold truncate">{it.title}</div>
+                <div className="text-xs text-white/80">{it.time}</div>
               </div>
               <div className="text-right">
-                <div className="text-[13px] font-bold">{positive ? "+" : "-"}{formatAmount(it.amount)}</div>
+                <div className="text-sm font-bold">{positive ? "+" : "-"}{formatAmount(it.amount)}</div>
                 {it.points ? (
-                  <div className="text-[11px] text-white/90">+{it.points} Setor Poin</div>
+                  <div className="text-xs text-white/90">+{it.points} Setor Poin</div>
                 ) : null}
               </div>
             </div>

@@ -53,7 +53,7 @@ export default function EditProfilePage() {
           <button onClick={() => router.back()} aria-label="Kembali" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
             <img src="/profile/back.svg" alt="Kembali"/>
           </button>
-          <h1 className="text-[18px] font-semibold">Edit Profil</h1>
+          <h1 className="text-lg font-semibold">Edit Profil</h1>
         </div>
       </div>
 
@@ -184,7 +184,7 @@ export default function EditProfilePage() {
               disabled={!canSubmit}
               aria-busy={saving}
               aria-disabled={!canSubmit}
-              className={`w-full py-4 rounded-[var(--radius-lg)] font-semibold text-[17px] [box-shadow:var(--shadow-card)] ${
+              className={`w-full py-4 rounded-[var(--radius-lg)] font-semibold text-base [box-shadow:var(--shadow-card)] ${
                 canSubmit
                   ? "bg-[var(--color-primary-700)] text-[var(--color-accent-amber)]"
                   : "bg-gray-300 text-gray-600"

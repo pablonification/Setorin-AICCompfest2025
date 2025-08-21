@@ -49,7 +49,7 @@ export default function SayaPage() {
               <div className="flex-1">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <div className="font-inter font-bold text-[18px] leading-none text-[var(--color-primary-700)]">
+                    <div className="font-inter font-bold text-lg leading-none text-[var(--color-primary-700)]">
                       {user?.name || user?.email || 'Pengguna'}
                     </div>
                     <div className="font-inter text-xs leading-none mt-1 text-[var(--color-primary-700)]">

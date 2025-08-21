@@ -57,7 +57,7 @@ export default function BalanceCard() {
             aria-label="Tarik"
             className="w-9 h-9 flex flex-col items-center justify-center"
           >
-            <span className="text-[12px] text-[var(--color-primary-700)] font-semibold mt-1">
+            <span className="text-xs text-[var(--color-primary-700)] font-semibold mt-1">
               Tarik
             </span>
             <img src="/tarik.svg" alt="Tarik" className="w-7 h-7" />
