@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import SectionHeader from '../components/SectionHeader';
@@ -41,32 +43,34 @@ export default function SayaPage() {
           {/* Profile Card */}
           <div className="rounded-[16px] bg-white [box-shadow:var(--shadow-card)] p-4">
             <div className="flex items-center gap-4">
-              <div className="w-20 h-20 rounded-full border-4 border-[var(--color-primary-700)] flex items-center justify-center">
-                <div className="w-10 h-10 rounded-md bg-gray-300" aria-hidden />
+              <div className="w-20 h-20 rounded-full border-4 border-[var(--color-primary-700)] flex items-center justify-center overflow-hidden bg-white">
+                <Image src="/placeholders/avatar.svg" width={40} height={40} alt="Avatar" />
               </div>
               <div className="flex-1">
-                <div className="text-[18px] font-semibold text-gray-900">
-                  {user?.name || user?.email || 'Pengguna'}
-                </div>
-                <div className="text-[12px] leading-4 text-[color:var(--color-muted)]">
-                  {user?.email}
-                </div>
-                <div className="mt-2">
-                  <button className="px-3 py-1 rounded-[var(--radius-pill)] border border-[var(--color-primary-700)] text-[12px] text-[var(--color-primary-700)]">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="font-inter font-bold text-[18px] leading-none text-[var(--color-primary-700)]">
+                      {user?.name || user?.email || 'Pengguna'}
+                    </div>
+                    <div className="font-inter text-xs leading-none mt-1 text-[var(--color-primary-700)]">
+                      {user?.email}
+                    </div>
+                  </div>
+                  <Link href="/profile/edit" className="font-inter text-xs leading-none px-3 py-1 rounded-[var(--radius-pill)] border border-[var(--color-primary-700)] text-[var(--color-primary-700)]">
                     Edit Profil
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>
 
             {/* Level pill */}
-            <div className="mt-4 rounded-[12px] p-3" style={{ backgroundImage: 'var(--gradient-primary)' }}>
+            <div className="mt-4 rounded-[16px] p-3" style={{ backgroundImage: 'var(--gradient-primary)' }}>
               <div className="flex items-center justify-between text-white">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-md bg-white/20" aria-hidden />
-                  <span className="font-medium">Perintis</span>
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 rounded-full bg-white/25" aria-hidden />
+                  <span className="font-inter font-bold text-sm leading-none">Perintis</span>
                 </div>
-                <span className="text-sm">{(user?.points ?? 0)} Setor Poin</span>
+                <span className="font-inter text-sm leading-none">{(user?.points ?? 0)} Setor Poin</span>
               </div>
             </div>
           </div>
