@@ -23,12 +23,13 @@ function AuthCallbackContent() {
 
       // If user is already authenticated, redirect immediately
       if (user) {
-        router.push('/scan');
+        router.push('/');
         return;
       }
 
-      // Get the authorization code from URL params
+      // Get the authorization code and state (next path) from URL params
       const code = searchParams.get('code');
+      const state = searchParams.get('state');
       
       // If no code, don't process (might be initial render)
       if (!code) {
@@ -56,16 +57,25 @@ function AuthCallbackContent() {
         }
 
         const data = await response.json();
-        
+
         // Use AuthContext to login
         login(data.user, data.access_token);
-        
+
         setStatus('success');
-        
-        // Redirect to scan page after short delay
+
+        // Determine next path from state (if present)
+        let nextPath = '/';
+        try {
+          if (state) {
+            const decoded = decodeURIComponent(state);
+            if (decoded.startsWith('/')) nextPath = decoded;
+          }
+        } catch {}
+
+        // Redirect after short delay
         setTimeout(() => {
-          router.push('/scan');
-        }, 1500);
+          router.push(nextPath);
+        }, 800);
         
       } catch (err) {
         console.error('Auth callback error:', err);

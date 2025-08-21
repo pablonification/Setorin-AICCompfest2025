@@ -10,6 +10,7 @@ from .routers.admin import router as admin_router
 from pathlib import Path
 from .db.mongo import connect_to_mongo, close_mongo_connection
 from .services.ws_manager import start_websocket_manager, stop_websocket_manager
+from .services.educational_service import EducationalService
 
 
 @asynccontextmanager
@@ -17,6 +18,12 @@ async def lifespan(app: FastAPI):
     # Startup
     await connect_to_mongo()
     await start_websocket_manager()
+    # Seed initial infoin contents (idempotent)
+    try:
+        await EducationalService().seed_initial_education_contents()
+    except Exception:
+        # Seeding is best-effort; avoid blocking app startup
+        pass
     yield
     # Shutdown
     await stop_websocket_manager()

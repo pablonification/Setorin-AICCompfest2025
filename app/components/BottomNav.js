@@ -6,9 +6,9 @@ import { usePathname } from "next/navigation";
 export default function BottomNav() {
   const pathname = usePathname();
 
-  // Hide on login page
   if (pathname === "/login") return null;
-
+  if (pathname.startsWith("/scan")) return null;
+  if (pathname.startsWith("/temuin")) return null;
   const isActive = (href) => pathname === href;
 
   return (
@@ -56,7 +56,7 @@ export default function BottomNav() {
             <Link href="/profile" className="flex flex-col items-center text-xs">
               <div aria-hidden>
                 <img
-                  src={isActive("/history") ? "/profile.svg" : "/profile-nonactive.svg"}
+                  src={isActive("/profile") ? "/profile.svg" : "/profile-nonactive.svg"}
                   alt=""
                   className="w-8 h-8"
                   aria-hidden="true"

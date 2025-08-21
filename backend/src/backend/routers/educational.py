@@ -18,9 +18,28 @@ service = EducationalService()
 
 
 @router.get("/", response_model=EducationalListResponse)
-async def list_contents(limit: int = Query(50, ge=1, le=100)):
+async def list_contents(limit: int = Query(50, ge=1, le=100), category: str | None = None, published_only: bool = True, q: str | None = None):
     """Public endpoint: list educational contents."""
-    items = await service.list(limit=limit)
+    filters = {}
+    if category:
+        filters["category"] = category
+    if published_only:
+        filters["is_published"] = True
+    if q:
+        # naive contains filter on title/description
+        filters["$or"] = [
+            {"title": {"$regex": q, "$options": "i"}},
+            {"description": {"$regex": q, "$options": "i"}},
+        ]
+    items_raw = await service.list(limit=limit, filters=filters)
+    items = []
+    for i in items_raw:
+        data = i.model_dump(by_alias=False)
+        if "_id" in data and "id" not in data:
+            data["id"] = str(data.pop("_id"))
+        else:
+            data["id"] = str(data.get("id"))
+        items.append(EducationalResponse.model_validate(data))
     return EducationalListResponse(items=items, total=len(items))
 
 
@@ -30,7 +49,26 @@ async def get_content(content_id: str):
     item = await service.get(content_id)
     if not item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found")
-    return item
+    data = item.model_dump(by_alias=False)
+    if "_id" in data and "id" not in data:
+        data["id"] = str(data.pop("_id"))
+    else:
+        data["id"] = str(data.get("id"))
+    return EducationalResponse.model_validate(data)
+
+
+@router.get("/slug/{slug}", response_model=EducationalResponse)
+async def get_content_by_slug(slug: str):
+    """Public endpoint: get educational content by slug."""
+    item = await service.get_by_slug(slug)
+    if not item:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found")
+    data = item.model_dump(by_alias=False)
+    if "_id" in data and "id" not in data:
+        data["id"] = str(data.pop("_id"))
+    else:
+        data["id"] = str(data.get("id"))
+    return EducationalResponse.model_validate(data)
 
 
 @router.post("/", response_model=EducationalResponse, status_code=status.HTTP_201_CREATED)
