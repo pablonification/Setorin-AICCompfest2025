@@ -20,7 +20,6 @@ export default function TopBar({ title, backHref, right, className }) {
 			onClick={() => (backHref ? null : router.back())}
 			aria-label="Kembali"
 			type="button"
-			className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center"
 		>
 			<img src="/profile/back.svg" alt="Kembali" />
 		</button>
@@ -33,7 +32,7 @@ export default function TopBar({ title, backHref, right, className }) {
 			<div className="mx-auto max-w-[430px] px-4 pt-6 pb-12 relative">
 				<div className="flex items-center justify-between">
 					{backHref ? (
-						<Link href={backHref} aria-label="Kembali" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
+						<Link href={backHref} aria-label="Kembali">
 							<img src="/profile/back.svg" alt="Kembali" />
 						</Link>
 					) : (
