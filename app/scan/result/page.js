@@ -28,14 +28,20 @@ export default function ScanResultPage() {
 
   return (
     <ProtectedRoute userOnly={true}>
-      <div className="container max-w-[430px] mx-auto min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter pt-4 pb-24">
+      <div className="container max-w-[430px] mx-auto min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
         {/* Header */}
-        <header className="h-12 flex items-center px-4 text-white font-semibold bg-[var(--color-primary-700)] shadow rounded-[var(--radius-sm)]">
-          <button onClick={() => router.push('/scan')} className="mr-2 active:opacity-70">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-          </button>
-          Duitin
-        </header>
+        <div className="sticky top-0 z-10 bg-[var(--color-primary-700)] text-white rounded-b-[var(--radius-lg)] px-4 py-6 [box-shadow:var(--shadow-card)]">
+          <div className="flex items-center justify-center relative">
+            <button
+              onClick={() => router.push('/scan')}
+              aria-label="Kembali"
+              className="w-9 h-9 flex items-center justify-center absolute left-0"
+            >
+              <img src="/back.svg" alt="Back" className="w-6 h-6" />
+            </button>
+            <div className="text-xl leading-7 font-semibold">Duitin</div>
+          </div>
+        </div>
 
         {loading ? (
           <div className="px-4 mt-12 flex flex-col items-center justify-center text-center">
@@ -48,28 +54,31 @@ export default function ScanResultPage() {
 
             {(() => {
               const invalid = data?.is_valid === false || data?.valid === false || (typeof data?.points_awarded === 'number' && data.points_awarded <= 0);
-              return invalid ? (
-                <button
-                  onClick={() => {
-                    try {
-                      localStorage.removeItem('smartbin_last_scan');
-                      localStorage.setItem('smartbin_scan_processing', '0');
-                    } catch {}
-                    router.push('/scan');
-                  }}
-                  className="mt-6 w-full py-3 rounded-[var(--radius-pill)] bg-[var(--color-primary-600)] text-white font-medium active:opacity-80"
-                >
-                  Ambil Ulang Foto
-                </button>
-              ) : null;
+              return (
+                <div className="mt-6 space-y-3">
+                  {invalid ? (
+                    <button
+                      onClick={() => {
+                        try {
+                          localStorage.removeItem('smartbin_last_scan');
+                          localStorage.setItem('smartbin_scan_processing', '0');
+                        } catch {}
+                        router.push('/scan');
+                      }}
+                      className="w-full h-12 rounded-[var(--radius-pill)] bg-[var(--color-primary-700)] text-white font-medium active:opacity-80"
+                    >
+                      Ambil Ulang Foto
+                    </button>
+                  ) : null}
+                  <button
+                    onClick={() => router.push('/')}
+                    className="w-full h-12 rounded-[var(--radius-pill)] bg-transparent text-[var(--color-primary-700)] font-medium active:opacity-80 border-2 border-[var(--color-primary-700)]"
+                  >
+                    Selesai
+                  </button>
+                </div>
+              );
             })()}
-
-            <button
-              onClick={() => router.push('/')}
-              className="mt-3 w-full py-3 rounded-[var(--radius-pill)] bg-gray-200 text-gray-800 font-medium active:opacity-80"
-            >
-              Selesai
-            </button>
           </div>
         )}
       </div>
