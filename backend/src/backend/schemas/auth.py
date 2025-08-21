@@ -18,6 +18,7 @@ class UserResponse(BaseModel):
     id: str
     email: str
     name: str
+    photo_url: Optional[str] = None
     points: int
     role: str = "user"  # Default role for backward compatibility
     tier: Optional[str] = None

@@ -11,6 +11,7 @@ from .common import MongoBaseModel, PyObjectId
 class User(MongoBaseModel):
     email: str
     name: Optional[str] = None
+    photo_url: Optional[str] = None
     points: int = 0
     role: Literal["user", "admin"] = "user"  # Default role is user
     tier: Optional[str] = None

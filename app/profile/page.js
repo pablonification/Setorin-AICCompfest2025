@@ -44,12 +44,12 @@ export default function SayaPage() {
           <div className="rounded-[16px] bg-white [box-shadow:var(--shadow-card)] p-4">
             <div className="flex items-center gap-4">
               <div className="w-20 h-20 rounded-full border-4 border-[var(--color-primary-700)] flex items-center justify-center overflow-hidden bg-white">
-                <Image src="/placeholders/avatar.svg" width={40} height={40} alt="Avatar" />
+                <img src={user?.photo_url || "/profile/default-profile.jpg"} alt="Avatar" referrerPolicy="no-referrer" />
               </div>
               <div className="flex-1">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <div className="font-inter font-bold text-[18px] leading-none text-[var(--color-primary-700)]">
+                    <div className="font-inter font-bold text-lg leading-none text-[var(--color-primary-700)]">
                       {user?.name || user?.email || 'Pengguna'}
                     </div>
                     <div className="font-inter text-xs leading-none mt-1 text-[var(--color-primary-700)]">
@@ -83,9 +83,7 @@ export default function SayaPage() {
           <SectionHeader title="Akun Saya" />
           <div className="mt-3 space-y-2">
             <SettingsRow href="/notifications" label="Notifikasi" badge={unreadCount} icon="/profile/notifikasi.svg" />
-            <SettingsRow href="#" label="Alamat Pengiriman" icon="/profile/alamat-pengiriman.svg" />
-            <SettingsRow href="#" label="Metode Pembayaran" icon="/profile/metode-pembayaran.svg" />
-            <SettingsRow href="#" label="Ubah Bahasa" icon="/profile/ubah-bahasa.svg" />
+            <SettingsRow href="/statistics" label="Statistics" icon="/profile/alamat-pengiriman.svg" />
           </div>
         </div>
 
@@ -94,7 +92,7 @@ export default function SayaPage() {
           <div className="mt-3 space-y-2">
             <SettingsRow href="#" label="Bantuan" icon="/profile/bantuan.svg" />
             <SettingsRow href="#" label="Lapor Masalah" icon="/profile/lapor-masalah.svg" />
-            <SettingsRow href="#" label="Tentang Kami" icon="/profile/tentang-kami.svg" />
+            <SettingsRow href="/tentang-kami" label="Tentang Kami" icon="/profile/tentang-kami.svg" />
           </div>
         </div>
       </div>
