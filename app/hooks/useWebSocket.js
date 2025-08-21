@@ -266,7 +266,7 @@ export const useNotificationWebSocket = (userId) => {
       
       // Show browser notification if supported
       if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification(notification.title || 'SmartBin Notification', {
+        new Notification(notification.title || 'Setorin Notification', {
           body: notification.message,
           icon: '/favicon.ico',
           tag: notification.id
@@ -280,7 +280,7 @@ export const useNotificationWebSocket = (userId) => {
       
       // Show browser notification if supported
       if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification(notification.title || 'SmartBin Broadcast', {
+        new Notification(notification.title || 'Setorin Broadcast', {
           body: notification.message,
           icon: '/favicon.ico',
           tag: `broadcast_${Date.now()}`

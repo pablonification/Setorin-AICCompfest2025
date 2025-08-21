@@ -1,5 +1,5 @@
 """
-SmartBin AI Agent – RAG app bootstrap
+Robin AI Agent – RAG app bootstrap
 
 Builds a simple Retrieval-Augmented Generation pipeline over the provided
 markdown knowledge base, exposing an `app.invoke({"messages": [...]}, config)
@@ -39,21 +39,32 @@ def _build_retriever() -> Chroma:
     docs = splitter.create_documents([kb_text]) if kb_text else []
 
     embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-    vs = Chroma.from_documents(docs, embeddings, collection_name="smartbin_rag")
+    vs = Chroma.from_documents(docs, embeddings, collection_name="Setorin_rag")
     return vs.as_retriever(search_kwargs={"k": 4})
 
 
 SYSTEM_PROMPT = (
-    "You are SmartBin AI Agent, an expert assistant for recycling and waste management.\n"
-    "Use only the provided context to answer in clear, concise Bahasa Indonesia,\n"
-    "with brief actionable guidance. If the answer is not in the context, say\n"
-    "you don't know and suggest relevant steps. Prefer concrete numbers, simple\n"
-    "lists, and short paragraphs. Avoid speculation.\n\n"
-    "Rules:\n"
-    "- Focus on botol plastik, PET, 3R/5R, dan kebijakan/angka yang ada di konteks.\n"
-    "- Jika pertanyaan tentang fitur SmartBin, jelaskan sesuai ringkasan produk.\n"
-    "- Beri saran praktis (cara memilah, bersihkan botol, dll.) bila relevan.\n"
-    "- Jangan mengada-ada di luar konteks.\n"
+    "You are Robin AI, an Setorin AI Agent, an expert assistant for recycling and waste management.\n"
+    "You have knowledge about recycling, waste management, environmental topics, and Setorin features.\n\n"
+    "Answering Strategy:\n"
+    "1. For Setorin-specific questions: Use the provided context when available\n"
+    "2. For general recycling/waste management questions: Use your base knowledge to provide helpful answers\n"
+    "3. For completely unrelated topics (e.g., cooking, sports, politics): Politely decline and redirect to recycling topics\n\n"
+    "Guidelines:\n"
+    "- Always answer in clear, concise Bahasa Indonesia\n"
+    "- Use markdown formatting for better readability:\n"
+    "  - **Bold** for important points and headings\n"
+    "  - *Italic* for emphasis\n"
+    "  - `code` for technical terms or app features\n"
+    "  - - Bullet points for lists\n"
+    "  - 1. Numbered lists for steps\n"
+    "  - > Blockquotes for tips or warnings\n"
+    "- Provide actionable guidance when possible\n"
+    "- Use concrete numbers and simple lists when relevant\n"
+    "- For Setorin features, explain based on context or general app knowledge\n"
+    "- For recycling topics, share best practices even without specific context\n"
+    "- Only reject questions completely unrelated to environment, waste, or Setorin\n"
+    "- Be helpful and educational, not restrictive\n"
 )
 
 
@@ -62,6 +73,19 @@ class SimpleRAGApp:
         self.retriever = _build_retriever()
         # Gemini 2.0 Flash (or fallback if env not set)
         self.llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.2)
+
+    def _is_related_to_domain(self, query: str) -> bool:
+        """Check if query is related to recycling, waste, environment, or Setorin."""
+        related_keywords = [
+            'sampah', 'daur ulang', 'recycling', 'waste', 'environment', 'lingkungan',
+            'plastik', 'botol', '3r', '5r', 'Setorin', 'setorin', 'tukar', 'poin',
+            'kebersihan', 'pemilahan', 'organik', 'anorganik', 'sustainability',
+            'green', 'eco', 'bumi', 'planet', 'polusi', 'polution', 'karbon',
+            'emisi', 'energy', 'energi', 'conservation', 'pelestarian', 'robin', 'Robin'
+        ]
+        
+        query_lower = query.lower()
+        return any(keyword in query_lower for keyword in related_keywords)
 
     def invoke(self, state: Dict[str, Any], config: Dict[str, Any] | None = None) -> Dict[str, Any]:
         messages: List[Any] = state.get("messages", [])
@@ -76,9 +100,19 @@ class SimpleRAGApp:
                 break
 
         if not user_query:
-            user_query = "Jelaskan ringkas tentang SmartBin dan 3R."
+            user_query = "Jelaskan ringkas tentang Setorin dan 3R."
 
-        # Retrieve context
+        # Check if query is related to our domain
+        if not self._is_related_to_domain(user_query):
+            rejection_message = (
+                "Maaf, saya adalah asisten khusus untuk topik sampah, daur ulang, lingkungan, dan fitur Setorin. "
+                "Untuk pertanyaan di luar topik tersebut, saya tidak bisa membantu. "
+                "Silakan tanyakan tentang cara memilah sampah, fitur aplikasi Setorin, atau topik lingkungan lainnya."
+            )
+            out_messages = list(messages) + [AIMessage(content=rejection_message)]
+            return {"messages": out_messages}
+
+        # Retrieve context for Setorin-specific questions
         contexts = []
         try:
             docs = self.retriever.get_relevant_documents(user_query)
@@ -86,13 +120,22 @@ class SimpleRAGApp:
         except Exception:
             contexts = []
 
-        context_block = "\n\n".join(contexts[:4]) if contexts else ""
-        prompt = (
-            "Konteks berikut berasal dari dokumen internal SmartBin. Gunakan seperlunya.\n\n"
-            f"{context_block}\n\n"
-            f"Pertanyaan: {user_query}\n"
-            "Jawab singkat, jelas, dan actionable."
-        )
+        # Build context-aware prompt
+        if contexts:
+            context_block = "\n\n".join(contexts[:4])
+            prompt = (
+                "Konteks berikut berasal dari dokumen internal Setorin. Gunakan seperlunya untuk pertanyaan spesifik.\n\n"
+                f"{context_block}\n\n"
+                f"Pertanyaan: {user_query}\n"
+                "Jawab dengan informasi dari konteks jika tersedia, atau gunakan pengetahuan umum tentang daur ulang dan waste management."
+            )
+        else:
+            # No specific context, but still answer using general knowledge
+            prompt = (
+                f"Pertanyaan: {user_query}\n"
+                "Jawab menggunakan pengetahuan umum tentang daur ulang, waste management, dan best practices lingkungan. "
+                "Meskipun tidak ada konteks spesifik Setorin, berikan jawaban yang bermanfaat dan edukatif."
+            )
 
         # Call LLM
         ai_msg = self.llm.invoke([

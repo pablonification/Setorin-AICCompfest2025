@@ -135,7 +135,7 @@ function AuthCallbackContent() {
           </svg>
         </div>
         <h2 className="mt-4 text-xl font-semibold text-gray-900">Authentication successful!</h2>
-        <p className="mt-2 text-gray-600">Redirecting to SmartBin...</p>
+        <p className="mt-2 text-gray-600">Redirecting to Setorin...</p>
       </div>
     </div>
   );

@@ -4,8 +4,11 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { useAuth } from '../contexts/AuthContext';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export default function RagPage() {
+  const router = useRouter();
   return (
     <ProtectedRoute userOnly={true}>
       <div className="max-w-[430px] mx-auto min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
@@ -13,7 +16,7 @@ export default function RagPage() {
         <div className="sticky top-0 z-10 bg-[var(--color-primary-700)] text-white rounded-b-[var(--radius-lg)] px-4 py-6 [box-shadow:var(--shadow-card)]">
           <div className="flex items-center justify-center relative">
             <button
-              onClick={() => router.back()}
+              onClick={() => router.replace('/')}
               aria-label="Kembali"
               className="w-9 h-9 flex items-center justify-center absolute left-0"
             >
@@ -44,6 +47,7 @@ function RagChat() {
     {
       role: 'suggestions',
       suggestions: [
+        'Apa itu Robin?',
         'Bagaimana cara menyetorkan sampah?',
         'Apa saja yang bisa dilakukan di Setorin?',
         'Bagaimana cara menukar poin?',
@@ -137,8 +141,31 @@ function RagChat() {
                     ? 'bg-[var(--color-accent-amber)] text-[var(--foreground)] ml-auto' 
                     : 'bg-white text-[var(--foreground)] border border-gray-200'
                 }`}>
-                  <div className="text-[14px] leading-5 whitespace-pre-wrap">
-                    {message.content}
+                  <div className="text-[14px] leading-5">
+                    {message.role === 'assistant' ? (
+                      <ReactMarkdown 
+                        remarkPlugins={[remarkGfm]}
+                        className="markdown-content"
+                        components={{
+                          // Custom styling for markdown elements
+                          h1: ({children}) => <h1 className="text-lg font-bold mb-2 text-[var(--color-primary-700)]">{children}</h1>,
+                          h2: ({children}) => <h2 className="text-base font-bold mb-2 text-[var(--color-primary-700)]">{children}</h2>,
+                          h3: ({children}) => <h3 className="text-sm font-bold mb-1 text-[var(--color-primary-700)]">{children}</h3>,
+                          p: ({children}) => <p className="mb-2 last:mb-0">{children}</p>,
+                          ul: ({children}) => <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>,
+                          ol: ({children}) => <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>,
+                          li: ({children}) => <li className="text-[14px] leading-5">{children}</li>,
+                          strong: ({children}) => <strong className="font-semibold text-[var(--color-primary-700)]">{children}</strong>,
+                          em: ({children}) => <em className="italic">{children}</em>,
+                          code: ({children}) => <code className="bg-gray-100 px-1 py-0.5 rounded text-xs font-mono text-gray-800">{children}</code>,
+                          blockquote: ({children}) => <blockquote className="border-l-4 border-[var(--color-primary-500)] pl-3 py-1 bg-[var(--color-primary-50)] italic text-gray-700">{children}</blockquote>,
+                        }}
+                      >
+                        {message.content}
+                      </ReactMarkdown>
+                    ) : (
+                      <div className="whitespace-pre-wrap">{message.content}</div>
+                    )}
                   </div>
                 </div>
               </div>

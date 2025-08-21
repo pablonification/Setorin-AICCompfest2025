@@ -22,7 +22,7 @@ export default function TentangKamiPage() {
 
         {/* Description paragraph */}
         <p className="text-center text-sm leading-6">
-          Setorin adalah platform ekosistem berbasis web yang membantu Anda mengubah sampah terpilah menjadi aset bernilai. Melalui jaringan SmartBin kami dan layanan penjemputan, kami membuat proses daur ulang menjadi lebih mudah, seru, dan menguntungkan.
+          Setorin adalah platform ekosistem berbasis web yang membantu Anda mengubah sampah terpilah menjadi aset bernilai. Melalui jaringan Setorin kami dan layanan penjemputan, kami membuat proses daur ulang menjadi lebih mudah, seru, dan menguntungkan.
         </p>
 
         {/* Developer heading */}

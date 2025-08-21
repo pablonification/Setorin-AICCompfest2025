@@ -43,7 +43,7 @@ export default function TemuinPage() {
         {/* Bottom card */}
         <div className="absolute left-1/2 bottom-24 w-[92%] -translate-x-1/2">
           <div className="rounded-[16px] bg-white [box-shadow:var(--shadow-card)] p-4">
-            <div className="text-[12px] leading-4 text-[color:var(--color-muted)]">SmartBin</div>
+            <div className="text-[12px] leading-4 text-[color:var(--color-muted)]">Setorin Bin</div>
             <div className="text-[18px] leading-6 font-semibold">Sunken Court ITB</div>
             <div className="text-[12px] leading-4 text-[color:var(--color-muted)] mt-1">
               Jl. X, Lb. Siliwangi, Kecamatan Coblong, Kota Bandung, Jawa Barat 40132

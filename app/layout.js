@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "SmartBin - Smart Recycling System",
+  title: "Setorin - Smart Recycling System",
   description: "Recycle plastic bottles and earn rewards with AI-powered validation",
 };
 

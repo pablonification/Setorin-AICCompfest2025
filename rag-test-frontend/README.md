@@ -1,6 +1,6 @@
-# SmartBin RAG Agent Testing Frontend
+# Setorin RAG Agent Testing Frontend
 
-A simple HTML frontend for testing the SmartBin RAG (Retrieval-Augmented Generation) agent that answers questions about waste management, recycling, and SmartBin operations using knowledge from the markdown documentation.
+A simple HTML frontend for testing the Setorin RAG (Retrieval-Augmented Generation) agent that answers questions about waste management, recycling, and Setorin operations using knowledge from the markdown documentation.
 
 ## Features
 
@@ -28,14 +28,14 @@ Simply open `index.html` in your web browser. No build process required!
 
 1. **Configure API**: Set the backend URL (default: `http://localhost:8000`)
 2. **Ask Questions**: Type your question or click on sample queries
-3. **Get Answers**: The RAG agent will retrieve relevant information from the SmartBin knowledge base
+3. **Get Answers**: The RAG agent will retrieve relevant information from the Setorin knowledge base
 
 ## Sample Questions
 
 The frontend includes several pre-built questions to test different aspects:
 
 - **Waste Management**: "Jelaskan hierarki pengelolaan sampah 3R dan 5R"
-- **SmartBin Overview**: "Apa itu SmartBin dan bagaimana cara kerjanya?"
+- **Setorin Overview**: "Apa itu Setorin dan bagaimana cara kerjanya?"
 - **Recycling Process**: "Bagaimana proses daur ulang plastik PET?"
 - **Benefits**: "Apa saja manfaat daur ulang plastik?"
 - **Environmental Impact**: "Jelaskan tentang mikroplastik dan dampaknya"
@@ -64,7 +64,7 @@ export GOOGLE_API_KEY=your_google_api_key_here
 
 ## How It Works
 
-1. **Knowledge Base**: The RAG agent indexes the SmartBin markdown documentation
+1. **Knowledge Base**: The RAG agent indexes the Setorin markdown documentation
 2. **Query Processing**: User questions are processed through the LangGraph workflow
 3. **Retrieval**: Relevant document chunks are retrieved using vector similarity
 4. **Generation**: Google Gemini 2.0 Flash generates contextual answers
@@ -114,7 +114,7 @@ The backend includes debug endpoints:
 
 This is a standalone testing frontend. When ready for production:
 
-1. Integrate with the main SmartBin frontend
+1. Integrate with the main Setorin frontend
 2. Add proper authentication
 3. Implement conversation persistence
 4. Add analytics and monitoring

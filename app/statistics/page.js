@@ -15,7 +15,7 @@ export default function StatisticsPage() {
           <div className="px-4 py-6 sm:px-0">
             <div className="mb-6">
               <h2 className="text-3xl font-bold text-gray-900">Dashboard Statistik Personal</h2>
-              <p className="mt-2 text-gray-600">Lihat progress dan impact kamu dalam program daur ulang SmartBin</p>
+              <p className="mt-2 text-gray-600">Lihat progress dan impact kamu dalam program daur ulang Setorin</p>
             </div>
             <StatisticsDashboard />
             <div className="mt-8">

@@ -165,7 +165,7 @@ export default function AdminPage() {
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-            <p className="text-gray-600">Manage your SmartBin system and monitor performance</p>
+            <p className="text-gray-600">Manage your Setorin system and monitor performance</p>
           </div>
 
           {error && (

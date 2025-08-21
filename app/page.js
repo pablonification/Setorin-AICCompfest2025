@@ -8,6 +8,7 @@ import ActionGrid from './components/ActionGrid';
 import HeroCarousel from './components/HeroCarousel';
 import HistoryList from './components/HistoryList';
 import HeaderBar from './components/HeaderBar';
+import ChatFab from './components/ChatFab';
 
 export default function HomePage() {
   const { user, token, loading } = useAuth();
@@ -44,6 +45,7 @@ export default function HomePage() {
         <HeroCarousel />
         <HistoryList />
       </div>
+      <ChatFab />
     </div>
   );
 }

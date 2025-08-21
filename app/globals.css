@@ -60,3 +60,43 @@ html { background: var(--background); }
   background-color: #d1d5db; /* gray-300 */
   border-radius: var(--radius-md);
 }
+
+/* Markdown content styling for RAG chat */
+.markdown-content {
+  line-height: 1.5;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3 {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.markdown-content p {
+  margin-bottom: 0.5rem;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin-bottom: 0.5rem;
+  padding-left: 1rem;
+}
+
+.markdown-content li {
+  margin-bottom: 0.25rem;
+}
+
+.markdown-content blockquote {
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.markdown-content code {
+  font-family: 'Courier New', monospace;
+  background-color: #f3f4f6;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
