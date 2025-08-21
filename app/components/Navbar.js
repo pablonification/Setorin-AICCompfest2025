@@ -20,7 +20,6 @@ export default function Navbar() {
           // Admin navigation - only show Admin link
           <>
             <Link href="/admin" className="text-gray-800 font-semibold">Admin</Link>
-            <Link href="/rag" className="text-gray-600 hover:text-gray-800">SmartBin AI Agent</Link>
           </>
         ) : (
           // End-user navigation
@@ -30,6 +29,7 @@ export default function Navbar() {
             <Link href="/statistics" className="text-gray-600 hover:text-gray-800">Statistics</Link>
             <Link href="/education" className="text-gray-600 hover:text-gray-800">Education</Link>
             <Link href="/payout" className="text-gray-600 hover:text-gray-800">Payout</Link>
+            <Link href="/rag" className="text-emerald-700 font-semibold hover:text-emerald-800">SmartBin AI Agent</Link>
           </>
         )}
 
