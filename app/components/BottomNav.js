@@ -12,6 +12,7 @@ export default function BottomNav() {
   if (pathname.startsWith("/temuin")) return null;
   if (pathname.startsWith("/profile/edit")) return null;
   if (pathname.startsWith("/tentang-kami")) return null;
+  if (pathname.startsWith("/rag")) return null;
   const isActive = (href) => pathname === href;
 
   return (

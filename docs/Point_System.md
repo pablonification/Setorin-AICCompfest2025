@@ -1,6 +1,6 @@
-# ♻️ SmartBin — Sistem Poin→Rupiah berbasis Ukuran & Koefisien (Draft v1)
+# ♻️ Setorin — Sistem Poin→Rupiah berbasis Ukuran & Koefisien (Draft v1)
 
-Dokumen ini merancang sistem konversi **poin langsung ke Rupiah** untuk SmartBin, berbasis **ukuran botol PET** dan **koefisien kualitas/deteksi**. Dirancang agar **transparan**, **adil**, dan **mudah dioperasikan** lintas wilayah/mitra.
+Dokumen ini merancang sistem konversi **poin langsung ke Rupiah** untuk Setorin, berbasis **ukuran botol PET** dan **koefisien kualitas/deteksi**. Dirancang agar **transparan**, **adil**, dan **mudah dioperasikan** lintas wilayah/mitra.
 
 ---
 

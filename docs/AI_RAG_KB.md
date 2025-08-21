@@ -1,6 +1,6 @@
-## SmartBin — Kenalan Singkat
+## Setorin — Kenalan Singkat
 
-SmartBin adalah cara baru dan mudah untuk mendaur ulang botol plastik. Kamu cukup login, foto botolmu, dan sistem akan memvalidasi botol tersebut. Jika valid, tong pintar terbuka, kamu masukkan botolnya, dan poin otomatis bertambah. Cepat, praktis, dan berdampak baik untuk lingkungan.
+Setorin adalah cara baru dan mudah untuk mendaur ulang botol plastik. Kamu cukup login, foto botolmu, dan sistem akan memvalidasi botol tersebut. Jika valid, tong pintar terbuka, kamu masukkan botolnya, dan poin otomatis bertambah. Cepat, praktis, dan berdampak baik untuk lingkungan.
 
 ---
 
@@ -82,8 +82,8 @@ Tips singkat:
 - Apakah saya bisa melihat riwayat saya?
   - Bisa. Cek menu Riwayat/History untuk melihat daftar pembuangan botolmu.
 
-- Apakah SmartBin harus terhubung ke tong fisik?
-  - Saat demo, kami juga menyediakan mode simulasi. Saat produksi, SmartBin terhubung ke tong pintar di lokasi.
+- Apakah Setorin harus terhubung ke tong fisik?
+  - Saat demo, kami juga menyediakan mode simulasi. Saat produksi, Setorin terhubung ke tong pintar di lokasi.
 
 ---
 
@@ -114,7 +114,7 @@ Tips singkat:
 
 ## Butuh Bantuan?
 
-Jika ada kendala, saran, atau pertanyaan, kamu bisa menghubungi tim SmartBin. Kami senang mendengar masukanmu untuk membuat layanan ini semakin baik.
+Jika ada kendala, saran, atau pertanyaan, kamu bisa menghubungi tim Setorin. Kami senang mendengar masukanmu untuk membuat layanan ini semakin baik.
 
 
 
