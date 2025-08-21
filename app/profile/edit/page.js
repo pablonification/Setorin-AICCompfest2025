@@ -60,9 +60,9 @@ export default function EditProfilePage() {
       {/* Avatar */}
       <div className="px-4 -mt-8">
         <div className="relative mx-auto w-40 h-40 rounded-full border-4 border-[var(--color-primary-700)] bg-white flex items-center justify-center [box-shadow:var(--shadow-card)] overflow-hidden">
-          <Image src="/placeholders/avatar.svg" width={64} height={64} alt="Avatar" />
+          <img src="/profile/default-profile.jpg" widthalt="Avatar" />
           <div className="absolute -bottom-1 -right-1 w-10 h-10 rounded-full bg-white border-2 border-[var(--color-primary-700)] flex items-center justify-center">
-            <Image src="/placeholders/camera.svg" width={18} height={18} alt="Ubah foto" />
+            <Image src="/profile/edit/camera.svg" fill alt="Ubah foto" />
           </div>
         </div>
       </div>
