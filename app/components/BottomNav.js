@@ -52,9 +52,8 @@ export default function BottomNav() {
                 Beranda
               </span>
             </Link>
-
             {/* Right: Saya */}
-            <Link href="/history" className="flex flex-col items-center text-xs">
+            <Link href="/profile" className="flex flex-col items-center text-xs">
               <div aria-hidden>
                 <img
                   src={isActive("/history") ? "/profile.svg" : "/profile-nonactive.svg"}
@@ -64,8 +63,8 @@ export default function BottomNav() {
                   draggable="false"
                 />
               </div>
-              <span className={`mt-1 ${isActive("/history") ? "text-[var(--color-primary-700)]" : "text-gray-600"}`}>
-                Saya
+              <span className={`mt-1 ${isActive("/profile") ? "text-[var(--color-primary-700)]" : "text-gray-600"}`}>
+                Profile
               </span>
             </Link>
           </div>
