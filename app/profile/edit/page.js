@@ -51,19 +51,19 @@ export default function EditProfilePage() {
       {/* Top bar */}
       <TopBar title="Edit Profil" />
 
-      {/* Avatar */}
-      <div className="px-4 -mt-16">
+      {/* Avatar - positioned below TopBar with proper spacing */}
+      <div className="px-4 pt-6">
         <div className="relative mx-auto w-max">
-          <div className="w-36 h-36 rounded-full border-4 border-[var(--color-primary-700)] bg-white flex items-center justify-center [box-shadow:var(--shadow-card)] overflow-hidden">
-            <img src="/profile/default-profile.jpg" alt="Avatar" />
+          <div className="rounded-full border-2 border-[var(--color-primary-700)] flex items-center justify-center overflow-hidden bg-white">
+            <img src={user?.photo_url || "/profile/default-profile.jpg"} alt="Avatar" referrerPolicy="no-referrer" />
           </div>
-          <button
+          {/* <button
             type="button"
             aria-label="Ubah foto"
             className="absolute -bottom-1 -right-1 z-10 w-10 h-10 rounded-full bg-white border-2 border-[var(--color-primary-700)] flex items-center justify-center"
           >
             <Image src="/profile/edit/camera.svg" fill alt="Ubah foto" />
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -160,22 +160,6 @@ export default function EditProfilePage() {
                 </div>
                 <button type="button" className="px-3 py-1 rounded-[var(--radius-pill)] border border-[var(--color-primary-700)] text-[var(--color-primary-700)] text-xs">
                   Terhubung
-                </button>
-              </div>
-
-              {/* Apple row */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center">
-                    <span className="text-xl text-[var(--color-primary-700)]" aria-hidden></span>
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold text-[var(--color-primary-700)]">Apple</div>
-                    <div className="text-xs text-gray-600">Tidak terhubung</div>
-                  </div>
-                </div>
-                <button type="button" className="px-3 py-1 rounded-[var(--radius-pill)] bg-[var(--color-primary-700)] text-white text-xs">
-                  Hubungkan
                 </button>
               </div>
             </div>

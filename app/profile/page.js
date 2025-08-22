@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import SectionHeader from '../components/SectionHeader';
 import SettingsRow from '../components/SettingsRow';
 
-export default function SayaPage() {
+export default function ProfilePage() {
   const { user, token, getAuthHeaders } = useAuth();
   const router = useRouter();
   const [unreadCount, setUnreadCount] = useState(0);
@@ -43,7 +43,7 @@ export default function SayaPage() {
           {/* Profile Card */}
           <div className="rounded-[16px] bg-white [box-shadow:var(--shadow-card)] p-4">
             <div className="flex items-center gap-4">
-              <div className="w-20 h-20 rounded-full border-4 border-[var(--color-primary-700)] flex items-center justify-center overflow-hidden bg-white">
+              <div className="w-20 h-20 rounded-full border-2 border-[var(--color-primary-700)] flex items-center justify-center overflow-hidden bg-white">
                 <img src={user?.photo_url || "/profile/default-profile.jpg"} alt="Avatar" referrerPolicy="no-referrer" />
               </div>
               <div className="flex-1">
