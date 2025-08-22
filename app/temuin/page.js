@@ -43,14 +43,14 @@ export default function TemuinPage() {
         {/* Bottom card */}
         <div className="absolute left-1/2 bottom-24 w-[92%] -translate-x-1/2">
           <div className="rounded-[16px] bg-white [box-shadow:var(--shadow-card)] p-4">
-            <div className="text-[12px] leading-4 text-[color:var(--color-muted)]">Setorin Bin</div>
-            <div className="text-[18px] leading-6 font-semibold">Sunken Court ITB</div>
-            <div className="text-[12px] leading-4 text-[color:var(--color-muted)] mt-1">
+            <div className="text-xs leading-4 text-[color:var(--color-muted)]">Setorin Bin</div>
+                          <div className="text-lg leading-6 font-semibold">Sunken Court ITB</div>
+                          <div className="text-xs leading-4 text-[color:var(--color-muted)] mt-1">
               Jl. X, Lb. Siliwangi, Kecamatan Coblong, Kota Bandung, Jawa Barat 40132
             </div>
 
             <div className="mt-3 flex items-center gap-2">
-              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-[var(--radius-pill)] bg-green-50 text-green-700 text-[12px] leading-4">
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-[var(--radius-pill)] bg-green-50 text-green-700 text-xs leading-4">
                 <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-success)]" />
                 Aktif
               </span>

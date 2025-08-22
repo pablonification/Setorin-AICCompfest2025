@@ -188,7 +188,7 @@ export default function HistoryPage() {
           {/* Transactions List */}
           <div className="bg-[var(--color-card)] rounded-[var(--radius-lg)] [box-shadow:var(--shadow-card)] p-4 mb-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[18px] leading-6 font-semibold">Transaksi Terbaru</h3>
+              <h3 className="text-lg leading-6 font-semibold">Transaksi Terbaru</h3>
             </div>
 
             {loading ? (
@@ -242,13 +242,13 @@ export default function HistoryPage() {
           {/* Withdrawals */}
           {withdrawals.length > 0 && (
             <div className="bg-[var(--color-card)] rounded-[var(--radius-lg)] [box-shadow:var(--shadow-card)] p-4">
-              <h3 className="text-[18px] leading-6 font-semibold mb-4">Riwayat Penarikan</h3>
+              <h3 className="text-lg leading-6 font-semibold mb-4">Riwayat Penarikan</h3>
               <div className="space-y-3">
                 {withdrawals.map((w, idx) => (
                   <div key={idx} className="flex items-center justify-between py-2">
                     <div>
-                      <div className="text-[14px] leading-5 font-medium">{w.amount_points} points</div>
-                      <div className="text-[12px] leading-4 text-[color:var(--color-muted)]">
+                      <div className="text-sm leading-5 font-medium">{w.amount_points} points</div>
+                                              <div className="text-xs leading-4 text-[color:var(--color-muted)]">
                         {new Date(w.created_at).toLocaleString('id-ID')}
                       </div>
                     </div>

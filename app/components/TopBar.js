@@ -39,7 +39,7 @@ export default function TopBar({ title, backHref, right, className }) {
 						<BackButton />
 					)}
 
-					<h1 className="absolute left-1/2 -translate-x-1/2 text-[22px] leading-7 font-semibold">{title}</h1>
+					         <h1 className="absolute left-1/2 -translate-x-1/2 text-xl leading-7 font-semibold">{title}</h1>
 
 					{/* Right action placeholder to keep title centered */}
 					<div className="w-9 h-9 flex items-center justify-center">

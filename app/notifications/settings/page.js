@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { FiBell, FiMail, FiSmartphone, FiClock, FiSave, FiCheck } from 'react-icons/fi';
+import { FiBell, FiMail, FiSmartphone, FiClock, FiSave, FiCheck, FiArrowLeft } from 'react-icons/fi';
+import Link from 'next/link';
 
 export default function NotificationSettings() {
   const { user, token, getAuthHeaders } = useAuth();
@@ -93,40 +94,43 @@ export default function NotificationSettings() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          {/* Header */}
-          <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex items-center space-x-3">
-              <FiBell className="w-8 h-8 text-blue-600" />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Pengaturan Notifikasi</h1>
-                <p className="text-gray-600">Kelola preferensi notifikasi Anda</p>
-              </div>
-            </div>
-          </div>
+    <div className="container max-w-[430px] mx-auto min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
+      {/* Header */}
+      <div className="bg-[var(--color-primary-700)] text-white pt-4 pb-6 px-4">
+        <div className="flex items-center justify-between">
+          <Link href="/notifications" className="p-2 -ml-2">
+                <img src="/back.svg" alt="Back" className="w-6 h-6" />
+          </Link>
+                     <h1 className="text-xl leading-7 font-semibold">Pengaturan Notifikasi</h1>
+          <div className="w-10"></div> {/* Spacer for centering */}
+        </div>
+                 <p className="text-white/80 text-sm leading-5 mt-2">Kelola preferensi notifikasi Anda</p>
+      </div>
+
+      {/* Content */}
+      <div className="px-4 pb-24">
+        <div className="bg-[var(--color-card)] rounded-[var(--radius-md)] [box-shadow:var(--shadow-card)] border border-gray-200">
 
           {/* Settings Form */}
-          <div className="px-6 py-6">
+          <div className="p-4">
             {saveSuccess && (
-              <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-2">
-                <FiCheck className="w-5 h-5 text-green-600" />
-                <span className="text-green-800">Pengaturan berhasil disimpan!</span>
+              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-[var(--radius-md)] flex items-center space-x-2">
+                <FiCheck className="w-5 h-5 text-[var(--color-success)]" />
+                                 <span className="text-green-800 text-sm leading-5">Pengaturan berhasil disimpan!</span>
               </div>
             )}
 
             {/* Notification Types */}
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Jenis Notifikasi</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                                 <h3 className="text-lg leading-6 font-semibold text-[var(--foreground)] mb-3">Jenis Notifikasi</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 border border-gray-200 rounded-[var(--radius-md)]">
                     <div className="flex items-center space-x-3">
-                      <FiMail className="w-5 h-5 text-blue-600" />
+                      <FiMail className="w-5 h-5 text-[var(--color-primary-600)]" />
                       <div>
-                        <p className="font-medium text-gray-900">Email</p>
-                        <p className="text-sm text-gray-500">Notifikasi via email</p>
+                                                 <p className="font-medium text-[var(--foreground)] text-sm leading-5">Email</p>
+                         <p className="text-xs leading-4 text-[var(--color-muted)]">Notifikasi via email</p>
                       </div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -136,16 +140,16 @@ export default function NotificationSettings() {
                         checked={settings?.email_notifications || false}
                         onChange={() => handleToggle('email_notifications')}
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--color-primary-600)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-primary-600)]"></div>
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                  <div className="flex items-center justify-between p-3 border border-gray-200 rounded-[var(--radius-md)]">
                     <div className="flex items-center space-x-3">
-                      <FiSmartphone className="w-5 h-5 text-green-600" />
+                      <FiSmartphone className="w-5 h-5 text-[var(--color-success)]" />
                       <div>
-                        <p className="font-medium text-gray-900">Push Notifications</p>
-                        <p className="text-sm text-gray-500">Notifikasi di aplikasi</p>
+                                                 <p className="font-medium text-[var(--foreground)] text-sm leading-5">Push Notifications</p>
+                         <p className="text-xs leading-4 text-[var(--color-muted)]">Notifikasi di aplikasi</p>
                       </div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -155,7 +159,7 @@ export default function NotificationSettings() {
                         checked={settings?.push_notifications || false}
                         onChange={() => handleToggle('push_notifications')}
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--color-primary-600)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-primary-600)]"></div>
                     </label>
                   </div>
                 </div>
@@ -163,14 +167,14 @@ export default function NotificationSettings() {
 
               {/* Notification Categories */}
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Kategori Notifikasi</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                                 <h3 className="text-lg leading-6 font-semibold text-[var(--foreground)] mb-3">Kategori Notifikasi</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 border border-gray-200 rounded-[var(--radius-md)]">
                     <div className="flex items-center space-x-3">
                       <span className="text-2xl">🗑️</span>
                       <div>
-                        <p className="font-medium text-gray-900">Status Tong Sampah</p>
-                        <p className="text-sm text-gray-500">Update status dan maintenance</p>
+                                                 <p className="font-medium text-[var(--foreground)] text-sm leading-5">Status Tong Sampah</p>
+                         <p className="text-xs leading-4 text-[var(--color-muted)]">Update status dan maintenance</p>
                       </div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -180,16 +184,16 @@ export default function NotificationSettings() {
                         checked={settings?.bin_status_notifications || false}
                         onChange={() => handleToggle('bin_status_notifications')}
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--color-primary-600)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-primary-600)]"></div>
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                  <div className="flex items-center justify-between p-3 border border-gray-200 rounded-[var(--radius-md)]">
                     <div className="flex items-center space-x-3">
                       <span className="text-2xl">🏆</span>
                       <div>
-                        <p className="font-medium text-gray-900">Pencapaian</p>
-                        <p className="text-sm text-gray-500">Milestone dan achievements</p>
+                                                 <p className="font-medium text-[var(--foreground)] text-sm leading-5">Pencapaian</p>
+                         <p className="text-xs leading-4 text-[var(--color-muted)]">Milestone dan achievements</p>
                       </div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -199,16 +203,16 @@ export default function NotificationSettings() {
                         checked={settings?.achievement_notifications || false}
                         onChange={() => handleToggle('achievement_notifications')}
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--color-primary-600)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-primary-600)]"></div>
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                  <div className="flex items-center justify-between p-3 border border-gray-200 rounded-[var(--radius-md)]">
                     <div className="flex items-center space-x-3">
                       <span className="text-2xl">🎁</span>
                       <div>
-                        <p className="font-medium text-gray-900">Reward</p>
-                        <p className="text-sm text-gray-500">Poin dan hadiah</p>
+                                                 <p className="font-medium text-[var(--foreground)] text-sm leading-5">Reward</p>
+                         <p className="text-xs leading-4 text-[var(--color-muted)]">Poin dan hadiah</p>
                       </div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -218,16 +222,16 @@ export default function NotificationSettings() {
                         checked={settings?.reward_notifications || false}
                         onChange={() => handleToggle('reward_notifications')}
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--color-primary-600)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-primary-600)]"></div>
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                  <div className="flex items-center justify-between p-3 border border-gray-200 rounded-[var(--radius-md)]">
                     <div className="flex items-center space-x-3">
                       <span className="text-2xl">ℹ️</span>
                       <div>
-                        <p className="font-medium text-gray-900">Sistem</p>
-                        <p className="text-sm text-gray-500">Update aplikasi dan maintenance</p>
+                                                 <p className="font-medium text-[var(--foreground)] text-sm leading-5">Sistem</p>
+                         <p className="text-xs leading-4 text-[var(--color-muted)]">Update aplikasi dan maintenance</p>
                       </div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
@@ -237,7 +241,7 @@ export default function NotificationSettings() {
                         checked={settings?.system_notifications || false}
                         onChange={() => handleToggle('system_notifications')}
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--color-primary-600)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-primary-600)]"></div>
                     </label>
                   </div>
                 </div>
@@ -245,19 +249,19 @@ export default function NotificationSettings() {
 
               {/* Quiet Hours */}
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Jam Tenang</h3>
-                <p className="text-sm text-gray-600 mb-4">Atur waktu di mana notifikasi tidak akan dikirim</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                 <h3 className="text-lg leading-6 font-semibold text-[var(--foreground)] mb-3">Jam Tenang</h3>
+                 <p className="text-sm leading-5 text-[var(--color-muted)] mb-3">Atur waktu di mana notifikasi tidak akan dikirim</p>
+                <div className="space-y-3">
                   <div className="flex items-center space-x-3">
-                    <FiClock className="w-5 h-5 text-gray-400" />
+                    <FiClock className="w-5 h-5 text-[var(--color-muted)]" />
                     <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Mulai
-                      </label>
+                                             <label className="block text-sm leading-5 font-medium text-[var(--foreground)] mb-1">
+                         Mulai
+                       </label>
                       <select
                         value={settings?.quiet_hours_start || 22}
                         onChange={(e) => handleTimeChange('quiet_hours_start', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-[var(--radius-sm)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-600)] focus:border-[var(--color-primary-600)] text-sm leading-5"
                       >
                         {Array.from({ length: 24 }, (_, i) => (
                           <option key={i} value={i}>
@@ -269,15 +273,15 @@ export default function NotificationSettings() {
                   </div>
 
                   <div className="flex items-center space-x-3">
-                    <FiClock className="w-5 h-5 text-gray-400" />
+                    <FiClock className="w-5 h-5 text-[var(--color-muted)]" />
                     <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm leading-5 font-medium text-[var(--foreground)] mb-1">
                         Selesai
                       </label>
                       <select
                         value={settings?.quiet_hours_end || 7}
                         onChange={(e) => handleTimeChange('quiet_hours_end', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-[var(--radius-sm)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-600)] focus:border-[var(--color-primary-600)] text-sm leading-5"
                       >
                         {Array.from({ length: 24 }, (_, i) => (
                           <option key={i} value={i}>
@@ -288,18 +292,18 @@ export default function NotificationSettings() {
                     </div>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  Notifikasi tidak akan dikirim antara {settings?.quiet_hours_start || 22}:00 - {settings?.quiet_hours_end || 7}:00
-                </p>
+                                 <p className="text-xs leading-4 text-[color:var(--color-muted)] mt-2">
+                   Notifikasi tidak akan dikirim antara {settings?.quiet_hours_start || 22}:00 - {settings?.quiet_hours_end || 7}:00
+                 </p>
               </div>
             </div>
 
             {/* Save Button */}
-            <div className="mt-8 pt-6 border-t border-gray-200">
+            <div className="mt-6 pt-4 border-t border-gray-200">
               <button
                 onClick={() => setSaveSuccess(true)}
                 disabled={isSaving}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                 className="w-full inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm leading-5 font-medium rounded-[var(--radius-md)] shadow-sm text-white bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary-600)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isSaving ? (
                   <>

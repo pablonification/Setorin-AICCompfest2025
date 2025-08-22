@@ -122,7 +122,7 @@ function RagChat() {
                   <button
                     key={suggestionIdx}
                     onClick={() => send(suggestion)}
-                    className="px-3 py-2 bg-[var(--color-primary-100)] text-[var(--color-primary-700)] rounded-[var(--radius-md)] text-[12px] leading-4 font-medium hover:bg-[var(--color-primary-200)] active:opacity-80 transition-colors border border-[var(--color-primary-200)]"
+                    className="px-3 py-2 bg-[var(--color-primary-100)] text-[var(--color-primary-700)] rounded-[var(--radius-md)] text-xs leading-4 font-medium hover:bg-[var(--color-primary-200)] active:opacity-80 transition-colors border border-[var(--color-primary-200)]"
                   >
                     {suggestion}
                   </button>
@@ -141,7 +141,7 @@ function RagChat() {
                     ? 'bg-[var(--color-accent-amber)] text-[var(--foreground)] ml-auto' 
                     : 'bg-white text-[var(--foreground)] border border-gray-200'
                 }`}>
-                  <div className="text-[14px] leading-5">
+                  <div className="text-sm leading-5">
                     {message.role === 'assistant' ? (
                       <ReactMarkdown 
                         remarkPlugins={[remarkGfm]}
@@ -154,7 +154,7 @@ function RagChat() {
                           p: ({children}) => <p className="mb-2 last:mb-0">{children}</p>,
                           ul: ({children}) => <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>,
                           ol: ({children}) => <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>,
-                          li: ({children}) => <li className="text-[14px] leading-5">{children}</li>,
+                          li: ({children}) => <li className="text-sm leading-5">{children}</li>,
                           strong: ({children}) => <strong className="font-semibold text-[var(--color-primary-700)]">{children}</strong>,
                           em: ({children}) => <em className="italic">{children}</em>,
                           code: ({children}) => <code className="bg-gray-100 px-1 py-0.5 rounded text-xs font-mono text-gray-800">{children}</code>,
@@ -198,7 +198,7 @@ function RagChat() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            className="flex-1 border border-gray-300 rounded-[var(--radius-pill)] px-4 py-3 text-[14px] leading-5 focus:outline-none focus:border-[var(--color-primary-600)]"
+            className="flex-1 border border-gray-300 rounded-[var(--radius-pill)] px-4 py-3 text-sm leading-5 focus:outline-none focus:border-[var(--color-primary-600)]"
             placeholder="Tanyakan apapun ke Robin..."
             disabled={loading}
           />

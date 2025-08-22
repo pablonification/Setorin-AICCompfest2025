@@ -44,7 +44,7 @@ export default function TentangKamiPage() {
                 </svg>
               </div>
               <div className="mt-3">
-                <p className="text-[15px] font-semibold">{p.name}</p>
+                <p className="text-base font-semibold">{p.name}</p>
                 <p className="text-xs leading-4 text-[color:var(--color-muted)]">{p.role1}</p>
                 {p.role2 && (
                   <p className="text-xs leading-4 text-[color:var(--color-muted)]">{p.role2}</p>

@@ -43,14 +43,14 @@ export default function InfoinDetailPage() {
           <div className="py-8 text-center text-[color:var(--color-danger)]">Konten tidak ditemukan</div>
         ) : (
           <article className="mt-5 bg-[var(--color-card)] rounded-[var(--radius-md)] [box-shadow:var(--shadow-card)] p-4">
-            <div className="text-[12px] leading-4 text-[color:var(--color-muted)] mb-2">
+            <div className="text-xs leading-4 text-[color:var(--color-muted)] mb-2">
               {item.category === 'tutorial' ? 'Tutorial' : 'Artikel'} · {item.estimated_read_time} menit baca
             </div>
-            <h1 className="text-[18px] leading-6 font-semibold mb-3">{item.title}</h1>
+            <h1 className="text-lg leading-6 font-semibold mb-3">{item.title}</h1>
             {item.media_url ? (
               <img src={item.media_url} alt={item.title} className="w-full rounded-[var(--radius-md)] mb-4" />
             ) : null}
-            <div className="whitespace-pre-wrap text-[14px] leading-5 text-[var(--foreground)]">
+            <div className="whitespace-pre-wrap text-sm leading-5 text-[var(--foreground)]">
               {item.content}
             </div>
           </article>

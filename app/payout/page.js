@@ -171,9 +171,9 @@ export default function PayoutPage() {
 
           {/* Payout method setup (one-time) */}
           <div className="bg-[var(--color-card)] rounded-[var(--radius-md)] [box-shadow:var(--shadow-card)] p-4 mb-6">
-            <div className="text-[14px] leading-5 font-semibold mb-2">Metode Pencairan</div>
+            <div className="text-sm leading-5 font-semibold mb-2">Metode Pencairan</div>
             {method ? (
-              <div className="text-[14px] leading-5 text-[color:var(--color-muted)]">
+              <div className="text-sm leading-5 text-[color:var(--color-muted)]">
                 <div>Jenis: <span className="font-medium uppercase text-[var(--foreground)]">{method.method_type}</span></div>
                 {method.method_type === 'bank' ? (
                   <div>
@@ -187,7 +187,7 @@ export default function PayoutPage() {
                     <div>No. HP: {method.phone_number}</div>
                   </div>
                 )}
-                <div className="text-[12px] leading-4 mt-1">Sudah diset dan tidak bisa diubah.</div>
+                <div className="text-xs leading-4 mt-1">Sudah diset dan tidak bisa diubah.</div>
               </div>
             ) : (
               <form onSubmit={handleSetMethod} className="space-y-3">
@@ -204,7 +204,7 @@ export default function PayoutPage() {
                 {methodType === 'bank' ? (
                   <div className="grid grid-cols-1 gap-3">
                     <div>
-                      <label className="block text-[12px] leading-4 text-[color:var(--color-muted)] mb-1">Bank</label>
+                      <label className="block text-xs leading-4 text-[color:var(--color-muted)] mb-1">Bank</label>
                       <select className="w-full border rounded-[var(--radius-sm)] p-2" value={bankCode} onChange={e=>setBankCode(e.target.value)}>
                         {banks.map(b => (
                           <option key={b} value={b}>{b}</option>
@@ -212,18 +212,18 @@ export default function PayoutPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[12px] leading-4 text-[color:var(--color-muted)] mb-1">No. Rekening</label>
+                      <label className="block text-xs leading-4 text-[color:var(--color-muted)] mb-1">No. Rekening</label>
                       <input className="w-full border rounded-[var(--radius-sm)] p-2" value={bankAcc} onChange={e=>setBankAcc(e.target.value)} required />
                     </div>
                     <div>
-                      <label className="block text-[12px] leading-4 text-[color:var(--color-muted)] mb-1">Nama Pemilik Rekening</label>
+                      <label className="block text-xs leading-4 text-[color:var(--color-muted)] mb-1">Nama Pemilik Rekening</label>
                       <input className="w-full border rounded-[var(--radius-sm)] p-2" value={bankName} onChange={e=>setBankName(e.target.value)} required />
                     </div>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 gap-3">
                     <div>
-                      <label className="block text-[12px] leading-4 text-[color:var(--color-muted)] mb-1">Provider</label>
+                      <label className="block text-xs leading-4 text-[color:var(--color-muted)] mb-1">Provider</label>
                       <select className="w-full border rounded-[var(--radius-sm)] p-2" value={ewalletProvider} onChange={e=>setEwalletProvider(e.target.value)}>
                         {ewallets.map(w => (
                           <option key={w} value={w}>{w}</option>
@@ -231,7 +231,7 @@ export default function PayoutPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[12px] leading-4 text-[color:var(--color-muted)] mb-1">No. HP</label>
+                      <label className="block text-xs leading-4 text-[color:var(--color-muted)] mb-1">No. HP</label>
                       <input className="w-full border rounded-[var(--radius-sm)] p-2" value={phoneNumber} onChange={e=>setPhoneNumber(e.target.value)} required />
                     </div>
                   </div>
@@ -243,29 +243,29 @@ export default function PayoutPage() {
 
           {/* Withdraw */}
           <div className="bg-[var(--color-card)] rounded-[var(--radius-md)] [box-shadow:var(--shadow-card)] p-4 mb-6">
-            <div className="text-[14px] leading-5 font-semibold mb-2">Tarik Poin</div>
+            <div className="text-sm leading-5 font-semibold mb-2">Tarik Poin</div>
             <form onSubmit={handleWithdraw} className="flex items-end gap-3">
               <div className="flex-1">
-                <label className="block text-[12px] leading-4 text-[color:var(--color-muted)] mb-1">Jumlah Poin</label>
+                <label className="block text-xs leading-4 text-[color:var(--color-muted)] mb-1">Jumlah Poin</label>
                 <input type="number" min={minWithdrawal} className="w-full border rounded-[var(--radius-sm)] p-2" value={amount} onChange={e=>setAmount(e.target.value)} />
               </div>
               <button className="text-sm h-12 px-5 rounded-[var(--radius-pill)] bg-[var(--color-primary-700)] text-white" type="submit" disabled={!method}>Ajukan</button>
             </form>
-            <div className="text-[12px] leading-4 text-[color:var(--color-muted)] mt-2">Minimal {minWithdrawal} poin. Dana ditransfer manual oleh admin.</div>
+            <div className="text-xs leading-4 text-[color:var(--color-muted)] mt-2">Minimal {minWithdrawal} poin. Dana ditransfer manual oleh admin.</div>
           </div>
 
           {/* List */}
           <div className="bg-[var(--color-card)] rounded-[var(--radius-md)] [box-shadow:var(--shadow-card)] p-4">
-            <div className="text-[14px] leading-5 font-semibold mb-2">Riwayat Pencairan</div>
+            <div className="text-sm leading-5 font-semibold mb-2">Riwayat Pencairan</div>
             {withdrawals.length === 0 ? (
-              <div className="text-[14px] leading-5 text-[color:var(--color-muted)]">Belum ada pengajuan</div>
+              <div className="text-sm leading-5 text-[color:var(--color-muted)]">Belum ada pengajuan</div>
             ) : (
               <div className="divide-y">
                 {withdrawals.map(w => (
                   <div key={w.id} className="py-2 flex items-center justify-between">
                     <div>
                       <div className="font-medium">{w.amount_points} poin</div>
-                      <div className="text-[12px] leading-4 text-[color:var(--color-muted)]">{new Date(w.created_at).toLocaleString('id-ID')}</div>
+                      <div className="text-xs leading-4 text-[color:var(--color-muted)]">{new Date(w.created_at).toLocaleString('id-ID')}</div>
                     </div>
                     <div className={`text-sm font-semibold ${w.status==='completed'?'text-[color:var(--color-success)]':w.status==='rejected'?'text-[color:var(--color-danger)]':'text-yellow-600'}`}>{w.status}</div>
                   </div>

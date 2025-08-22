@@ -30,20 +30,20 @@ export default function HistoryListItem({ transaction }) {
 
       {/* Middle: Title and Time */}
       <div className="flex-1 min-w-0 px-4">
-        <div className="text-[14px] leading-5 font-medium truncate">
+        <div className="text-sm leading-5 font-medium truncate">
           {title}
         </div>
-        <div className="text-[12px] leading-4 text-[color:var(--color-muted)]">
+        <div className="text-xs leading-4 text-[color:var(--color-muted)]">
           {time}
         </div>
       </div>
 
       {/* Right: Amount and Points */}
       <div className="text-right">
-        <div className={`text-[14px] leading-5 font-semibold ${amountColor}`}>
+        <div className={`text-sm leading-5 font-semibold ${amountColor}`}>
           {formatAmount(amount)}
         </div>
-        <div className={`text-[12px] leading-4 ${pointsColor}`}>
+        <div className={`text-xs leading-4 ${pointsColor}`}>
           {formatPoints(points)}
         </div>
       </div>

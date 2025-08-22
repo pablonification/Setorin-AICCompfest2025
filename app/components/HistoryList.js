@@ -108,13 +108,13 @@ export default function HistoryList({ items = [] }) {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-semibold truncate">{it.title}</div>
-                  <div className="text-[11px] text-white/80">{it.time}</div>
+                  <div className="text-sm font-semibold truncate">{it.title}</div>
+                                      <div className="text-xs text-white/80">{it.time}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[13px] font-bold">{positive ? "+" : "-"}{formatAmount(it.amount)}</div>
+                  <div className="text-sm font-bold">{positive ? "+" : "-"}{formatAmount(it.amount)}</div>
                   {it.points ? (
-                    <div className="text-[11px] text-white/90">+{it.points} Setor Poin</div>
+                                          <div className="text-xs text-white/90">+{it.points} Setor Poin</div>
                   ) : null}
                 </div>
               </div>

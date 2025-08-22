@@ -7,6 +7,8 @@
   --foreground: #171717;
   /* UI tokens (from hi-fi design) */
   --color-primary-700: #016F2F; /* Green */
+  --color-primary-600: #0e7f4e; /* Medium Green */
+  --color-primary-500: #14a160; /* Light Green */
   --color-accent-amber: #FFE200; /* Yellow */
   --color-card: #ffffff;
   --color-muted: #7a8b87;
@@ -19,6 +21,21 @@
   --radius-pill: 999px;
   --shadow-card: 0 6px 18px rgba(0,0,0,0.08);
   --shadow-fab: 0 8px 24px rgba(0,0,0,0.16);
+  
+  /* Font sizes (define as CSS variables and use via Tailwind utilities) */
+  --text-xs: 0.75rem; /* 12px */
+  --text-sm: 0.875rem; /* 14px */
+  --text-base: 1rem; /* 16px */
+  --text-lg: 1.125rem; /* 18px */
+  --text-xl: 1.25rem; /* 20px */
+  --text-2xl: 1.5rem; /* 24px */
+  --text-3xl: 1.875rem; /* 30px */
+  --text-4xl: 2.25rem; /* 36px */
+  --text-5xl: 3rem; /* 48px */
+  --text-6xl: 3.75rem; /* 60px */
+  --text-7xl: 4.5rem; /* 72px */
+  --text-8xl: 6rem; /* 96px */
+  --text-9xl: 8rem; /* 128px */
 }
 
 @theme inline {
