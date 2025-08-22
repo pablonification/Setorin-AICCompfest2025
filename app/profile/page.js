@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import SectionHeader from '../components/SectionHeader';
 import SettingsRow from '../components/SettingsRow';
 
-export default function SayaPage() {
+export default function ProfilePage() {
   const { user, token, getAuthHeaders } = useAuth();
   const router = useRouter();
   const [unreadCount, setUnreadCount] = useState(0);
@@ -99,5 +99,3 @@ export default function SayaPage() {
     </div>
   );
 }
-
-
