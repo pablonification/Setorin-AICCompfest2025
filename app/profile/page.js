@@ -1,14 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import ProfileHeader from '../components/ProfileHeader';
-import StatisticsCard from '../components/StatisticsCard';
-import SettingsGroup from '../components/SettingsGroup';
+import SectionHeader from '../components/SectionHeader';
+import SettingsRow from '../components/SettingsRow';
 
-export default function ProfilePage() {
-  const { user, token, logout } = useAuth();
+export default function SayaPage() {
+  const { user, token, getAuthHeaders } = useAuth();
   const router = useRouter();
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -34,139 +35,66 @@ export default function ProfilePage() {
     }
   };
 
-  const getAuthHeaders = () => {
-    return {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    };
-  };
-
-  const handleLogout = () => {
-    logout();
-    router.push('/login');
-  };
-
-  // Mock data for development
-  const mockUser = {
-    name: user?.name || 'Pengguna',
-    avatarUrl: user?.photo_url || "/profile/default-profile.jpg",
-    level: 'Level 2'
-  };
-
-  const mockStats = {
-    totalDeposits: '32 kg',
-    points: '64.000',
-    totalWithdrawals: 'Rp 24.000'
-  };
-
-  const pengaturanItems = [
-    {
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary-600)" strokeWidth="2">
-          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
-          <path d="m13.73 21a2 2 0 0 1-3.46 0"/>
-        </svg>
-      ),
-      label: 'Notifikasi',
-      href: '/notifications'
-    },
-    {
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary-600)" strokeWidth="2">
-          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
-          <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
-        </svg>
-      ),
-      label: 'Metode Pembayaran',
-      href: '/profile/payment-methods'
-    },
-    {
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary-600)" strokeWidth="2">
-          <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
-          <circle cx="12" cy="10" r="3"/>
-        </svg>
-      ),
-      label: 'Alamat Pengiriman',
-      href: '/profile/addresses'
-    }
-  ];
-
-  const bantuanItems = [
-    {
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary-600)" strokeWidth="2">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-          <path d="M12 17h.01"/>
-        </svg>
-      ),
-      label: 'Bantuan',
-      href: '/help'
-    },
-    {
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary-600)" strokeWidth="2">
-          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-          <line x1="12" y1="9" x2="12" y2="13"/>
-          <line x1="12" y1="17" x2="12.01" y2="17"/>
-        </svg>
-      ),
-      label: 'Lapor Masalah',
-      href: '/report-issue'
-    },
-    {
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary-600)" strokeWidth="2">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-          <circle cx="12" cy="7" r="4"/>
-        </svg>
-      ),
-      label: 'Tentang Kami',
-      href: '/tentang-kami'
-    }
-  ];
-
   return (
-    <div className="max-w-[430px] mx-auto min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
-      <div className="pt-4 pb-24 px-4 space-y-6">
-        {/* Profile Header */}
-        <div className="rounded-[var(--radius-md)] [box-shadow:var(--shadow-card)] bg-white">
-          <ProfileHeader user={mockUser} />
+    <div className="mobile-container font-inter">
+      {/* Green header */}
+      <div className="bg-[var(--color-primary-700)] pb-20">
+        <div className="px-4 pt-4">
+          {/* Profile Card */}
+          <div className="rounded-[16px] bg-white [box-shadow:var(--shadow-card)] p-4">
+            <div className="flex items-center gap-4">
+              <div className="w-20 h-20 rounded-full border-4 border-[var(--color-primary-700)] flex items-center justify-center overflow-hidden bg-white">
+                <img src={user?.photo_url || "/profile/default-profile.jpg"} alt="Avatar" referrerPolicy="no-referrer" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="font-inter font-bold text-lg leading-none text-[var(--color-primary-700)]">
+                      {user?.name || user?.email || 'Pengguna'}
+                    </div>
+                    <div className="font-inter text-xs leading-none mt-1 text-[var(--color-primary-700)]">
+                      {user?.email}
+                    </div>
+                  </div>
+                  <Link href="/profile/edit" className="font-inter text-xs leading-none px-3 py-1 rounded-[var(--radius-pill)] border border-[var(--color-primary-700)] text-[var(--color-primary-700)]">
+                    Edit Profil
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Level pill */}
+            <div className="mt-4 rounded-[16px] p-3" style={{ backgroundImage: 'var(--gradient-primary)' }}>
+              <div className="flex items-center justify-between text-white">
+                <div className="flex items-center gap-3">
+                  <img src="/profile/level.svg" alt="Level" />
+                  <span className="font-inter font-bold text-sm leading-none">Perintis</span>
+                </div>
+                <span className="font-inter text-sm leading-none">{(user?.points ?? 0)} Setor Poin</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="-mt-14 px-4 pb-28 space-y-6">
+        <div className="rounded-[16px] bg-white [box-shadow:var(--shadow-card)] p-4">
+          <SectionHeader title="Akun Saya" />
+          <div className="mt-3 space-y-2">
+            <SettingsRow href="/notifications" label="Notifikasi" badge={unreadCount} icon="/profile/notifikasi.svg" />
+            <SettingsRow href="/statistics" label="Statistics" icon="/profile/alamat-pengiriman.svg" />
+          </div>
         </div>
 
-        {/* Statistics Card */}
-        <StatisticsCard stats={mockStats} />
-
-        {/* Pengaturan Section */}
-        <SettingsGroup title="Pengaturan" items={pengaturanItems} />
-
-        {/* Bantuan & Info Section */}
-        <SettingsGroup title="Bantuan & Info" items={bantuanItems} />
-
-        {/* Logout Button */}
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-[var(--radius-md)] bg-red-50 hover:bg-red-100 transition-colors"
-        >
-          <svg 
-            width="20" 
-            height="20" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="var(--color-danger)" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-          >
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-            <polyline points="16,17 21,12 16,7"/>
-            <line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
-          <span className="text-[14px] leading-5 font-medium text-[var(--color-danger)]">
-            Keluar
-          </span>
-        </button>
+        <div className="rounded-[16px] bg-white [box-shadow:var(--shadow-card)] p-4">
+          <SectionHeader title="Seputar Setorin" />
+          <div className="mt-3 space-y-2">
+            <SettingsRow href="#" label="Bantuan" icon="/profile/bantuan.svg" />
+            <SettingsRow href="#" label="Lapor Masalah" icon="/profile/lapor-masalah.svg" />
+            <SettingsRow href="/tentang-kami" label="Tentang Kami" icon="/profile/tentang-kami.svg" />
+          </div>
+        </div>
       </div>
     </div>
   );
