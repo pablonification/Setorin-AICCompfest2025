@@ -39,23 +39,53 @@ Path("debug_images").mkdir(exist_ok=True)
 # Add CORS middleware
 # Build CORS allowed origins list from defaults plus environment overrides
 default_allowed_origins = [
-    "http://localhost:3000",  # Frontend dev
-    "http://127.0.0.1:3000",  # Frontend dev alternative
-    "http://localhost:8081",  # RAG test frontend
-    "http://127.0.0.1:8081",  # RAG test frontend alternative
-    "http://smartbin-frontend:3000",  # Frontend container
-    "http://smartbin-frontend:8081",  # RAG frontend container
+    # Local/dev
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8081",
+    "http://127.0.0.1:8081",
+    # Containers
+    "http://smartbin-frontend:3000",
+    "http://smartbin-frontend:8081",
+    # Production (setorin.app)
+    "https://setorin.app",
+    "https://www.setorin.app",
 ]
 
-extra_allowed = []
+def _expand_origin(origin: str) -> list[str]:
+    """Expand bare host origins into http/https forms.
+
+    Accepts inputs like:
+    - "https://foo.bar" -> [same]
+    - "http://foo.bar" -> [same]
+    - "foo.bar" -> ["http://foo.bar", "https://foo.bar"]
+    - "foo.bar/" -> strip trailing slash before expansion
+    """
+    if not origin:
+        return []
+    normalized = origin.strip().rstrip("/")
+    if normalized.startswith("http://") or normalized.startswith("https://"):
+        return [normalized]
+    # Bare hostname provided
+    return [f"http://{normalized}", f"https://{normalized}"]
+
+
+extra_allowed: list[str] = []
 env_single = os.getenv("ALLOWED_ORIGIN")
 env_multi = os.getenv("ALLOWED_ORIGINS")
 if env_single:
-    extra_allowed.append(env_single)
+    extra_allowed.extend(_expand_origin(env_single))
 if env_multi:
-    extra_allowed.extend([o.strip() for o in env_multi.split(",") if o.strip()])
+    for raw in env_multi.split(","):
+        extra_allowed.extend(_expand_origin(raw))
 
-allow_origins = [o for o in (default_allowed_origins + extra_allowed) if o]
+# Final allowed origins (deduplicated, non-empty)
+seen: set[str] = set()
+allow_origins: list[str] = []
+for origin in default_allowed_origins + extra_allowed:
+    if origin and origin not in seen:
+        seen.add(origin)
+        allow_origins.append(origin)
 
 app.add_middleware(
     CORSMiddleware,
