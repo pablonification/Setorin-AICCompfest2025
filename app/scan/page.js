@@ -1086,7 +1086,18 @@ export default function ScanPage() {
         {/* Camera preview */}
         <div className="flex flex-col items-center pt-6 pb-24 px-4">
           <div className="w-full max-w-[320px] h-[420px] bg-black rounded-[var(--radius-md)] flex items-center justify-center overflow-hidden relative">
-            {cameraStream ? (
+            {isScanning ? (
+              // Show loading state during processing
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="w-24 h-24 rounded-full border-4 border-[var(--color-primary-600)] border-t-transparent animate-spin mb-4"></div>
+                <p className="text-white text-lg font-medium">Memproses gambar...</p>
+                <p className="text-white/70 text-sm mt-2">Processing image...</p>
+                <div className="mt-4 text-white/50 text-xs">
+                  <div>Scan ID: {result?.scan_id || 'Generating...'}</div>
+                  <div>Status: Processing</div>
+                </div>
+              </div>
+            ) : cameraStream ? (
               <>
                 <video 
                   ref={videoRef} 
@@ -1131,7 +1142,38 @@ export default function ScanPage() {
 
           {/* Controls */}
           <div className="mt-6 w-full max-w-[320px] flex items-center justify-center">
-            {!cameraStream ? (
+            {isScanning ? (
+              // Show processing state
+              <div className="flex flex-col items-center space-y-4 w-full">
+                <div className="text-center">
+                  <div className="w-20 h-20 rounded-full border-4 border-[var(--color-primary-600)] border-t-transparent animate-spin mx-auto"></div>
+                  <p className="mt-3 text-sm text-[var(--color-muted)]">
+                    Memproses gambar botol...
+                  </p>
+                  <p className="text-xs text-[var(--color-muted)] mt-1">
+                    Processing bottle image...
+                  </p>
+                </div>
+                {/* Show cancel button during processing */}
+                <button
+                  onClick={() => {
+                    console.log('🛑 Cancelling scan...');
+                    setIsScanning(false);
+                    setStatus('Scan cancelled');
+                    // Reset localStorage
+                    try {
+                      localStorage.setItem('smartbin_scan_processing', '0');
+                      localStorage.removeItem('smartbin_last_scan');
+                    } catch (e) {
+                      console.warn('LocalStorage not available:', e);
+                    }
+                  }}
+                  className="px-6 py-2 text-sm text-red-600 bg-red-100 rounded-[var(--radius-pill)] active:opacity-80"
+                >
+                  Cancel Scan
+                </button>
+              </div>
+            ) : !cameraStream ? (
               <button
                 onClick={handleStartScan}
                 className="w-full py-3 rounded-[var(--radius-pill)] bg-[var(--color-primary-600)] text-white font-medium active:opacity-80"
@@ -1188,7 +1230,7 @@ export default function ScanPage() {
           </div>
 
           {/* Camera control buttons */}
-          {cameraStream && (
+          {cameraStream && !isScanning && (
             <div className="mt-3 w-full max-w-[320px] flex justify-center space-x-2">
               <button 
                 onClick={stopCamera} 
@@ -1197,11 +1239,10 @@ export default function ScanPage() {
                 Stop Camera
               </button>
               {/* Manual reset button for stuck states */}
-              {(isScanning || isLoadingAfterQR || qrValidationInProgress) && (
+              {(isLoadingAfterQR || qrValidationInProgress) && (
                 <button 
                   onClick={() => {
                     console.log('🔄 Manual reset triggered');
-                    setIsScanning(false);
                     setIsLoadingAfterQR(false);
                     setQrValidationInProgress(false);
                     setStatus('Ready to scan');
@@ -1237,8 +1278,21 @@ export default function ScanPage() {
                   <div>QR Validated: {qrValidated ? 'Yes' : 'No'}</div>
                   <div>Loading: {isLoadingAfterQR ? 'Yes' : 'No'}</div>
                   <div>Result: {result ? 'Received' : 'None'}</div>
+                  <div>Processing: {isScanning ? 'Yes' : 'No'}</div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Progress indicator during scanning */}
+          {isScanning && (
+            <div className="mt-4 w-full max-w-[320px]">
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="bg-[var(--color-primary-600)] h-2 rounded-full animate-pulse" style={{ width: '100%' }}></div>
+              </div>
+              <p className="text-xs text-center text-[var(--color-muted)] mt-2">
+                Processing scan... Please wait
+              </p>
             </div>
           )}
         </div>
