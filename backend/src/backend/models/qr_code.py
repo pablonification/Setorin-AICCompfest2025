@@ -6,7 +6,8 @@ from datetime import datetime, timezone, timedelta
 from enum import Enum
 from typing import Optional
 from pydantic import BaseModel, Field
-from .common import MongoBaseModel, PyObjectId
+from .common import MongoBaseModel
+from bson import ObjectId
 
 
 class QRCodeStatus(str, Enum):
@@ -17,23 +18,25 @@ class QRCodeStatus(str, Enum):
     USED = "used"
 
 
-class QRCode(MongoBaseModel):
+class QRCode(BaseModel):
     """QR Code document model."""
-    id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
+    id: Optional[ObjectId] = Field(default_factory=ObjectId, alias="_id")
     token: str = Field(..., description="Unique QR code token")
-    generated_by: PyObjectId = Field(..., description="Admin user who generated the code")
+    generated_by: ObjectId = Field(..., description="Admin user who generated the code")
     generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     expires_at: datetime = Field(..., description="When the QR code expires")
     status: QRCodeStatus = Field(default=QRCodeStatus.ACTIVE)
     usage_count: int = Field(default=0, description="How many times this QR has been used")
     max_uses: int = Field(default=1, description="Maximum number of uses allowed")
     last_used_at: Optional[datetime] = Field(None, description="Last time this QR was used")
-    used_by: Optional[PyObjectId] = Field(None, description="User who last used this QR code")
+    used_by: Optional[ObjectId] = Field(None, description="User who last used this QR code")
     metadata: Optional[dict] = Field(None, description="Additional metadata")
 
     class Config:
         populate_by_name = True
-        json_encoders = {PyObjectId: str}
+        json_encoders = {ObjectId: str}
+        allow_population_by_field_name = True
+        arbitrary_types_allowed = True
 
 
 class QRCodeCreate(BaseModel):
@@ -74,7 +77,7 @@ def generate_secure_token(length: int = 32) -> str:
 
 
 def create_qr_code_document(
-    generated_by: PyObjectId,
+    generated_by: ObjectId,
     expires_in_hours: int = 24,
     max_uses: int = 1,
     metadata: Optional[dict] = None
