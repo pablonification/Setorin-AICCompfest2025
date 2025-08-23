@@ -8,6 +8,7 @@ export default function BottomNav() {
 
 
   if (pathname === "/login") return null;
+  if (pathname.startsWith("/admin")) return null;
   if (pathname.startsWith("/scan")) return null;
   if (pathname.startsWith("/history")) return null;
   if (pathname.startsWith("/temuin")) return null;
