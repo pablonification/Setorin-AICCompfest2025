@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { FiBell, FiRefreshCw, FiArrowLeft } from 'react-icons/fi';
 import Link from 'next/link';
 import NotificationItem from '../components/NotificationItem';
+import TopBar from '../components/TopBar';
 
 export default function NotificationsPage() {
   const { user, token, getAuthHeaders } = useAuth();
@@ -135,24 +136,17 @@ export default function NotificationsPage() {
 
   return (
     <div className="container max-w-[430px] mx-auto min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
-      {/* Header */}
-      <div className="bg-[var(--color-primary-700)] text-white pt-4 pb-6 px-4">
+      <TopBar title="Notifikasi" backHref="/profile" />
+
+      {/* Stats */}
+      <div className="bg-[var(--color-primary-700)] text-white -mt-4 pt-4 pb-6 px-4 rounded-b-[var(--radius-lg)]">
         <div className="flex items-center justify-between">
-          <Link href="/profile" className="p-2 -ml-2">
-                <img src="/back.svg" alt="Back" className="w-6 h-6" />
-          </Link>
-                     <h1 className="text-xl leading-7 font-semibold">Notifikasi</h1>
-          <div className="w-10"></div> {/* Spacer for centering */}
-        </div>
-        
-        {/* Stats */}
-        <div className="mt-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
               onClick={() => setActiveTab('all')}
               className={`px-4 py-2 rounded-[var(--radius-pill)] text-sm font-medium transition-colors ${
-                activeTab === 'all' 
-                  ? 'bg-white text-[var(--color-primary-700)]' 
+                activeTab === 'all'
+                  ? 'bg-white text-[var(--color-primary-700)]'
                   : 'text-white/80 hover:text-white'
               }`}
             >
@@ -161,15 +155,15 @@ export default function NotificationsPage() {
             <button
               onClick={() => setActiveTab('unread')}
               className={`px-4 py-2 rounded-[var(--radius-pill)] text-sm font-medium transition-colors ${
-                activeTab === 'unread' 
-                  ? 'bg-white text-[var(--color-primary-700)]' 
+                activeTab === 'unread'
+                  ? 'bg-white text-[var(--color-primary-700)]'
                   : 'text-white/80 hover:text-white'
               }`}
             >
               Belum Dibaca ({unreadCount})
             </button>
           </div>
-          
+
           {unreadCount > 0 && (
             <button
               onClick={markAllAsRead}

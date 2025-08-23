@@ -1,12 +1,46 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { useAuth } from '../contexts/AuthContext';
-import { useRouter } from 'next/navigation';
-import SectionHeader from '../components/SectionHeader';
-import SettingsRow from '../components/SettingsRow';
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useAuth } from "../contexts/AuthContext";
+import { useRouter } from "next/navigation";
+import SectionHeader from "../components/SectionHeader";
+import SettingsRow from "../components/SettingsRow";
+
+// Template for bug report email
+const createBugReportMailto = () => {
+  const subject = encodeURIComponent('Laporan Masalah - Setorin App');
+  const body = encodeURIComponent(`Halo Tim Setorin,
+
+Saya mengalami masalah dengan aplikasi Setorin. Berikut detailnya:
+
+Informasi Perangkat:
+- Sistem Operasi: (iOS/Android/Web)
+- Browser: (Chrome/Safari/Firefox/dll)
+- Versi Aplikasi: (jika diketahui)
+
+ Deskripsi Masalah:
+- Halaman/Fitur yang bermasalah:
+- Langkah-langkah untuk mereproduksi:
+- Apa yang terjadi:
+- Apa yang seharusnya terjadi:
+
+Screenshot/Video:
+- (Jika memungkinkan, lampirkan screenshot atau video)
+
+Informasi Tambahan:
+- Waktu kejadian:
+- Frekuensi terjadinya: (selalu/kadang-kadang/pertama kali)
+- Informasi lain yang relevan:
+
+Terima kasih atas bantuannya!
+
+Salam,
+[Nama Anda]`);
+
+  return `mailto:arqilasp@gmail.com?subject=${subject}&body=${body}`;
+};
 
 export default function ProfilePage() {
   const { user, token, getAuthHeaders } = useAuth();
@@ -15,7 +49,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!token) {
-      router.push('/login');
+      router.push("/login");
       return;
     }
     fetchUnread();
@@ -23,8 +57,8 @@ export default function ProfilePage() {
 
   const fetchUnread = async () => {
     try {
-      const res = await fetch('/api/notifications/unread-count', {
-        headers: getAuthHeaders()
+      const res = await fetch("/api/notifications/unread-count", {
+        headers: getAuthHeaders(),
       });
       if (res.ok) {
         const data = await res.json();
@@ -44,19 +78,26 @@ export default function ProfilePage() {
           <div className="rounded-[16px] bg-white [box-shadow:var(--shadow-card)] p-4">
             <div className="flex items-center gap-4">
               <div className="w-20 h-20 rounded-full border-2 border-[var(--color-primary-700)] flex items-center justify-center overflow-hidden bg-white">
-                <img src={user?.photo_url || "/profile/default-profile.jpg"} alt="Avatar" referrerPolicy="no-referrer" />
+                <img
+                  src={user?.photo_url || "/profile/default-profile.jpg"}
+                  alt="Avatar"
+                  referrerPolicy="no-referrer"
+                />
               </div>
               <div className="flex-1">
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <div className="font-inter font-bold text-lg leading-none text-[var(--color-primary-700)]">
-                      {user?.name || user?.email || 'Pengguna'}
+                      {user?.name || user?.email || "Pengguna"}
                     </div>
                     <div className="font-inter text-xs leading-none mt-1 text-[var(--color-primary-700)]">
                       {user?.email}
                     </div>
                   </div>
-                  <Link href="/profile/edit" className="font-inter text-xs leading-none px-3 py-1 rounded-[var(--radius-pill)] border border-[var(--color-primary-700)] text-[var(--color-primary-700)]">
+                  <Link
+                    href="/profile/edit"
+                    className="font-inter text-xs leading-none px-3 py-1 rounded-[var(--radius-pill)] border border-[var(--color-primary-700)] text-[var(--color-primary-700)]"
+                  >
                     Edit Profil
                   </Link>
                 </div>
@@ -64,13 +105,20 @@ export default function ProfilePage() {
             </div>
 
             {/* Level pill */}
-            <div className="mt-4 rounded-[16px] p-3" style={{ backgroundImage: 'var(--gradient-primary)' }}>
+            <div
+              className="mt-4 rounded-[16px] p-3"
+              style={{ backgroundImage: "var(--gradient-primary)" }}
+            >
               <div className="flex items-center justify-between text-white">
                 <div className="flex items-center gap-3">
                   <img src="/profile/level.svg" alt="Level" />
-                  <span className="font-inter font-bold text-sm leading-none">Perintis</span>
+                  <span className="font-inter font-bold text-sm leading-none">
+                    Perintis
+                  </span>
                 </div>
-                <span className="font-inter text-sm leading-none">{(user?.points ?? 0)} Setor Poin</span>
+                <span className="font-inter text-sm leading-none">
+                  {user?.points ?? 0} Setor Poin
+                </span>
               </div>
             </div>
           </div>
@@ -82,17 +130,34 @@ export default function ProfilePage() {
         <div className="rounded-[16px] bg-white [box-shadow:var(--shadow-card)] p-4">
           <SectionHeader title="Akun Saya" />
           <div className="mt-3 space-y-2">
-            <SettingsRow href="/notifications" label="Notifikasi" badge={unreadCount} icon="/profile/notifikasi.svg" />
-            <SettingsRow href="/statistics" label="Statistics" icon="/profile/alamat-pengiriman.svg" />
+            <SettingsRow
+              href="/notifications"
+              label="Notifikasi"
+              badge={unreadCount}
+              icon="/profile/notifikasi.svg"
+            />
+            <SettingsRow
+              href="/statistics"
+              label="Statistics"
+              icon="/profile/alamat-pengiriman.svg"
+            />
           </div>
         </div>
 
         <div className="rounded-[16px] bg-white [box-shadow:var(--shadow-card)] p-4">
           <SectionHeader title="Seputar Setorin" />
           <div className="mt-3 space-y-2">
-            <SettingsRow href="#" label="Bantuan" icon="/profile/bantuan.svg" />
-            <SettingsRow href="#" label="Lapor Masalah" icon="/profile/lapor-masalah.svg" />
-            <SettingsRow href="/tentang-kami" label="Tentang Kami" icon="/profile/tentang-kami.svg" />
+            <SettingsRow href="/faq" label="Bantuan" icon="/profile/bantuan.svg" />
+            <SettingsRow
+              href={createBugReportMailto()}
+              label="Lapor Masalah"
+              icon="/profile/lapor-masalah.svg"
+            />
+            <SettingsRow
+              href="/tentang-kami"
+              label="Tentang Kami"
+              icon="/profile/tentang-kami.svg"
+            />
           </div>
         </div>
       </div>

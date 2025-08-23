@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '../components/ProtectedRoute';
+import TopBar from '../components/TopBar';
 
 export default function PayoutPage() {
   const { token, user, updateUser } = useAuth();
@@ -149,19 +150,7 @@ export default function PayoutPage() {
   return (
     <ProtectedRoute userOnly={true}>
       <div className="pb-10 max-w-[430px] mx-auto min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
-        {/* Top section */}
-        <div className="sticky top-0 z-10 bg-[var(--color-primary-700)] text-white rounded-b-[var(--radius-lg)] px-4 py-6 [box-shadow:var(--shadow-card)]">
-          <div className="flex items-center justify-center relative">
-            <button
-              onClick={() => router.back()}
-              aria-label="Kembali"
-              className="w-9 h-9 flex items-center justify-center absolute left-0"
-            >
-              <img src="/back.svg" alt="Back" className="w-6 h-6" />
-            </button>
-            <div className="text-xl leading-7 font-semibold">Pencairan</div>
-          </div>
-        </div>
+        <TopBar title="Pencairan" />
 
         {/* Safe area */}
         <div className="pt-4 pb-24 px-4">

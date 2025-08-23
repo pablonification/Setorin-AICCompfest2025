@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { FiBell, FiMail, FiSmartphone, FiClock, FiSave, FiCheck, FiArrowLeft } from 'react-icons/fi';
 import Link from 'next/link';
+import TopBar from '../../components/TopBar';
 
 export default function NotificationSettings() {
   const { user, token, getAuthHeaders } = useAuth();
@@ -95,17 +96,7 @@ export default function NotificationSettings() {
 
   return (
     <div className="container max-w-[430px] mx-auto min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
-      {/* Header */}
-      <div className="bg-[var(--color-primary-700)] text-white pt-4 pb-6 px-4">
-        <div className="flex items-center justify-between">
-          <Link href="/notifications" className="p-2 -ml-2">
-                <img src="/back.svg" alt="Back" className="w-6 h-6" />
-          </Link>
-                     <h1 className="text-xl leading-7 font-semibold">Pengaturan Notifikasi</h1>
-          <div className="w-10"></div> {/* Spacer for centering */}
-        </div>
-                 <p className="text-white/80 text-sm leading-5 mt-2">Kelola preferensi notifikasi Anda</p>
-      </div>
+      <TopBar title="Pengaturan Notifikasi" backHref="/notifications" />
 
       {/* Content */}
       <div className="px-4 pb-24">

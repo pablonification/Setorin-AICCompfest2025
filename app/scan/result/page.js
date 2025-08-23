@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import MobileScanResult from '../../components/MobileScanResult';
+import TopBar from '../../components/TopBar';
 
 export default function ScanResultPage() {
   const router = useRouter();
@@ -29,19 +30,7 @@ export default function ScanResultPage() {
   return (
     <ProtectedRoute userOnly={true}>
       <div className="container max-w-[430px] mx-auto min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-[var(--color-primary-700)] text-white rounded-b-[var(--radius-lg)] px-4 py-6 [box-shadow:var(--shadow-card)]">
-          <div className="flex items-center justify-center relative">
-            <button
-              onClick={() => router.push('/scan')}
-              aria-label="Kembali"
-              className="w-9 h-9 flex items-center justify-center absolute left-0"
-            >
-              <img src="/back.svg" alt="Back" className="w-6 h-6" />
-            </button>
-            <div className="text-xl leading-7 font-semibold">Duitin</div>
-          </div>
-        </div>
+        <TopBar title="Duitin" backHref="/scan" />
 
         {loading ? (
           <div className="px-4 mt-12 flex flex-col items-center justify-center text-center">

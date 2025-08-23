@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+
 function InfoCard({ item }) {
   return (
     <Link href={`/infoin/${item.slug}`} className="block">
@@ -80,35 +81,42 @@ export default function InfoinPage() {
     <div className="max-w-[430px] mx-auto min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
       <div className="pt-4 pb-24 px-4">
         {/* Header Bar */}
-        <div className="sticky top-0 z-10 bg-[var(--color-primary-700)] text-white rounded-b-[var(--radius-lg)] -mx-4 px-4 py-5 [box-shadow:var(--shadow-card)]">
-          <div className="flex items-center gap-3 relative">
-            <button
-              onClick={() => router.back()}
-              aria-label="Kembali"
-              className="w-9 h-9 flex items-center justify-center z-10"
-            >
-              <img src="/back.svg" alt="Back" className="w-6 h-6" />
-            </button>
-            <div className="flex-1 flex justify-center absolute left-0 right-0 pointer-events-none">
-              <div className="text-xl leading-7 font-semibold pointer-events-none">
+        <div className="sticky top-0 z-10 bg-[var(--color-primary-700)] text-white rounded-b-[var(--radius-lg)] [box-shadow:var(--shadow-card)]">
+          <div className="mx-auto max-w-[430px] px-4 pt-6 pb-6 relative">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => router.back()}
+                aria-label="Kembali"
+                className="w-9 h-9 flex items-center justify-center hover:opacity-80 transition-opacity"
+              >
+                <img src="/back.svg" alt="Kembali" className="w-6 h-6" />
+              </button>
+
+              <h1 className="absolute left-1/2 -translate-x-1/2 text-xl leading-7 font-semibold">
                 Infoin
+              </h1>
+
+              <div className="w-9 h-9 flex items-center justify-center">
+                {/* Right placeholder for centering */}
               </div>
             </div>
           </div>
-          <div className="mt-4">
-            <div className="flex items-center bg-white rounded-xl px-3 py-2">
-              <img
-                src="/search.svg"
-                alt="Cari"
-                className="w-5 h-5 opacity-70"
-              />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="ml-2 flex-1 outline-none text-sm leading-5 text-black placeholder:text-[color:var(--color-muted)]"
-                placeholder="Jenis Sampah Apa Saja yang Bisa di-Setorin?"
-              />
-            </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="mt-4">
+          <div className="flex items-center bg-white rounded-xl px-3 py-2">
+            <img
+              src="/search.svg"
+              alt="Cari"
+              className="w-5 h-5 opacity-70"
+            />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="ml-2 flex-1 outline-none text-sm leading-5 text-black placeholder:text-[color:var(--color-muted)]"
+              placeholder="Jenis Sampah Apa Saja yang Bisa di-Setorin?"
+            />
           </div>
         </div>
 

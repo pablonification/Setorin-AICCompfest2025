@@ -7,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '../components/ProtectedRoute';
 import MobileScanResult from '../components/MobileScanResult';
+import TopBar from '../components/TopBar';
 
 export default function ScanPage() {
   const { user, token, logout, updateUser } = useAuth();
@@ -20,6 +21,7 @@ export default function ScanPage() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const attemptedAutoStartRef = useRef(false);
+  const cameraStreamRef = useRef(null); // Store camera stream reference for cleanup
 
   // Debug user state changes
   useEffect(() => {
@@ -70,6 +72,90 @@ export default function ScanPage() {
       startCamera().catch(() => {});
     }
   }, []);
+
+  // Cleanup camera when component unmounts
+  useEffect(() => {
+    return () => {
+      // Stop camera when component unmounts
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        console.log('Camera stopped on component unmount');
+      }
+    };
+  }, [cameraStream]);
+
+  // Cleanup function for component unmount
+  useEffect(() => {
+    // Store ref values at effect start to avoid stale closures
+    const videoElement = videoRef.current;
+
+    return () => {
+      console.log('ScanPage: Starting component cleanup...');
+
+      // Stop camera tracks directly using ref
+      if (cameraStreamRef.current) {
+        cameraStreamRef.current.getTracks().forEach(track => {
+          console.log('Stopping camera track:', track.kind, track.label);
+          track.stop();
+        });
+        cameraStreamRef.current = null;
+      }
+
+      // Additional cleanup for video element using stored reference
+      if (videoElement) {
+        try {
+          videoElement.pause();
+          videoElement.srcObject = null;
+          videoElement.onloadedmetadata = null;
+          videoElement.onerror = null;
+        } catch (error) {
+          console.warn('Error stopping video playback:', error);
+        }
+      }
+
+      // Reset all states to ensure clean slate
+      setCameraStream(null);
+      setCapturedImage(null);
+      setIsScanning(false);
+      setStatus('Camera stopped');
+      attemptedAutoStartRef.current = false; // Reset auto-start flag
+
+      console.log('ScanPage: Component cleanup completed');
+    };
+  }, []); // Empty dependency array means this runs on mount/unmount only
+
+  // Additional cleanup for browser navigation events
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      console.log('ScanPage: Browser beforeunload event triggered');
+      if (cameraStreamRef.current) {
+        cameraStreamRef.current.getTracks().forEach(track => {
+          console.log('Stopping camera track on beforeunload:', track.kind, track.label);
+          track.stop();
+        });
+        cameraStreamRef.current = null;
+      }
+    };
+
+    const handlePopState = () => {
+      console.log('ScanPage: Browser navigation detected');
+      if (cameraStreamRef.current) {
+        cameraStreamRef.current.getTracks().forEach(track => {
+          console.log('Stopping camera track on popstate:', track.kind, track.label);
+          track.stop();
+        });
+        cameraStreamRef.current = null;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []); // Empty dependency array since we use refs
 
   // Check camera permissions and available devices
   useEffect(() => {
@@ -212,6 +298,7 @@ export default function ScanPage() {
       
       console.log('Camera stream obtained:', stream.getVideoTracks()[0]?.getSettings());
       setCameraStream(stream);
+      cameraStreamRef.current = stream; // Store reference for cleanup
       
       if (videoRef.current) {
         const video = videoRef.current;
@@ -275,6 +362,7 @@ export default function ScanPage() {
     if (cameraStream) {
       cameraStream.getTracks().forEach(track => track.stop());
       setCameraStream(null);
+      cameraStreamRef.current = null; // Clear reference
       setCapturedImage(null);
       setStatus('Camera stopped');
     }
@@ -475,22 +563,7 @@ export default function ScanPage() {
   return (
     <ProtectedRoute userOnly={true}>
       <div className="container max-w-[430px] mx-auto min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter pt-4 pb-24">
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-[var(--color-primary-700)] text-white rounded-b-[var(--radius-lg)] -mx-4 px-4 py-6 [box-shadow:var(--shadow-card)]">
-          <div className="flex items-center justify-center gap-3 relative">
-            <button
-              onClick={() => router.back()}
-              aria-label="Kembali"
-              className="w-9 h-9 flex items-center justify-center absolute left-0"
-              style={{ zIndex: 1 }}
-            >
-              <img src="/back.svg" alt="Back" className="w-6 h-6" />
-            </button>
-            <div className="flex-1 flex justify-center">
-              <div className="text-xl leading-7 font-semibold">Duitin</div>
-            </div>
-          </div>
-        </div>
+        <TopBar title="Duitin" />
 
         {/* Camera preview */}
         <div className="flex flex-col items-center mt-6 px-4">

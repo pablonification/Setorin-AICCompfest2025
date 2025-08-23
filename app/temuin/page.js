@@ -1,6 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import TopBar from "../components/TopBar";
+import { useEffect } from "react";
 
 // Sunken Court ITB Bandung coordinates
 const SUNKEN_COURT_ITB = { lat: -6.8883703, lng: 107.6103749 };
@@ -11,24 +13,29 @@ export default function TemuinPage() {
 
   const directionUrl = `https://www.google.com/maps/dir/?api=1&destination=${SUNKEN_COURT_ITB.lat},${SUNKEN_COURT_ITB.lng}`;
 
+  // Fix viewport height for mobile browsers
+  useEffect(() => {
+    const setVH = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+
+    setVH();
+    window.addEventListener('resize', setVH);
+    window.addEventListener('orientationchange', setVH);
+
+    return () => {
+      window.removeEventListener('resize', setVH);
+      window.removeEventListener('orientationchange', setVH);
+    };
+  }, []);
+
   return (
     <div className="max-w-[430px] mx-auto min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-[var(--color-primary-700)] text-white rounded-b-[var(--radius-lg)] px-4 py-6 [box-shadow:var(--shadow-card)]">
-        <div className="flex items-center justify-center relative">
-          <button
-            onClick={() => router.back()}
-            aria-label="Kembali"
-            className="w-9 h-9 flex items-center justify-center absolute left-0"
-          >
-            <img src="/back.svg" alt="Back" className="w-6 h-6" />
-          </button>
-          <div className="text-xl leading-7 font-semibold">Temuin</div>
-        </div>
-      </div>
+      <TopBar title="Temuin" />
 
       {/* Map section */}
-      <div className="relative h-screen">
+      <div className="relative" style={{ height: 'calc(var(--vh, 1vh) * 100)' }}>
         <div className="absolute inset-0">
           <iframe
             title="Map Sunken Court ITB Bandung"

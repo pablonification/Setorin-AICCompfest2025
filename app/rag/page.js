@@ -6,25 +6,14 @@ import ProtectedRoute from '../components/ProtectedRoute';
 import { useAuth } from '../contexts/AuthContext';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import TopBar from '../components/TopBar';
 
 export default function RagPage() {
   const router = useRouter();
   return (
     <ProtectedRoute userOnly={true}>
       <div className="max-w-[430px] mx-auto min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-[var(--color-primary-700)] text-white rounded-b-[var(--radius-lg)] px-4 py-6 [box-shadow:var(--shadow-card)]">
-          <div className="flex items-center justify-center relative">
-            <button
-              onClick={() => router.replace('/')}
-              aria-label="Kembali"
-              className="w-9 h-9 flex items-center justify-center absolute left-0"
-            >
-              <img src="/back.svg" alt="Back" className="w-6 h-6" />
-            </button>
-            <div className="text-xl leading-7 font-semibold">Robin</div>
-          </div>
-        </div>
+        <TopBar title="Robin" backHref="/" />
 
         {/* Chat Container */}
         <div className="flex-1 flex flex-col h-[calc(100vh-120px)]">
@@ -143,26 +132,27 @@ function RagChat() {
                 }`}>
                   <div className="text-sm leading-5">
                     {message.role === 'assistant' ? (
-                      <ReactMarkdown 
-                        remarkPlugins={[remarkGfm]}
-                        className="markdown-content"
-                        components={{
-                          // Custom styling for markdown elements
-                          h1: ({children}) => <h1 className="text-lg font-bold mb-2 text-[var(--color-primary-700)]">{children}</h1>,
-                          h2: ({children}) => <h2 className="text-base font-bold mb-2 text-[var(--color-primary-700)]">{children}</h2>,
-                          h3: ({children}) => <h3 className="text-sm font-bold mb-1 text-[var(--color-primary-700)]">{children}</h3>,
-                          p: ({children}) => <p className="mb-2 last:mb-0">{children}</p>,
-                          ul: ({children}) => <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>,
-                          ol: ({children}) => <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>,
-                          li: ({children}) => <li className="text-sm leading-5">{children}</li>,
-                          strong: ({children}) => <strong className="font-semibold text-[var(--color-primary-700)]">{children}</strong>,
-                          em: ({children}) => <em className="italic">{children}</em>,
-                          code: ({children}) => <code className="bg-gray-100 px-1 py-0.5 rounded text-xs font-mono text-gray-800">{children}</code>,
-                          blockquote: ({children}) => <blockquote className="border-l-4 border-[var(--color-primary-500)] pl-3 py-1 bg-[var(--color-primary-50)] italic text-gray-700">{children}</blockquote>,
-                        }}
-                      >
-                        {message.content}
-                      </ReactMarkdown>
+                      <div className="markdown-content">
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            // Custom styling for markdown elements
+                            h1: ({children}) => <h1 className="text-lg font-bold mb-2 text-[var(--color-primary-700)]">{children}</h1>,
+                            h2: ({children}) => <h2 className="text-base font-bold mb-2 text-[var(--color-primary-700)]">{children}</h2>,
+                            h3: ({children}) => <h3 className="text-sm font-bold mb-1 text-[var(--color-primary-700)]">{children}</h3>,
+                            p: ({children}) => <p className="mb-2 last:mb-0">{children}</p>,
+                            ul: ({children}) => <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>,
+                            ol: ({children}) => <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>,
+                            li: ({children}) => <li className="text-sm leading-5">{children}</li>,
+                            strong: ({children}) => <strong className="font-semibold text-[var(--color-primary-700)]">{children}</strong>,
+                            em: ({children}) => <em className="italic">{children}</em>,
+                            code: ({children}) => <code className="bg-gray-100 px-1 py-0.5 rounded text-xs font-mono text-gray-800">{children}</code>,
+                            blockquote: ({children}) => <blockquote className="border-l-4 border-[var(--color-primary-500)] pl-3 py-1 bg-[var(--color-primary-50)] italic text-gray-700">{children}</blockquote>,
+                          }}
+                        >
+                          {message.content}
+                        </ReactMarkdown>
+                      </div>
                     ) : (
                       <div className="whitespace-pre-wrap">{message.content}</div>
                     )}
