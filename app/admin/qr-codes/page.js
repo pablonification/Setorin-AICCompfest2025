@@ -13,6 +13,7 @@ import {
   FiCheck
 } from 'react-icons/fi';
 import { RiQrCodeLine } from 'react-icons/ri';
+import QRCode from 'qrcode';
 import AdminRoute from '../../components/AdminRoute';
 
 export default function AdminQRCodesPage() {
@@ -158,6 +159,25 @@ export default function AdminQRCodesPage() {
       setTimeout(() => setCopiedToken(''), 2000);
     } catch (e) {
       console.error('Failed to copy:', e);
+    }
+  };
+
+  const downloadQR = async (token, qrId) => {
+    try {
+      const dataUrl = await QRCode.toDataURL(token, {
+        errorCorrectionLevel: 'M',
+        margin: 2,
+        scale: 6,
+      });
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = `qr-${qrId}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (e) {
+      console.error('Failed to generate/download QR image:', e);
+      setError('Failed to generate QR image');
     }
   };
 
@@ -390,6 +410,13 @@ export default function AdminQRCodesPage() {
                               Deactivate
                             </button>
                           )}
+                          <button
+                            onClick={() => downloadQR(qr.token, qr.id)}
+                            className="ml-3 text-blue-600 hover:text-blue-900"
+                            title="Download QR PNG"
+                          >
+                            Download
+                          </button>
                         </td>
                       </tr>
                     ))}
