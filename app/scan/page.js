@@ -120,6 +120,17 @@ export default function ScanPage() {
     };
   }, [cleanupCamera]);
 
+  // Debug logging for navigation
+  useEffect(() => {
+    console.log('🔍 Current scan page state:', {
+      isScanning,
+      result: !!result,
+      currentPath: typeof window !== 'undefined' ? window.location.pathname : 'unknown',
+      hasResult: !!result,
+      resultData: result
+    });
+  }, [isScanning, result]);
+
   // Monitor result state and ensure navigation
   useEffect(() => {
     if (result && mountedRef.current) {
@@ -147,7 +158,9 @@ export default function ScanPage() {
       setTimeout(() => {
         if (mountedRef.current && window.location.pathname === '/scan') {
           console.log('🚀 Navigating to result page from result monitor...');
-          router.push('/scan/result');
+          const resultData = encodeURIComponent(JSON.stringify(result));
+          const resultUrl = `/scan/result?data=${resultData}`;
+          router.push(resultUrl);
         }
       }, 800);
     }
@@ -701,7 +714,9 @@ export default function ScanPage() {
             setTimeout(() => {
               if (mountedRef.current) {
                 console.log('🚀 Navigating to result page from WebSocket...');
-                router.push('/scan/result');
+                const resultData = encodeURIComponent(JSON.stringify(msg.data));
+                const resultUrl = `/scan/result?data=${resultData}`;
+                router.push(resultUrl);
               }
             }, 1000); // Increased delay to ensure state is properly updated
           } else {
@@ -856,11 +871,14 @@ export default function ScanPage() {
         }
       }
       
-      // Force navigation to result page after successful scan
+      // Force navigation to result page with data in URL
+      const resultData = encodeURIComponent(JSON.stringify(data));
+      const resultUrl = `/scan/result?data=${resultData}`;
+      
       setTimeout(() => {
         if (mountedRef.current && window.location.pathname === '/scan') {
-          console.log('🚀 Navigating to result page from manual scan...');
-          router.push('/scan/result');
+          console.log('🚀 Navigating to result page with data in URL...');
+          router.push(resultUrl);
         }
       }, 500);
       
@@ -1018,7 +1036,9 @@ export default function ScanPage() {
               setTimeout(() => {
                 if (mountedRef.current && window.location.pathname === '/scan') {
                   console.log('🚀 Fallback navigation to result page...');
-                  router.push('/scan/result');
+                  const resultData = encodeURIComponent(JSON.stringify(parsedResult));
+                  const resultUrl = `/scan/result?data=${resultData}`;
+                  router.push(resultUrl);
                 }
               }, 500);
             } else {
@@ -1044,7 +1064,9 @@ export default function ScanPage() {
       const navigationCheck = setInterval(() => {
         if (mountedRef.current && window.location.pathname === '/scan' && result) {
           console.log('🔄 Navigation check: Still on scan page with result, forcing navigation...');
-          router.push('/scan/result');
+          const resultData = encodeURIComponent(JSON.stringify(result));
+          const resultUrl = `/scan/result?data=${resultData}`;
+          router.push(resultUrl);
           clearInterval(navigationCheck);
         }
       }, 2000); // Check every 2 seconds
@@ -1184,6 +1206,20 @@ export default function ScanPage() {
                   className="px-4 py-2 text-xs text-red-600 bg-red-100 rounded-[var(--radius-pill)] active:opacity-80"
                 >
                   Reset
+                </button>
+              )}
+              {/* Force navigation button when we have a result */}
+              {result && (
+                <button 
+                  onClick={() => {
+                    console.log('🚀 Force navigation triggered');
+                    const resultData = encodeURIComponent(JSON.stringify(result));
+                    const resultUrl = `/scan/result?data=${resultData}`;
+                    router.push(resultUrl);
+                  }}
+                  className="px-4 py-2 text-xs text-green-600 bg-green-100 rounded-[var(--radius-pill)] active:opacity-80"
+                >
+                  Lihat Hasil
                 </button>
               )}
             </div>

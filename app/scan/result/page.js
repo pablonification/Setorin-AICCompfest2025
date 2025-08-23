@@ -1,31 +1,74 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import MobileScanResult from '../../components/MobileScanResult';
 import TopBar from '../../components/TopBar';
 
 export default function ScanResultPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
 
   useEffect(() => {
+    // First try to get data from URL parameters
+    const urlData = searchParams.get('data');
+    
+    if (urlData) {
+      try {
+        console.log('📡 Found data in URL parameters');
+        const parsedData = JSON.parse(decodeURIComponent(urlData));
+        setData(parsedData);
+        setLoading(false);
+        
+        // Also store in localStorage for backup
+        try {
+          localStorage.setItem('smartbin_last_scan', JSON.stringify(parsedData));
+          localStorage.setItem('smartbin_scan_processing', '0');
+        } catch (e) {
+          console.warn('LocalStorage not available:', e);
+        }
+        
+        return;
+      } catch (error) {
+        console.error('Error parsing URL data:', error);
+      }
+    }
+    
+    // Fallback to localStorage if no URL data
+    console.log('📡 No URL data, checking localStorage...');
     const interval = setInterval(() => {
       try {
         const processing = localStorage.getItem('smartbin_scan_processing');
         const raw = localStorage.getItem('smartbin_last_scan');
         if (processing === '0' && raw) {
+          console.log('📡 Found data in localStorage');
           const parsed = JSON.parse(raw);
           setData(parsed);
           setLoading(false);
           clearInterval(interval);
         }
-      } catch {}
+      } catch (e) {
+        console.error('LocalStorage error:', e);
+      }
     }, 300);
+    
     return () => clearInterval(interval);
-  }, []);
+  }, [searchParams]);
+
+  // If still loading after 10 seconds, show error
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.warn('⚠️ Result page timeout - no data received');
+        setLoading(false);
+      }
+    }, 10000);
+    
+    return () => clearTimeout(timeout);
+  }, [loading]);
 
   return (
     <ProtectedRoute userOnly={true}>
@@ -36,8 +79,9 @@ export default function ScanResultPage() {
           <div className="px-4 mt-12 flex flex-col items-center justify-center text-center">
             <div className="w-16 h-16 rounded-full border-4 border-white/40 border-t-[var(--color-primary-600)] animate-spin"></div>
             <p className="mt-4 text-sm text-gray-600">Memproses hasil scan...</p>
+            <p className="mt-2 text-xs text-gray-400">Checking for scan results...</p>
           </div>
-        ) : (
+        ) : data ? (
           <div className="px-4">
             <MobileScanResult result={data} />
 
@@ -68,6 +112,18 @@ export default function ScanResultPage() {
                 </div>
               );
             })()}
+          </div>
+        ) : (
+          <div className="px-4 mt-12 flex flex-col items-center justify-center text-center">
+            <div className="w-16 h-16 rounded-full border-4 border-red-200 border-t-red-500 animate-spin"></div>
+            <p className="mt-4 text-sm text-gray-600">Tidak ada hasil scan</p>
+            <p className="mt-2 text-xs text-gray-400">No scan results found</p>
+            <button
+              onClick={() => router.push('/scan')}
+              className="mt-4 px-6 py-2 bg-[var(--color-primary-600)] text-white rounded-[var(--radius-pill)] text-sm"
+            >
+              Kembali ke Scan
+            </button>
           </div>
         )}
       </div>
