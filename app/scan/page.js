@@ -160,7 +160,14 @@ export default function ScanPage() {
       
       // Navigate to result page immediately
       console.log('🚀 Immediate navigation to result page...');
-      router.push('/scan/result');
+      
+      // Check if we're already on the result page
+      if (window.location.pathname === '/scan/result') {
+        console.log('🔄 Already on result page, refreshing to show new data...');
+        window.location.reload();
+      } else {
+        router.push('/scan/result');
+      }
     }
   }, [result, router]);
 
@@ -712,7 +719,14 @@ export default function ScanPage() {
             setTimeout(() => {
               if (mountedRef.current) {
                 console.log('🚀 Navigating to result page from WebSocket...');
-                router.push('/scan/result');
+                
+                // Check if we're already on the result page
+                if (window.location.pathname === '/scan/result') {
+                  console.log('🔄 Already on result page, refreshing to show new data...');
+                  window.location.reload();
+                } else {
+                  router.push('/scan/result');
+                }
               }
             }, 1000); // Increased delay to ensure state is properly updated
           } else {
@@ -800,10 +814,7 @@ export default function ScanPage() {
       // Clear any existing result to prevent conflicts
       setResult(null);
       
-      // Navigate to result screen immediately
-      router.push('/scan/result');
-      
-      // Continue processing in background
+      // Process the scan first, then navigate
       await scanWithBlob(blob);
       
     } catch (error) {
@@ -869,7 +880,14 @@ export default function ScanPage() {
       
       // Force navigation to result page immediately
       console.log('🚀 Navigating to result page immediately...');
-      router.push('/scan/result');
+      
+      // Check if we're already on the result page
+      if (window.location.pathname === '/scan/result') {
+        console.log('🔄 Already on result page, refreshing to show new data...');
+        window.location.reload();
+      } else {
+        router.push('/scan/result');
+      }
       
     } catch (error) {
       console.error('Scan error:', error);

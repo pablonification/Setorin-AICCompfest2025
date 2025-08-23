@@ -22,10 +22,15 @@ function ScanResultContent() {
         const processing = localStorage.getItem('smartbin_scan_processing');
         const raw = localStorage.getItem('smartbin_last_scan');
         
-        console.log('📡 localStorage check:', { processing, hasData: !!raw });
+        console.log('📡 localStorage check:', { 
+          processing, 
+          hasData: !!raw,
+          rawData: raw ? 'exists' : 'none',
+          currentTime: new Date().toISOString()
+        });
         
         if (processing === '0' && raw) {
-          console.log('📡 Found data in localStorage');
+          console.log('📡 Found completed scan data:', raw);
           const parsed = JSON.parse(raw);
           setData(parsed);
           setLoading(false);
@@ -51,6 +56,28 @@ function ScanResultContent() {
     return () => clearTimeout(timeout);
   }, [loading]);
 
+  // Manual refresh function
+  const handleManualRefresh = () => {
+    try {
+      const processing = localStorage.getItem('smartbin_scan_processing');
+      const raw = localStorage.getItem('smartbin_last_scan');
+      
+      console.log('🔄 Manual refresh check:', { processing, hasData: !!raw });
+      
+      if (processing === '0' && raw) {
+        const parsed = JSON.parse(raw);
+        setData(parsed);
+        setLoading(false);
+      } else {
+        console.log('🔄 No completed scan data found, refreshing page...');
+        window.location.reload();
+      }
+    } catch (e) {
+      console.error('Manual refresh error:', e);
+      window.location.reload();
+    }
+  };
+
   return (
     <div className="px-4">
       {loading ? (
@@ -58,6 +85,12 @@ function ScanResultContent() {
           <div className="w-16 h-16 rounded-full border-4 border-white/40 border-t-[var(--color-primary-600)] animate-spin"></div>
           <p className="mt-4 text-sm text-gray-600">Memproses hasil scan...</p>
           <p className="mt-2 text-xs text-gray-400">Checking for scan results...</p>
+          <button
+            onClick={handleManualRefresh}
+            className="mt-4 px-4 py-2 bg-[var(--color-primary-600)] text-white rounded-[var(--radius-pill)] text-sm"
+          >
+            Refresh Manual
+          </button>
         </div>
       ) : data ? (
         <>
