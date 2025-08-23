@@ -88,6 +88,17 @@ export default function ScanPage() {
     return () => {
       mountedRef.current = false;
       cleanupCamera();
+      
+      // Reset all states on unmount
+      setStatus('Ready');
+      setResult(null);
+      setIsScanning(false);
+      setCapturedImage(null);
+      setCameraError(null);
+      setIsScanningQR(true);
+      setQrValidated(false);
+      setIsLoadingAfterQR(false);
+      setQrValidationInProgress(false);
     };
   }, [cleanupCamera]);
 
@@ -108,6 +119,53 @@ export default function ScanPage() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [cleanupCamera]);
+
+  // Monitor result state and ensure navigation
+  useEffect(() => {
+    if (result && mountedRef.current) {
+      console.log('🎯 Result received, ensuring navigation...');
+      
+      // Clear all loading states
+      setIsScanning(false);
+      setIsScanningQR(false);
+      setQrValidated(false);
+      setIsLoadingAfterQR(false);
+      setQrValidationInProgress(false);
+      
+      // Set completion status
+      setStatus('Scan completed successfully!');
+      
+      // Navigate to result page if not already there
+      setTimeout(() => {
+        if (mountedRef.current && window.location.pathname === '/scan') {
+          console.log('🚀 Navigating to result page from result monitor...');
+          router.push('/scan/result');
+        }
+      }, 500);
+    }
+  }, [result, router]);
+
+  // Route change listener to reset states
+  useEffect(() => {
+    const handleRouteChange = () => {
+      console.log('🔄 Route change detected, resetting scan states...');
+      if (mountedRef.current) {
+        setIsScanning(false);
+        setIsScanningQR(true);
+        setQrValidated(false);
+        setIsLoadingAfterQR(false);
+        setQrValidationInProgress(false);
+        setStatus('Ready');
+      }
+    };
+
+    // Listen for route changes
+    window.addEventListener('popstate', handleRouteChange);
+    
+    return () => {
+      window.removeEventListener('popstate', handleRouteChange);
+    };
+  }, []);
 
   // Auto play video function
   const triggerVideoPlay = useCallback(async (video, stream) => {
@@ -502,12 +560,13 @@ export default function ScanPage() {
                 setIsLoadingAfterQR(true);
                 setStatus('QR code validated! Loading...');
 
+                // Clear loading state after a reasonable delay
                 setTimeout(() => {
                   if (mountedRef.current) {
                     setIsLoadingAfterQR(false);
                     setStatus('Ready to scan bottle');
                   }
-                }, 1000);
+                }, 1500); // Increased delay for better UX
               } else {
                 const reason = validationResult.reason || validationResult.detail || validationResult.message || 'Invalid';
                 console.log('❌ Invalid QR code detected:', reason);
@@ -590,8 +649,18 @@ export default function ScanPage() {
         const msg = JSON.parse(e.data);
         console.log('WebSocket message received:', msg);
         if (msg.type === 'scan_result') {
+          console.log('✅ Scan result received via WebSocket:', msg.data);
+          
+          // Clear all loading and scanning states immediately
+          setIsScanning(false);
+          setIsScanningQR(false);
+          setQrValidated(false);
+          setIsLoadingAfterQR(false);
+          
+          // Set the result
           setResult(msg.data);
           
+          // Update user points if available
           if (msg.data && user) {
             const current = user?.points ?? 0;
             const totalFromServer = typeof msg.data.total_points === 'number' ? msg.data.total_points : null;
@@ -606,9 +675,10 @@ export default function ScanPage() {
               updateUser({ ...user, points: candidate });
             }
           }
-          setStatus('Completed');
-          setIsScanning(false);
-
+          
+          // Set completion status
+          setStatus('Scan completed successfully!');
+          
           // Persist result for result page to read
           try {
             localStorage.setItem('smartbin_last_scan', JSON.stringify(msg.data));
@@ -617,12 +687,13 @@ export default function ScanPage() {
             console.warn('LocalStorage not available:', e);
           }
 
-          // Navigate to result page after successful scan
+          // Navigate to result page after successful scan with proper delay
           setTimeout(() => {
             if (mountedRef.current) {
+              console.log('🚀 Navigating to result page...');
               router.push('/scan/result');
             }
-          }, 250);
+          }, 1000); // Increased delay to ensure state is properly updated
         }
       } catch (error) {
         console.error('Error parsing WebSocket message:', error);
@@ -648,7 +719,7 @@ export default function ScanPage() {
         ws.close();
       }
     };
-  }, [token, updateUser, user]);
+  }, [token, updateUser, user, router]);
 
   const stopCamera = useCallback(() => {
     cleanupCamera();
@@ -700,18 +771,32 @@ export default function ScanPage() {
       }
 
       setIsScanning(true);
-      setStatus('Processing...');
+      setStatus('Processing image...');
       
-      // Navigate to result screen
+      // Set a timeout to prevent getting stuck
+      const scanTimeout = setTimeout(() => {
+        if (mountedRef.current && isScanning) {
+          console.warn('⚠️ Scan timeout reached, resetting state...');
+          setIsScanning(false);
+          setStatus('Scan timeout - please try again');
+        }
+      }, 30000); // 30 second timeout
+      
+      // Navigate to result screen immediately
+      
       router.push('/scan/result');
       
       // Continue processing in background
       await scanWithBlob(blob);
       
+      // Clear timeout if scan completes successfully
+      clearTimeout(scanTimeout);
+      
     } catch (error) {
       console.error('Capture error:', error);
       if (mountedRef.current) {
         setStatus('Capture failed - please try again');
+        setIsScanning(false);
       }
     }
   };
@@ -719,7 +804,9 @@ export default function ScanPage() {
   const scanWithBlob = async (blob) => {
     if (!token || !blob || !mountedRef.current) return;
     
+    let scanTimeout;
     try {
+      console.log('🔍 Starting manual scan with blob...');
       const formData = new FormData();
       formData.append('image', blob, 'bottle.jpg');
       
@@ -734,10 +821,14 @@ export default function ScanPage() {
       }
       
       const data = await response.json();
+      console.log('✅ Manual scan completed:', data);
       
       if (!mountedRef.current) return;
       
-      setResult(data);
+      // Only update result if we haven't already received one via WebSocket
+      if (!result) {
+        setResult(data);
+      }
       
       try {
         localStorage.setItem('smartbin_last_scan', JSON.stringify(data));
@@ -746,6 +837,7 @@ export default function ScanPage() {
         console.warn('LocalStorage not available:', e);
       }
       
+      // Update user points if available
       if (data && user) {
         const current = user?.points ?? 0;
         const totalFromServer = typeof data.total_points === 'number' ? data.total_points : null;
@@ -755,26 +847,29 @@ export default function ScanPage() {
         let candidate = current;
         if (totalFromServer !== null) candidate = Math.max(candidate, totalFromServer);
         if (awarded !== null) candidate = Math.max(candidate, current + awarded);
-        if (candidate > current) updateUser({ ...user, points: candidate });
+        if (candidate > current) {
+          console.log('Manual scan points update:', { current, totalFromServer, awarded, candidate });
+          updateUser({ ...user, points: candidate });
+        }
       }
       
+      // Clear scanning state
+      setIsScanning(false);
       setStatus('Scan completed');
       
-      // Navigate to result page after successful scan
-      setTimeout(() => {
-        if (mountedRef.current) {
-          router.push('/scan/result');
-        }
-      }, 1000);
+      // Note: Navigation is already handled in captureAndScan
+      // No need to navigate again here
       
     } catch (error) {
       console.error('Scan error:', error);
       if (mountedRef.current) {
-        setStatus('Scan failed');
+        setStatus('Scan failed - please try again');
+        setIsScanning(false);
       }
     } finally {
-      if (mountedRef.current) {
-        setIsScanning(false);
+      // Always clear timeout
+      if (scanTimeout) {
+        clearTimeout(scanTimeout);
       }
     }
   };
@@ -1014,6 +1109,21 @@ export default function ScanPage() {
               >
                 Stop Camera
               </button>
+              {/* Manual reset button for stuck states */}
+              {(isScanning || isLoadingAfterQR || qrValidationInProgress) && (
+                <button 
+                  onClick={() => {
+                    console.log('🔄 Manual reset triggered');
+                    setIsScanning(false);
+                    setIsLoadingAfterQR(false);
+                    setQrValidationInProgress(false);
+                    setStatus('Ready to scan');
+                  }}
+                  className="px-4 py-2 text-xs text-red-600 bg-red-100 rounded-[var(--radius-pill)] active:opacity-80"
+                >
+                  Reset
+                </button>
+              )}
             </div>
           )}
 
@@ -1021,6 +1131,15 @@ export default function ScanPage() {
           {status && (
             <div className="mt-2 text-sm text-center text-[var(--color-muted)]">
               {status}
+              {/* Show additional debug info in development */}
+              {process.env.NODE_ENV === 'development' && (
+                <div className="mt-1 text-xs opacity-60">
+                  <div>Scanning: {isScanning ? 'Yes' : 'No'}</div>
+                  <div>QR Validated: {qrValidated ? 'Yes' : 'No'}</div>
+                  <div>Loading: {isLoadingAfterQR ? 'Yes' : 'No'}</div>
+                  <div>Result: {result ? 'Received' : 'None'}</div>
+                </div>
+              )}
             </div>
           )}
         </div>
