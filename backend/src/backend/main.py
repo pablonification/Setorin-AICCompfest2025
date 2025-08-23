@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import os
 
-from .routers import health, scan, ws, auth, notification, statistics, educational, transactions
+from .routers import health, scan, ws, auth, notification, statistics, educational, transactions, esp32
 from .routers.payout import router as payout_router
 from .routers.rag import router as rag_router  # import rag separately after routers package initialized
 from .routers.admin import router as admin_router
@@ -105,6 +105,7 @@ app.include_router(notification.router)
 app.include_router(statistics.router)
 app.include_router(educational.router)
 app.include_router(transactions.router)
+app.include_router(esp32.router)
 app.include_router(rag_router)
 app.include_router(payout_router)
 app.include_router(admin_router)

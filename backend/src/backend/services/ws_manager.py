@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from typing import Dict, Set, Optional
+from typing import Dict, Set, Optional, Any
 from fastapi import WebSocket
 from datetime import datetime
 
@@ -178,6 +178,17 @@ class ConnectionManager:
     def get_user_connections(self, user_id: str) -> Set[WebSocket]:
         """Get all connections for a specific user."""
         return self.active_connections.get(user_id, set())
+
+    def get_connection_info(self) -> Dict[str, Any]:
+        """Get connection information for health checks."""
+        return {
+            'total_connections': self.get_connection_count(),
+            'total_users': self.get_user_count(),
+            'connections': {
+                user_id: len(connections)
+                for user_id, connections in self.active_connections.items()
+            }
+        }
     
     async def ping_all_connections(self):
         """Send ping to all connections to keep them alive."""
