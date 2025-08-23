@@ -49,7 +49,7 @@ ESP32 Device ↔ Backend API ↔ MongoDB Database
 - **Status LED** (for visual feedback - not currently implemented)
 
 ### Network Requirements
-- **Backend URL**: `https://setorin.app`
+- **Backend URL**: `https://api.setorin.app`
 - **WiFi Credentials** for ESP32 connection
 - **Static IP** (recommended) or DHCP
 - **HTTPS Support** (built into ESP32 Arduino Core with WiFiClientSecure)
@@ -78,10 +78,10 @@ Download from [arduino.cc](https://www.arduino.cc/en/software)
 ### 4. SSL Certificate Setup (for HTTPS)
 For HTTPS communication, you'll need to add the root CA certificate:
 
-1. Download the root CA certificate for setorin.app
+1. Download the root CA certificate for api.setorin.app
 2. Add it to your Arduino sketch as a constant:
 ```cpp
-// Root CA certificate for setorin.app (get from browser or certificate authority)
+// Root CA certificate for api.setorin.app (get from browser or certificate authority)
 const char* rootCACertificate = \
 "-----BEGIN CERTIFICATE-----\n" \
 "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...\n" \
@@ -101,14 +101,14 @@ Update these variables in the Arduino code:
 ```cpp
 const char* ssid = "YOUR_WIFI_SSID";
 const char* password = "YOUR_WIFI_PASSWORD";
-const char* serverUrl = "https://setorin.app";
+const char* serverUrl = "https://api.setorin.app";
 ```
 
 ## 📡 API Endpoints
 
 ### Base URL
 ```
-https://setorin.app/api/esp32
+https://api.setorin.app/api/esp32
 ```
 
 ### 1. Device Registration
@@ -238,14 +238,14 @@ Get ESP32 action history.
 // WiFi Configuration
 const char* ssid = "YOUR_WIFI_SSID";
 const char* password = "YOUR_WIFI_PASSWORD";
-const char* serverUrl = "https://setorin.app";
+const char* serverUrl = "https://api.setorin.app";
 
 // Device Configuration
 const char* deviceId = "ESP32-SMARTBIN-001";
 const char* firmwareVersion = "1.0.0";
 const char* location = "Main Entrance";
 
-// Root CA certificate for setorin.app (replace with actual certificate)
+// Root CA certificate for api.setorin.app (replace with actual certificate)
 const char* rootCACertificate = \
 "-----BEGIN CERTIFICATE-----\n" \
 "MIIDSjCCAjKgAwIBAgIQRK+wgNajJ7qJMDmGLvhAazANBgkqhkiG9w0BAQUFADA/\n" \
@@ -549,15 +549,15 @@ String makeHttpRequest(const char* endpoint, const char* method, String payload 
 ### 1. Basic Connectivity Test
 ```bash
 # Test backend health
-curl https://setorin.app/health
+curl https://api.setorin.app/health
 
 # Test ESP32 endpoints
-curl https://setorin.app/api/esp32/devices
+curl https://api.setorin.app/api/esp32/devices
 ```
 
 ### 2. Device Registration Test
 ```bash
-curl -X POST https://setorin.app/api/esp32/register \
+curl -X POST https://api.setorin.app/api/esp32/register \
   -H "Content-Type: application/json" \
   -d '{
     "device_id": "ESP32-SMARTBIN-001",
@@ -570,7 +570,7 @@ curl -X POST https://setorin.app/api/esp32/register \
 
 ### 3. Lid Control Test
 ```bash
-curl -X POST https://setorin.app/api/esp32/control \
+curl -X POST https://api.setorin.app/api/esp32/control \
   -H "Content-Type: application/json" \
   -d '{
     "device_id": "ESP32-SMARTBIN-001",
@@ -582,10 +582,10 @@ curl -X POST https://setorin.app/api/esp32/control \
 ### 4. Monitor Logs
 ```bash
 # Check action logs
-curl "https://setorin.app/api/esp32/logs?device_id=ESP32-SMARTBIN-001"
+curl "https://api.setorin.app/api/esp32/logs?device_id=ESP32-SMARTBIN-001"
 
 # Check specific action
-curl "https://setorin.app/api/esp32/logs/64f1a2b3c4d5e6f7g8h9i0j1"
+curl "https://api.setorin.app/api/esp32/logs/64f1a2b3c4d5e6f7g8h9i0j1"
 ```
 
 ### 5. ESP32 Serial Monitor
@@ -649,7 +649,7 @@ async def control_esp32_lid(device_id: str, duration_seconds: int = 3):
             }
 
             async with session.post(
-                "https://setorin.app/api/esp32/control",
+                "https://api.setorin.app/api/esp32/control",
                 json=payload,
                 headers={"Content-Type": "application/json"}
             ) as response:
@@ -695,7 +695,7 @@ async def control_esp32_lid(device_id: str, duration_seconds: int = 3):
 **Solutions:**
 - Verify ESP32 has internet access and DNS resolution
 - Check if SSL certificates are valid (ESP32 needs root CA certificates)
-- Test backend endpoints with curl: `curl https://setorin.app/health`
+- Test backend endpoints with curl: `curl https://api.setorin.app/health`
 - Verify firewall allows HTTPS outbound traffic (port 443)
 - Check ESP32 time synchronization (needed for SSL certificate validation)
 
@@ -731,13 +731,13 @@ Serial.printf("Debug: Variable value = %d\n", variable);
 nmap -sn 192.168.1.0/24
 
 # Test backend connectivity (from any network)
-curl -v https://setorin.app/health
+curl -v https://api.setorin.app/health
 
 # Test ESP32 endpoints
-curl -v https://setorin.app/api/esp32/devices
+curl -v https://api.setorin.app/api/esp32/devices
 
 # Check SSL certificate
-curl -vI https://setorin.app
+curl -vI https://api.setorin.app
 ```
 
 ## 🚀 Advanced Features
@@ -750,7 +750,7 @@ For real-time communication, you can implement WebSocket on ESP32:
 WebSocketsClient webSocket;
 
 void setupWebSocket() {
-  webSocket.begin("YOUR_SERVER_IP", 8000, "/ws/esp32");
+  webSocket.begin("api.setorin.app", 443, "/ws/esp32");
   webSocket.onEvent(webSocketEvent);
 }
 
@@ -788,7 +788,7 @@ Implement Over-The-Air updates:
 #include <HTTPUpdate.h>
 
 void checkForUpdates() {
-  String updateUrl = "https://setorin.app/firmware.bin";
+  String updateUrl = "https://api.setorin.app/firmware.bin";
 
   WiFiClientSecure client;  // Use WiFiClientSecure for HTTPS
   client.setCACert(rootCACertificate);  // Set root CA certificate
