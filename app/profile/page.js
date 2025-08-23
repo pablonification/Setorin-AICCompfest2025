@@ -13,12 +13,12 @@ import {
   BiBeer,
   BiBarcodeReader,
   BiLeaf,
-  BiAward
+  BiAward,
 } from "react-icons/bi";
 
 // Template for bug report email
 const createBugReportMailto = () => {
-  const subject = encodeURIComponent('Laporan Masalah - Setorin App');
+  const subject = encodeURIComponent("Laporan Masalah - Setorin App");
   const body = encodeURIComponent(`Halo Tim Setorin,
 
 Saya mengalami masalah dengan aplikasi Setorin. Berikut detailnya:
@@ -51,7 +51,13 @@ Salam,
 };
 
 // Statistics Card Component
-function StatisticsCard({ icon: Icon, total, label, monthly, iconColor = "var(--color-accent-amber)" }) {
+function StatisticsCard({
+  icon: Icon,
+  total,
+  label,
+  monthly,
+  iconColor = "var(--color-accent-amber)",
+}) {
   return (
     <div className="bg-[var(--color-card)] rounded-[var(--radius-lg)] shadow-[var(--shadow-card)] overflow-hidden">
       {/* Top Section - White Background */}
@@ -69,13 +75,14 @@ function StatisticsCard({ icon: Icon, total, label, monthly, iconColor = "var(--
             </div>
           </div>
         </div>
-
       </div>
 
       {/* Bottom Section - Green Background */}
       <div className="bg-[var(--color-primary-700)] px-4 py-3 flex justify-between items-center">
         <span className="text-[14px] leading-5 text-white">Bulan ini :</span>
-        <span className="text-[14px] leading-5 text-white font-semibold">{monthly}</span>
+        <span className="text-[14px] leading-5 text-white font-semibold">
+          {monthly}
+        </span>
       </div>
     </div>
   );
@@ -102,7 +109,7 @@ function PointsRankCard({ points, monthly, rank }) {
         </div>
         <div
           className="px-3 py-2 rounded-[var(--radius-pill)] text-white text-[14px] leading-5 font-medium"
-          style={{ background: 'var(--gradient-primary)' }}
+          style={{ background: "var(--gradient-primary)" }}
         >
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-white rounded-full"></div>
@@ -114,7 +121,9 @@ function PointsRankCard({ points, monthly, rank }) {
       {/* Bottom Section - Green Background */}
       <div className="bg-[var(--color-primary-700)] px-4 py-3 flex justify-between items-center">
         <span className="text-[14px] leading-5 text-white">Bulan ini :</span>
-        <span className="text-[14px] leading-5 text-white font-semibold">{monthly}</span>
+        <span className="text-[14px] leading-5 text-white font-semibold">
+          {monthly}
+        </span>
       </div>
     </div>
   );
@@ -199,7 +208,7 @@ function AchievementCard({ currentStreak, longestStreak }) {
 }
 
 // Force dynamic rendering to prevent build-time errors
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 // Statistics Component
 function StatisticsSection({ user }) {
@@ -218,24 +227,28 @@ function StatisticsSection({ user }) {
       points: {
         total: data.total_points ?? 0,
         monthly: data.points_this_month ?? 0,
-        rank: (data.user_tier || data.tier || (auth?.user?.tier ?? null) || 'Perintis')
+        rank:
+          data.user_tier ||
+          data.tier ||
+          (auth?.user?.tier ?? null) ||
+          "Perintis",
       },
       bottles: {
         total: data.total_bottles ?? 0,
-        monthly: data.bottles_this_month ?? 0
+        monthly: data.bottles_this_month ?? 0,
       },
       scans: {
         total: data.total_scans ?? 0,
-        monthly: undefined
+        monthly: undefined,
       },
       impact: {
         plasticAvoidedKg: Number(data.plastic_waste_diverted_kg ?? 0),
-        co2AvoidedKg: Number(data.co2_emissions_saved_kg ?? 0)
+        co2AvoidedKg: Number(data.co2_emissions_saved_kg ?? 0),
       },
       achievements: {
         currentStreak: data.current_streak_days ?? 0,
-        longestStreak: data.longest_streak_days ?? 0
-      }
+        longestStreak: data.longest_streak_days ?? 0,
+      },
     };
   }, []);
 
@@ -248,8 +261,20 @@ function StatisticsSection({ user }) {
     setError(null);
     try {
       const [personal, leaderboard] = await Promise.all([
-        makeAuthenticatedRequest('/api/statistics/personal', {}, auth, setError, () => {}),
-        makeAuthenticatedRequest('/api/statistics/leaderboard?limit=5', {}, auth, setError, () => {})
+        makeAuthenticatedRequest(
+          "/api/statistics/personal",
+          {},
+          auth,
+          setError,
+          () => {}
+        ),
+        makeAuthenticatedRequest(
+          "/api/statistics/leaderboard?limit=5",
+          {},
+          auth,
+          setError,
+          () => {}
+        ),
       ]);
 
       if (personal) {
@@ -261,7 +286,7 @@ function StatisticsSection({ user }) {
         setTotalParticipants(leaderboard.total_participants || 0);
       }
     } catch (e) {
-      setError(e?.message || 'Gagal memuat statistik');
+      setError(e?.message || "Gagal memuat statistik");
     } finally {
       setLoading(false);
       fetchingRef.current = false;
@@ -291,8 +316,18 @@ function StatisticsSection({ user }) {
         <div className="rounded-[16px] bg-white [box-shadow:var(--shadow-card)] p-4">
           <div className="bg-red-50 border border-red-200 rounded-[var(--radius-md)] p-4 text-center">
             <div className="flex items-center justify-center mb-2">
-              <svg className="h-5 w-5 text-red-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              <svg
+                className="h-5 w-5 text-red-600 mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
               </svg>
               <p className="text-red-600 font-medium">Error: {error}</p>
             </div>
@@ -303,16 +338,13 @@ function StatisticsSection({ user }) {
       {stats && (
         <>
           {/* Points and Rank Card */}
-          <div className="mb-4">
+          <div className="mb-4 grid grid-cols-1 gap-4">
             <PointsRankCard
               points={stats.points.total}
               monthly={stats.points.monthly}
               rank={stats.points.rank}
             />
-          </div>
 
-          {/* Middle Row - Two Cards Side by Side */}
-          <div className="grid grid-cols-1 gap-4">
             <StatisticsCard
               icon={BiBeer}
               total={stats.bottles.total}
@@ -340,36 +372,62 @@ function StatisticsSection({ user }) {
           {/* Leaderboard Section */}
           <div className="rounded-[16px] bg-white [box-shadow:var(--shadow-card)] p-4">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-[22px] leading-7 font-semibold text-[var(--color-primary-700)]">Papan Peringkat</h2>
-              <div className="text-[14px] leading-5 text-[var(--color-muted)]">Total Peserta : {totalParticipants}</div>
+              <h2 className="text-[22px] leading-7 font-semibold text-[var(--color-primary-700)]">
+                Papan Peringkat
+              </h2>
+              <div className="text-[14px] leading-5 text-[var(--color-muted)]">
+                Total Peserta : {totalParticipants}
+              </div>
             </div>
 
             {/* Your position card */}
             <div className="rounded-[var(--radius-lg)] bg-[var(--color-primary-700)] text-white [box-shadow:var(--shadow-card)] px-5 py-4 mb-3 flex items-center justify-between">
               <div>
-                <div className="text-[22px] leading-7 font-semibold">#{userRank ?? '-'}</div>
-                <div className="text-[14px] leading-5 opacity-90">Posisi Kamu</div>
+                <div className="text-[22px] leading-7 font-semibold">
+                  #{userRank ?? "-"}
+                </div>
+                <div className="text-[14px] leading-5 opacity-90">
+                  Posisi Kamu
+                </div>
               </div>
               <div className="text-right">
-                <div className="text-[22px] leading-7 font-semibold">{(rankings.find(r => r.rank === userRank)?.total_bottles) ?? 0}</div>
-                <div className="text-[14px] leading-5 opacity-90">Total Botol</div>
+                <div className="text-[22px] leading-7 font-semibold">
+                  {rankings.find((r) => r.rank === userRank)?.total_bottles ??
+                    0}
+                </div>
+                <div className="text-[14px] leading-5 opacity-90">
+                  Total Botol
+                </div>
               </div>
             </div>
 
             {/* Top list */}
             <div className="rounded-[var(--radius-lg)] bg-[var(--color-card)] [box-shadow:var(--shadow-card)] p-4">
               {rankings.length === 0 && (
-                <div className="text-[14px] leading-5 text-[var(--color-muted)] text-center">Belum ada data leaderboard</div>
+                <div className="text-[14px] leading-5 text-[var(--color-muted)] text-center">
+                  Belum ada data leaderboard
+                </div>
               )}
               {rankings.map((rank) => (
-                <div key={rank.user_id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0 border-b last:border-b-0 border-[color:rgba(0,0,0,0.06)]">
+                <div
+                  key={rank.user_id}
+                  className="flex items-center justify-between py-3 first:pt-0 last:pb-0 border-b last:border-b-0 border-[color:rgba(0,0,0,0.06)]"
+                >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[var(--color-primary-700)] text-white flex items-center justify-center text-[16px] font-semibold">{rank.rank}</div>
-                    <div className="text-[14px] leading-5 text-[var(--color-primary-700)] font-medium">{rank.name || `User ${rank.user_id.slice(-4)}`}</div>
+                    <div className="w-10 h-10 rounded-full bg-[var(--color-primary-700)] text-white flex items-center justify-center text-[16px] font-semibold">
+                      {rank.rank}
+                    </div>
+                    <div className="text-[14px] leading-5 text-[var(--color-primary-700)] font-medium">
+                      {rank.name || `User ${rank.user_id.slice(-4)}`}
+                    </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-[16px] leading-6 font-semibold text-[var(--color-primary-700)]">{rank.total_bottles} Botol</div>
-                    <div className="text-[12px] leading-4 text-[var(--color-primary-700)]/80">{rank.total_points} Setor Poin</div>
+                    <div className="text-[16px] leading-6 font-semibold text-[var(--color-primary-700)]">
+                      {rank.total_bottles} Botol
+                    </div>
+                    <div className="text-[12px] leading-4 text-[var(--color-primary-700)]/80">
+                      {rank.total_points} Setor Poin
+                    </div>
                   </div>
                 </div>
               ))}
@@ -458,7 +516,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-            {/* Content */}
+      {/* Content */}
       <div className="-mt-14 px-4 pb-28 space-y-6">
         <StatisticsSection user={auth?.user} />
 
@@ -477,7 +535,11 @@ export default function ProfilePage() {
         <div className="rounded-[16px] bg-white [box-shadow:var(--shadow-card)] p-4">
           <SectionHeader title="Seputar Setorin" />
           <div className="mt-3 space-y-2">
-            <SettingsRow href="/faq" label="Bantuan" icon="/profile/bantuan.svg" />
+            <SettingsRow
+              href="/faq"
+              label="Bantuan"
+              icon="/profile/bantuan.svg"
+            />
             <SettingsRow
               href={createBugReportMailto()}
               label="Lapor Masalah"
