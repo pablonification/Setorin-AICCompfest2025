@@ -50,3 +50,21 @@ User asked to "fix the VPS deployment".
 
 - Waiting for the user to create the `.env.example` file and populate the `.env` file on their VPS.
 - Awaiting feedback on whether these changes have resolved their deployment issues, or if there are other specific errors to address.
+
+## Session 3: Login Page Redesign
+
+### User Request
+
+Redesign `/login` to match the new mobile-first prototype, using `public/login-hero.svg` as the hero image and `public/login-logo.svg` as the wordmark logo.
+
+### Actions Taken
+
+1. Updated `app/login/page.js` to a mobile-first layout using container `max-w-[430px] mx-auto` and safe-area paddings.
+2. Replaced legacy heading/copy with Indonesian copy per prototype.
+3. Inserted hero illustration `login-hero.svg` and logo `login-logo.svg`.
+4. Styled the Google sign-in button with SmartBin tokens (`--color-primary-700/600`, pill radius) and improved accessibility (aria-label, focus ring).
+5. Preserved OAuth flow logic and loading state.
+
+### Result
+
+`/login` now visually matches the hi‑fi design for 390–430px widths while aligning with tokens and accessibility rules.

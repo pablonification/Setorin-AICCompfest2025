@@ -17,6 +17,7 @@ export default function BottomNav() {
   if (pathname.startsWith("/rag")) return null;
   if (pathname.startsWith("/infoin")) return null;
   if (pathname.startsWith("/statistics")) return null;
+  if (pathname.startsWith("/ketentuan-layanan")) return null;
   const isActive = (href) => pathname === href;
 
   return (
