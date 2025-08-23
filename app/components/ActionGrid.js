@@ -29,11 +29,11 @@ export default function ActionGrid() {
       <ActionItem href="/infoin" iconSrc="/infoin.svg" alt="Infoin" />
       <ActionItem
         href="/scan"
-        iconSrc="/duitin.svg"
+        iconSrc="/duitin.avif"
         alt="Duitin"
-        containerClassName="w-[92px] h-[92px] -translate-y-1"
+        containerClassName="w-[102px] h-[102px] -translate-y-[8.5px]"
         imgClassName="w-full h-full object-contain"
-        labelClassName="mt-1 -translate-y-2 text-xs font-medium text-[var(--color-muted)]"
+        labelClassName="mt-1 -translate-y-[18px] text-xs font-medium text-[var(--color-muted)]"
       />
       <ActionItem href="/temuin" iconSrc="/temuin.svg" alt="Temuin" />
     </div>

@@ -29,7 +29,7 @@ export default function InfoinDetailPage() {
 
   return (
     <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
-      <TopBar title={item?.title} backHref="/infoin" />
+      <TopBar title={item?.category === 'tutorial' ? 'Tutorial' : 'Artikel'} backHref="/infoin" />
       <div className="pt-4 pb-24 px-4">
 
         {loading ? (

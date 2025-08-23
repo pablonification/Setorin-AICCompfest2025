@@ -20,6 +20,7 @@ export default function BottomNav() {
   if (pathname.startsWith("/statistics")) return null;
   if (pathname.startsWith("/ketentuan-layanan")) return null;
   if (pathname.startsWith("/faq")) return null;
+  if (pathname.startsWith("/setor-level")) return null;
   const isActive = (href) => pathname === href;
 
   return (

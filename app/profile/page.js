@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { makeAuthenticatedRequest } from "../utils/auth";
 import SectionHeader from "../components/SectionHeader";
 import SettingsRow from "../components/SettingsRow";
+import HeaderBar from "../components/HeaderBar";
 import {
   BiArrowToTop,
   BiBeer,
@@ -468,9 +469,10 @@ export default function ProfilePage() {
 
   return (
     <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
-      {/* Green header */}
+      {/* Combined Header Section */}
       <div className="bg-[var(--color-primary-700)] [box-shadow:var(--shadow-card)]">
-        <div className="px-4 pt-4 pb-4">
+        <HeaderBar />
+        <div className="px-4 pb-4">
           {/* Profile Card */}
           <div className="rounded-[16px] bg-white [box-shadow:var(--shadow-card)] p-4">
             <div className="flex items-center gap-4">
@@ -496,22 +498,24 @@ export default function ProfilePage() {
             </div>
 
             {/* Level pill */}
-            <div
-              className="mt-4 rounded-[16px] p-3"
-              style={{ backgroundImage: "var(--gradient-primary)" }}
-            >
-              <div className="flex items-center justify-between text-white">
-                <div className="flex items-center gap-3">
-                  <img src="/profile/level.svg" alt="Level" />
-                  <span className="font-inter font-bold text-sm leading-none">
-                    Perintis
+            <Link href="/setor-level" aria-label="Lihat Setor Level">
+              <div
+                className="mt-4 rounded-[16px] p-3"
+                style={{ backgroundImage: "var(--gradient-primary)" }}
+              >
+                <div className="flex items-center justify-between text-white">
+                  <div className="flex items-center gap-3">
+                    <img src="/profile/level.svg" alt="Level" />
+                    <span className="font-inter font-bold text-sm leading-none">
+                      Perintis
+                    </span>
+                  </div>
+                  <span className="font-inter text-sm leading-none">
+                    {auth?.user?.points ?? 0} Setor Poin
                   </span>
                 </div>
-                <span className="font-inter text-sm leading-none">
-                  {auth?.user?.points ?? 0} Setor Poin
-                </span>
               </div>
-            </div>
+            </Link>
           </div>
         </div>
       </div>

@@ -65,28 +65,30 @@ export default function BalanceCard() {
         </div>
       </div>
 
-      {/* Progress */}
-      <div
-        className="mt-4 rounded-[12px] p-3"
-        style={{
-          backgroundImage: "var(--gradient-primary)",
-          backgroundBlendMode: "multiply",
-        }}
-      >
-        <div className="text-white text-xs flex justify-between">
-          <span>Level {currentTier.name}</span>
-          <span>Setor Poin</span>
+      {/* Progress (clickable to Setor Level) */}
+      <Link href="/setor-level" aria-label="Lihat Setor Level">
+        <div
+          className="mt-4 rounded-[12px] p-3"
+          style={{
+            backgroundImage: "var(--gradient-primary)",
+            backgroundBlendMode: "multiply",
+          }}
+        >
+          <div className="text-white text-xs flex justify-between">
+            <span>Level {currentTier.name}</span>
+            <span>Setor Poin</span>
+          </div>
+          <div className="mt-2 h-2 bg-white/30 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-white rounded-full"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <div className="mt-1 text-white text-sm font-medium text-right">
+            {relative}/{range}
+          </div>
         </div>
-        <div className="mt-2 h-2 bg-white/30 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-white rounded-full"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-        <div className="mt-1 text-white text-sm font-medium text-right">
-          {relative}/{range}
-        </div>
-      </div>
+      </Link>
     </div>
   );
 }
