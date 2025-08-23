@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+export const dynamic = 'force-dynamic';
+
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import MobileScanResult from '../../components/MobileScanResult';
 import TopBar from '../../components/TopBar';
 
-export default function ScanResultPage() {
+function ScanResultContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
@@ -71,61 +73,76 @@ export default function ScanResultPage() {
   }, [loading]);
 
   return (
+    <div className="px-4">
+      {loading ? (
+        <div className="mt-12 flex flex-col items-center justify-center text-center">
+          <div className="w-16 h-16 rounded-full border-4 border-white/40 border-t-[var(--color-primary-600)] animate-spin"></div>
+          <p className="mt-4 text-sm text-gray-600">Memproses hasil scan...</p>
+          <p className="mt-2 text-xs text-gray-400">Checking for scan results...</p>
+        </div>
+      ) : data ? (
+        <>
+          <MobileScanResult result={data} />
+
+          {(() => {
+            const invalid = data?.is_valid === false || data?.valid === false || (typeof data?.points_awarded === 'number' && data.points_awarded <= 0);
+            return (
+              <div className="mt-6 space-y-3">
+                {invalid ? (
+                  <button
+                    onClick={() => {
+                      try {
+                        localStorage.removeItem('smartbin_last_scan');
+                        localStorage.setItem('smartbin_scan_processing', '0');
+                      } catch {}
+                      router.push('/scan');
+                    }}
+                    className="w-full h-12 rounded-[var(--radius-pill)] bg-[var(--color-primary-700)] text-white font-medium active:opacity-80"
+                  >
+                    Ambil Ulang Foto
+                  </button>
+                ) : null}
+                <button
+                  onClick={() => router.push('/')}
+                  className="w-full h-12 rounded-[var(--radius-pill)] bg-transparent text-[var(--color-primary-700)] font-medium active:opacity-80 border-2 border-[var(--color-primary-700)]"
+                >
+                  Selesai
+                </button>
+              </div>
+            );
+          })()}
+        </>
+      ) : (
+        <div className="mt-12 flex flex-col items-center justify-center text-center">
+          <div className="w-16 h-16 rounded-full border-4 border-red-200 border-t-red-500 animate-spin"></div>
+          <p className="mt-4 text-sm text-gray-600">Tidak ada hasil scan</p>
+          <p className="mt-2 text-xs text-gray-400">No scan results found</p>
+          <button
+            onClick={() => router.push('/scan')}
+            className="mt-4 px-6 py-2 bg-[var(--color-primary-600)] text-white rounded-[var(--radius-pill)] text-sm"
+          >
+            Kembali ke Scan
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function ScanResultPage() {
+  return (
     <ProtectedRoute userOnly={true}>
       <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
         <TopBar title="Duitin" backHref="/scan" />
-
-        {loading ? (
+        
+        <Suspense fallback={
           <div className="px-4 mt-12 flex flex-col items-center justify-center text-center">
             <div className="w-16 h-16 rounded-full border-4 border-white/40 border-t-[var(--color-primary-600)] animate-spin"></div>
-            <p className="mt-4 text-sm text-gray-600">Memproses hasil scan...</p>
-            <p className="mt-2 text-xs text-gray-400">Checking for scan results...</p>
+            <p className="mt-4 text-sm text-gray-600">Loading...</p>
           </div>
-        ) : data ? (
-          <div className="px-4">
-            <MobileScanResult result={data} />
-
-            {(() => {
-              const invalid = data?.is_valid === false || data?.valid === false || (typeof data?.points_awarded === 'number' && data.points_awarded <= 0);
-              return (
-                <div className="mt-6 space-y-3">
-                  {invalid ? (
-                    <button
-                      onClick={() => {
-                        try {
-                          localStorage.removeItem('smartbin_last_scan');
-                          localStorage.setItem('smartbin_scan_processing', '0');
-                        } catch {}
-                        router.push('/scan');
-                      }}
-                      className="w-full h-12 rounded-[var(--radius-pill)] bg-[var(--color-primary-700)] text-white font-medium active:opacity-80"
-                    >
-                      Ambil Ulang Foto
-                    </button>
-                  ) : null}
-                  <button
-                    onClick={() => router.push('/')}
-                    className="w-full h-12 rounded-[var(--radius-pill)] bg-transparent text-[var(--color-primary-700)] font-medium active:opacity-80 border-2 border-[var(--color-primary-700)]"
-                  >
-                    Selesai
-                  </button>
-                </div>
-              );
-            })()}
-          </div>
-        ) : (
-          <div className="px-4 mt-12 flex flex-col items-center justify-center text-center">
-            <div className="w-16 h-16 rounded-full border-4 border-red-200 border-t-red-500 animate-spin"></div>
-            <p className="mt-4 text-sm text-gray-600">Tidak ada hasil scan</p>
-            <p className="mt-2 text-xs text-gray-400">No scan results found</p>
-            <button
-              onClick={() => router.push('/scan')}
-              className="mt-4 px-6 py-2 bg-[var(--color-primary-600)] text-white rounded-[var(--radius-pill)] text-sm"
-            >
-              Kembali ke Scan
-            </button>
-          </div>
-        )}
+        }>
+          <ScanResultContent />
+        </Suspense>
       </div>
     </ProtectedRoute>
   );
