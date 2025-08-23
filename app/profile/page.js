@@ -338,7 +338,7 @@ function StatisticsSection({ user }) {
       {stats && (
         <>
           {/* Points and Rank Card */}
-          <div className="mb-4 grid grid-cols-1 gap-4">
+          <div className="mb-4 grid grid-cols-2 gap-4">
             <PointsRankCard
               points={stats.points.total}
               monthly={stats.points.monthly}
