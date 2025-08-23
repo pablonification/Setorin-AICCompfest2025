@@ -27,7 +27,7 @@ export default function RootLayout({ children }) {
       >
         <AuthProvider>
           {children}
-          <AuthDebugger />
+          {/* <AuthDebugger /> */}
           <BottomNav />
         </AuthProvider>
       </body>
