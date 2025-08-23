@@ -312,18 +312,12 @@ function StatisticsSection({ user }) {
           </div>
 
           {/* Middle Row - Two Cards Side by Side */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <StatisticsCard
               icon={BiBeer}
               total={stats.bottles.total}
               label="Total Botol"
               monthly={stats.bottles.monthly}
-            />
-            <StatisticsCard
-              icon={BiBarcodeReader}
-              total={stats.scans.total}
-              label="Total Scan"
-              monthly={stats.scans.monthly}
             />
           </div>
 

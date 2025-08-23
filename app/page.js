@@ -15,8 +15,12 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !(token && user)) {
-      router.push('/login');
+    if (!loading) {
+      if (!(token && user)) {
+        router.push('/login');
+      } else if (user?.role === 'admin') {
+        router.push('/admin');
+      }
     }
   }, [token, user, loading, router]);
 

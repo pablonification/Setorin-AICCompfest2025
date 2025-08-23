@@ -11,12 +11,13 @@ export default function AdminWithdrawals() {
   const router = useRouter();
   const [error, setError] = useState('');
   const [list, setList] = useState([]);
-  const [status, setStatus] = useState('pending');
+  const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [selectedWithdrawal, setSelectedWithdrawal] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [adminNote, setAdminNote] = useState('');
+  const [modalMode, setModalMode] = useState('view'); // 'view' or 'reject'
   const apiBase = process.env.NEXT_PUBLIC_BROWSER_API_URL || 'http://localhost:8000';
 
   useEffect(() => {
@@ -107,8 +108,15 @@ export default function AdminWithdrawals() {
 
   const viewWithdrawalDetails = (withdrawal) => {
     setSelectedWithdrawal(withdrawal);
+    setModalMode('view');
     setShowModal(true);
   };
+
+  const openRejectModal = (withdrawal) => {
+    setSelectedWithdrawal(withdrawal);
+    setModalMode('reject');
+    setShowModal(true);
+  }
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -264,8 +272,7 @@ export default function AdminWithdrawals() {
                             </button>
                             <button
                               onClick={() => {
-                                setSelectedWithdrawal(item);
-                                setShowModal(true);
+                                openRejectModal(item);
                               }}
                               className="inline-flex items-center px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                             >
@@ -283,49 +290,103 @@ export default function AdminWithdrawals() {
           </div>
         </div>
 
-        {/* Rejection Modal */}
-        {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-md w-full p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Reject Withdrawal Request
-              </h3>
+        {/* Details/Rejection Modal */}
+        {showModal && selectedWithdrawal && (
+          <div className="fixed inset-0 bg-[var(--color-overlay)] flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
               
-              <div className="mb-4">
-                <p className="text-sm text-gray-600 mb-2">
-                  Rejecting withdrawal for <strong>{selectedWithdrawal?.amount_points} points</strong>
-                </p>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Admin Note (Required)
-                </label>
-                <textarea
-                  value={adminNote}
-                  onChange={(e) => setAdminNote(e.target.value)}
-                  className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  rows={3}
-                  placeholder="Provide a reason for rejection..."
-                />
-              </div>
-              
-              <div className="flex gap-3 justify-end">
-                <button
-                  onClick={() => {
-                    setShowModal(false);
-                    setAdminNote('');
-                    setSelectedWithdrawal(null);
-                  }}
-                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => rejectRefund(selectedWithdrawal.id)}
-                  disabled={!adminNote.trim()}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
-                >
-                  Reject & Refund
-                </button>
-              </div>
+              {modalMode === 'view' && (
+                <>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-semibold text-gray-900">Withdrawal Details</h3>
+                    <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500">Amount</label>
+                      <p className="text-lg font-semibold text-gray-900">{selectedWithdrawal.amount_points.toLocaleString()} points</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500">Status</label>
+                      <p className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedWithdrawal.status)}`}>
+                        {selectedWithdrawal.status}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500">User</label>
+                      <p className="text-gray-900">{selectedWithdrawal.user_email}</p>
+                    </div>
+                     <div>
+                      <label className="block text-sm font-medium text-gray-500">Withdrawal Method</label>
+                      <div className="text-gray-900">
+                        <p className="font-semibold">{selectedWithdrawal.method_type}</p>
+                        {selectedWithdrawal.method_type === 'bank' ? (
+                          <p>{selectedWithdrawal.bank_code} - {selectedWithdrawal.bank_account_number} ({selectedWithdrawal.bank_account_name})</p>
+                        ) : (
+                          <p>{selectedWithdrawal.ewallet_provider} - {selectedWithdrawal.phone_number}</p>
+                        )}
+                      </div>
+                    </div>
+                     <div>
+                      <label className="block text-sm font-medium text-gray-500">Timestamps</label>
+                      <p className="text-gray-900">Requested: {formatDate(selectedWithdrawal.created_at)}</p>
+                      {selectedWithdrawal.processed_at && <p className="text-gray-900">Processed: {formatDate(selectedWithdrawal.processed_at)}</p>}
+                    </div>
+                    {selectedWithdrawal.admin_note && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-500">Admin Note</label>
+                        <p className="text-gray-900 bg-gray-50 p-2 rounded">{selectedWithdrawal.admin_note}</p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-6 flex justify-end">
+                    <button onClick={() => setShowModal(false)} className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">Close</button>
+                  </div>
+                </>
+              )}
+
+              {modalMode === 'reject' && (
+                <>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Reject Withdrawal Request
+                  </h3>
+                  <div className="mb-4">
+                    <p className="text-sm text-gray-600 mb-2">
+                      Rejecting withdrawal for <strong>{selectedWithdrawal.amount_points?.toLocaleString()} points</strong>
+                    </p>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Admin Note (Required)
+                    </label>
+                    <textarea
+                      value={adminNote}
+                      onChange={(e) => setAdminNote(e.target.value)}
+                      className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      rows={3}
+                      placeholder="Provide a reason for rejection..."
+                    />
+                  </div>
+                  <div className="flex gap-3 justify-end">
+                    <button
+                      onClick={() => {
+                        setShowModal(false);
+                        setAdminNote('');
+                        setSelectedWithdrawal(null);
+                      }}
+                      className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => rejectRefund(selectedWithdrawal.id)}
+                      disabled={!adminNote.trim()}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                    >
+                      Reject & Refund
+                    </button>
+                  </div>
+                </>
+              )}
+
             </div>
           </div>
         )}

@@ -15,6 +15,7 @@
   --color-success: #19c37d;
   --color-danger: #e24a4a;
   --gradient-primary: linear-gradient(90deg, #016F2F 0%, #FFE200 100%);
+  --color-overlay: rgba(17, 24, 39, 0.75); /* Equivalent to gray-900 with 75% opacity */
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;

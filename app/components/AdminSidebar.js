@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { useAuth } from '../contexts/AuthContext';
 import {
 	FiHome,
 	FiUsers,
@@ -12,14 +13,14 @@ import {
 	FiDownload,
 	FiSettings,
 	FiMenu,
-	FiX
+	FiX,
+	FiLogOut
 } from 'react-icons/fi';
 
 const navItems = [
 	{ title: 'Dashboard', href: '/admin', icon: FiHome },
 	{ title: 'Users', href: '/admin/users', icon: FiUsers },
 	{ title: 'Withdrawals', href: '/admin/withdrawals', icon: FiDollarSign },
-	{ title: 'Notifications', href: '/admin/notifications', icon: FiBell },
 	{ title: 'Education', href: '/admin/education', icon: FiBookOpen },
 	{ title: 'Monitoring', href: '/admin/monitoring', icon: FiActivity },
 	{ title: 'Export', href: '/admin/export', icon: FiDownload },
@@ -29,16 +30,27 @@ const navItems = [
 export default function AdminSidebar() {
 	const router = useRouter();
 	const pathname = usePathname();
+	const { logout } = useAuth();
 	const [mobileOpen, setMobileOpen] = useState(false);
 
 	const isActive = (href) => (href === '/admin' ? pathname === href : pathname.startsWith(href));
 
+	const handleLogout = () => {
+		logout();
+		router.push('/login');
+	};
+
 	const SidebarContents = () => (
 		<div className="h-full flex flex-col">
-			<div className="flex items-center gap-3 px-4 py-4 border-b border-gray-200">
-				<img src="/logo.svg" alt="Setorin" className="h-6 w-auto" />
+			<button
+				type="button"
+				onClick={() => router.push('/admin')}
+				className="flex items-center gap-3 px-4 py-4 border-b border-gray-200 w-full text-left hover:bg-gray-50 transition-colors cursor-pointer"
+				aria-label="Go to Home"
+			>
+				<img src="/login-logo.svg" alt="Setorin" className="h-6 w-auto" />
 				<span className="text-sm font-semibold tracking-wide">Admin</span>
-			</div>
+			</button>
 			<nav className="flex-1 px-2 py-3 overflow-y-auto">
 				{navItems.map((item) => {
 					const Icon = item.icon;
@@ -64,6 +76,17 @@ export default function AdminSidebar() {
 					);
 				})}
 			</nav>
+			<div className="px-2 py-3">
+				<button
+					onClick={handleLogout}
+					className="w-full flex items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+				>
+					<span className="grid place-items-center w-5 h-5">
+						<FiLogOut className="text-red-600" />
+					</span>
+					<span className="truncate">Logout</span>
+				</button>
+			</div>
 			<div className="px-3 py-3 text-[12px] leading-4 text-[color:var(--color-muted)] border-t border-gray-200">
 				© {new Date().getFullYear()} Setorin
 			</div>
@@ -76,8 +99,15 @@ export default function AdminSidebar() {
 			<div className="md:hidden sticky top-0 z-40 bg-[var(--background)] border-b border-gray-200">
 				<div className="flex items-center justify-between px-4 py-3">
 					<div className="flex items-center gap-3">
-						<img src="/logo.svg" alt="Setorin" className="h-5 w-auto" />
-						<span className="text-sm font-semibold">Admin</span>
+						<button
+							type="button"
+							onClick={() => router.push('/admin')}
+							className="flex items-center gap-3 px-4 py-4 border-b border-gray-200 w-full text-left hover:bg-gray-50 transition-colors cursor-pointer"
+							aria-label="Go to Home"
+						>
+							<img src="/login-logo.svg" alt="Setorin" className="h-5 w-auto" />
+							<span className="text-sm font-semibold">Admin</span>
+						</button>
 					</div>
 					<button
 						aria-label="Toggle navigation"
@@ -104,7 +134,7 @@ export default function AdminSidebar() {
 					<div className="absolute left-0 top-0 h-full w-72 bg-[var(--color-card)] [box-shadow:var(--shadow-card)] animate-fade-in-up">
 						<div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
 							<div className="flex items-center gap-3">
-								<img src="/logo.svg" alt="Setorin" className="h-5 w-auto" />
+								<img src="/login-logo.svg" alt="Setorin" className="h-5 w-auto" />
 								<span className="text-sm font-semibold">Admin</span>
 							</div>
 							<button

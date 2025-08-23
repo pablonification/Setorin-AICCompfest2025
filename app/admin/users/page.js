@@ -159,7 +159,6 @@ export default function AdminUsers() {
                     className="border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="points">Sort by Points</option>
-                    <option value="created_at">Sort by Join Date</option>
                     <option value="email">Sort by Email</option>
                   </select>
                 </div>
@@ -223,11 +222,6 @@ export default function AdminUsers() {
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Scans
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100" onClick={() => handleSort('created_at')}>
-                          <div className="flex items-center gap-2">
-                            Join Date {getSortIcon('created_at')}
-                          </div>
-                        </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Actions
                         </th>
@@ -249,9 +243,6 @@ export default function AdminUsers() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">{user.total_scans || 0}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{formatDate(user.created_at)}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <button
@@ -301,7 +292,7 @@ export default function AdminUsers() {
 
         {/* User Details Modal */}
         {showUserModal && selectedUser && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="fixed inset-0 bg-[var(--color-overlay)] flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">
@@ -335,10 +326,6 @@ export default function AdminUsers() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Total Scans</label>
                     <p className="text-sm text-gray-900">{selectedUser.total_scans || 0}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Join Date</label>
-                    <p className="text-sm text-gray-900">{formatDate(selectedUser.created_at)}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Last Active</label>

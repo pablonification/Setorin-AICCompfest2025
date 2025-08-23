@@ -72,10 +72,16 @@ function AuthCallbackContent() {
           }
         } catch {}
 
-        // Redirect after short delay
+        // Check if user is admin and redirect to admin panel
+        // Only redirect to admin if no specific next path was provided
+        if (data.user?.role === 'admin' && nextPath === '/') {
+          nextPath = '/admin';
+        }
+
+        // Redirect after short delay to allow auth context to update
         setTimeout(() => {
           router.push(nextPath);
-        }, 800);
+        }, 1000);
         
       } catch (err) {
         console.error('Auth callback error:', err);
