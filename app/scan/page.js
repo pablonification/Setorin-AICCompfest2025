@@ -608,13 +608,21 @@ export default function ScanPage() {
           }
           setStatus('Completed');
           setIsScanning(false);
-          
+
+          // Persist result for result page to read
+          try {
+            localStorage.setItem('smartbin_last_scan', JSON.stringify(msg.data));
+            localStorage.setItem('smartbin_scan_processing', '0');
+          } catch (e) {
+            console.warn('LocalStorage not available:', e);
+          }
+
           // Navigate to result page after successful scan
           setTimeout(() => {
             if (mountedRef.current) {
               router.push('/scan/result');
             }
-          }, 1000);
+          }, 250);
         }
       } catch (error) {
         console.error('Error parsing WebSocket message:', error);
