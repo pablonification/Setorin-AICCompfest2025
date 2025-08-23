@@ -57,7 +57,7 @@ function LoginContent() {
         </p>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-6 mb-12">
         <button
           aria-label="Masuk dengan Google"
           onClick={handleGoogleLogin}

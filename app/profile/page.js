@@ -467,10 +467,10 @@ export default function ProfilePage() {
   }, [auth]);
 
   return (
-    <div className="mobile-container font-inter">
+    <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
       {/* Green header */}
-      <div className="bg-[var(--color-primary-700)] pb-20">
-        <div className="px-4 pt-4">
+      <div className="bg-[var(--color-primary-700)] [box-shadow:var(--shadow-card)]">
+        <div className="px-4 pt-4 pb-4">
           {/* Profile Card */}
           <div className="rounded-[16px] bg-white [box-shadow:var(--shadow-card)] p-4">
             <div className="flex items-center gap-4">
@@ -517,7 +517,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Content */}
-      <div className="-mt-14 px-4 pb-28 space-y-6">
+      <div className="px-4 pb-24 pt-4 space-y-6">
         <StatisticsSection user={auth?.user} />
 
         {/* <div className="rounded-[16px] bg-white [box-shadow:var(--shadow-card)] p-4">

@@ -35,17 +35,17 @@ export default function HomePage() {
   }
 
   return (
-    <div className="mobile-container font-inter">
-      {/* Green header background area */}
-      <div className="bg-[var(--color-primary-700)] pb-20">
-        <div className="px-4 pt-4 space-y-4">
-          <HeaderBar />
+    <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
+      {/* Header section - sticks to top */}
+      <div className="bg-[var(--color-primary-700)] [box-shadow:var(--shadow-card)]">
+        <HeaderBar />
+        <div className="px-4 pb-4 space-y-4">
           <BalanceCard />
           <ActionGrid />
         </div>
       </div>
-      {/* Content overlapping the header */}
-      <div className="-mt-14 px-4 pb-28 space-y-4">
+      {/* Main content with safe area padding */}
+      <div className="px-4 pb-24 pt-4 space-y-4">
         <HeroCarousel />
         <HistoryList />
       </div>

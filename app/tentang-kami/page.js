@@ -10,7 +10,7 @@ export default function TentangKamiPage() {
   ];
 
   return (
-    <div className="mobile-container font-inter">
+    <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
       {/* Header */}
       <TopBar title="Tentang Kami" />
 

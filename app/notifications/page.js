@@ -135,11 +135,11 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="container max-w-[430px] mx-auto min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
+    <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
       <TopBar title="Notifikasi" backHref="/profile" />
 
       {/* Stats */}
-      <div className="bg-[var(--color-primary-700)] text-white -mt-4 pt-4 pb-6 px-4 rounded-b-[var(--radius-lg)]">
+      <div className="bg-[var(--color-primary-700)] text-white pt-4 pb-6 px-4 rounded-b-[var(--radius-lg)] [box-shadow:var(--shadow-card)]">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button

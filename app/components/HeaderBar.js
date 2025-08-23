@@ -7,7 +7,7 @@ export default function HeaderBar() {
   const { logout } = useAuth();
 
   return (
-    <div className="flex items-center justify-between px-3">
+    <div className="w-full px-4 pt-4 pb-4 flex items-center justify-between">
       <Link href="/" aria-label="Beranda">
         <img
           src="/logo.svg"

@@ -36,7 +36,7 @@ export default function TopBar({ title, backHref, right, className }) {
 		<div
 			className={`bg-[var(--color-primary-700)] text-white rounded-b-[var(--radius-lg)] [box-shadow:var(--shadow-card)] ${className || ""}`}
 		>
-			<div className="mx-auto max-w-[430px] px-4 pt-6 pb-6 relative">
+			<div className="w-full px-4 pt-6 pb-6 relative">
 				<div className="flex items-center justify-between">
 					{backHref ? (
 						<Link

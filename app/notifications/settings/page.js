@@ -95,7 +95,7 @@ export default function NotificationSettings() {
   }
 
   return (
-    <div className="container max-w-[430px] mx-auto min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
+    <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
       <TopBar title="Pengaturan Notifikasi" backHref="/notifications" />
 
       {/* Content */}

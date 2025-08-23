@@ -562,11 +562,11 @@ export default function ScanPage() {
 
   return (
     <ProtectedRoute userOnly={true}>
-      <div className="container max-w-[430px] mx-auto min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter pt-4 pb-24">
+      <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
         <TopBar title="Duitin" />
 
         {/* Camera preview */}
-        <div className="flex flex-col items-center mt-6 px-4">
+        <div className="flex flex-col items-center pt-6 pb-24 px-4">
           <div className="w-full max-w-[320px] h-[420px] bg-black rounded-[var(--radius-md)] flex items-center justify-center overflow-hidden relative">
             {cameraStream ? (
               <video ref={videoRef} autoPlay playsInline muted className="object-cover w-full h-full" />

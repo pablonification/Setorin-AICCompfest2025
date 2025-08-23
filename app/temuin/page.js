@@ -31,7 +31,7 @@ export default function TemuinPage() {
   }, []);
 
   return (
-    <div className="max-w-[430px] mx-auto min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
+    <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
       <TopBar title="Temuin" />
 
       {/* Map section */}

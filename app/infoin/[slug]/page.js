@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import TopBar from '../../components/TopBar';
 
 
 export default function InfoinDetailPage() {
@@ -27,29 +28,9 @@ export default function InfoinDetailPage() {
   }, [slug]);
 
   return (
-    <div className="max-w-[430px] mx-auto min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
+    <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
+      <TopBar title={item?.title} backHref="/infoin" />
       <div className="pt-4 pb-24 px-4">
-        <div className="sticky top-0 z-10 bg-[var(--color-primary-700)] text-white rounded-b-[var(--radius-lg)] [box-shadow:var(--shadow-card)]">
-          <div className="mx-auto max-w-[430px] px-4 pt-6 pb-6 relative">
-            <div className="flex items-center justify-between">
-              <button
-                onClick={() => router.back()}
-                aria-label="Kembali"
-                className="w-9 h-9 flex items-center justify-center hover:opacity-80 transition-opacity"
-              >
-                <img src="/back.svg" alt="Kembali" className="w-6 h-6" />
-              </button>
-
-              <h1 className="absolute left-1/2 -translate-x-1/2 text-xl leading-7 font-semibold">
-                Infoin
-              </h1>
-
-              <div className="w-9 h-9 flex items-center justify-center">
-                {/* Right placeholder for centering */}
-              </div>
-            </div>
-          </div>
-        </div>
 
         {loading ? (
           <div className="py-8 text-center text-[color:var(--color-muted)]">Memuat...</div>

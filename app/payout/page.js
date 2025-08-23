@@ -149,7 +149,7 @@ export default function PayoutPage() {
 
   return (
     <ProtectedRoute userOnly={true}>
-      <div className="pb-10 max-w-[430px] mx-auto min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
+      <div className="pb-10 w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
         <TopBar title="Pencairan" />
 
         {/* Safe area */}

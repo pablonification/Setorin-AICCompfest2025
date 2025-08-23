@@ -74,7 +74,7 @@ export default function FAQPage() {
   ];
 
   return (
-    <div className="mobile-container font-inter">
+    <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
       <TopBar
         title="Seputar Setorin"
         backHref="/"

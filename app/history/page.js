@@ -147,7 +147,7 @@ export default function HistoryPage() {
 
   return (
     <ProtectedRoute userOnly={true}>
-      <div className="max-w-[430px] mx-auto min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
+      <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
         <TopBar title="Riwayat Transaksi" backHref="/" />
         <div className="pt-4 pb-24 px-4">
           {/* Stats Summary */}

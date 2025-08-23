@@ -12,7 +12,7 @@ export default function RagPage() {
   const router = useRouter();
   return (
     <ProtectedRoute userOnly={true}>
-      <div className="max-w-[430px] mx-auto min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
+      <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
         <TopBar title="Robin" backHref="/" />
 
         {/* Chat Container */}
