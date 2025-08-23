@@ -127,7 +127,11 @@ export default function ScanPage() {
       result: !!result,
       currentPath: typeof window !== 'undefined' ? window.location.pathname : 'unknown',
       hasResult: !!result,
-      resultData: result
+      resultData: result,
+      localStorage: {
+        processing: typeof window !== 'undefined' ? localStorage.getItem('smartbin_scan_processing') : 'unknown',
+        hasData: typeof window !== 'undefined' ? !!localStorage.getItem('smartbin_last_scan') : 'unknown'
+      }
     });
   }, [isScanning, result]);
 
@@ -154,15 +158,9 @@ export default function ScanPage() {
         console.warn('LocalStorage not available:', e);
       }
       
-      // Navigate to result page if not already there
-      setTimeout(() => {
-        if (mountedRef.current && window.location.pathname === '/scan') {
-          console.log('🚀 Navigating to result page from result monitor...');
-          const resultData = encodeURIComponent(JSON.stringify(result));
-          const resultUrl = `/scan/result?data=${resultData}`;
-          router.push(resultUrl);
-        }
-      }, 800);
+      // Navigate to result page immediately
+      console.log('🚀 Immediate navigation to result page...');
+      router.push('/scan/result');
     }
   }, [result, router]);
 
@@ -714,9 +712,7 @@ export default function ScanPage() {
             setTimeout(() => {
               if (mountedRef.current) {
                 console.log('🚀 Navigating to result page from WebSocket...');
-                const resultData = encodeURIComponent(JSON.stringify(msg.data));
-                const resultUrl = `/scan/result?data=${resultData}`;
-                router.push(resultUrl);
+                router.push('/scan/result');
               }
             }, 1000); // Increased delay to ensure state is properly updated
           } else {
@@ -871,16 +867,9 @@ export default function ScanPage() {
         }
       }
       
-      // Force navigation to result page with data in URL
-      const resultData = encodeURIComponent(JSON.stringify(data));
-      const resultUrl = `/scan/result?data=${resultData}`;
-      
-      setTimeout(() => {
-        if (mountedRef.current && window.location.pathname === '/scan') {
-          console.log('🚀 Navigating to result page with data in URL...');
-          router.push(resultUrl);
-        }
-      }, 500);
+      // Force navigation to result page immediately
+      console.log('🚀 Navigating to result page immediately...');
+      router.push('/scan/result');
       
     } catch (error) {
       console.error('Scan error:', error);
@@ -1036,9 +1025,7 @@ export default function ScanPage() {
               setTimeout(() => {
                 if (mountedRef.current && window.location.pathname === '/scan') {
                   console.log('🚀 Fallback navigation to result page...');
-                  const resultData = encodeURIComponent(JSON.stringify(parsedResult));
-                  const resultUrl = `/scan/result?data=${resultData}`;
-                  router.push(resultUrl);
+                  router.push('/scan/result');
                 }
               }, 500);
             } else {
@@ -1064,9 +1051,7 @@ export default function ScanPage() {
       const navigationCheck = setInterval(() => {
         if (mountedRef.current && window.location.pathname === '/scan' && result) {
           console.log('🔄 Navigation check: Still on scan page with result, forcing navigation...');
-          const resultData = encodeURIComponent(JSON.stringify(result));
-          const resultUrl = `/scan/result?data=${resultData}`;
-          router.push(resultUrl);
+          router.push('/scan/result');
           clearInterval(navigationCheck);
         }
       }, 2000); // Check every 2 seconds
@@ -1213,9 +1198,7 @@ export default function ScanPage() {
                 <button 
                   onClick={() => {
                     console.log('🚀 Force navigation triggered');
-                    const resultData = encodeURIComponent(JSON.stringify(result));
-                    const resultUrl = `/scan/result?data=${resultData}`;
-                    router.push(resultUrl);
+                    router.push('/scan/result');
                   }}
                   className="px-4 py-2 text-xs text-green-600 bg-green-100 rounded-[var(--radius-pill)] active:opacity-80"
                 >

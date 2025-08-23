@@ -3,48 +3,27 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import MobileScanResult from '../../components/MobileScanResult';
 import TopBar from '../../components/TopBar';
 
 function ScanResultContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    // First try to get data from URL parameters
-    const urlData = searchParams.get('data');
+    console.log('📡 Checking localStorage for scan results...');
     
-    if (urlData) {
-      try {
-        console.log('📡 Found data in URL parameters');
-        const parsedData = JSON.parse(decodeURIComponent(urlData));
-        setData(parsedData);
-        setLoading(false);
-        
-        // Also store in localStorage for backup
-        try {
-          localStorage.setItem('smartbin_last_scan', JSON.stringify(parsedData));
-          localStorage.setItem('smartbin_scan_processing', '0');
-        } catch (e) {
-          console.warn('LocalStorage not available:', e);
-        }
-        
-        return;
-      } catch (error) {
-        console.error('Error parsing URL data:', error);
-      }
-    }
-    
-    // Fallback to localStorage if no URL data
-    console.log('📡 No URL data, checking localStorage...');
+    // Check localStorage for scan results
     const interval = setInterval(() => {
       try {
         const processing = localStorage.getItem('smartbin_scan_processing');
         const raw = localStorage.getItem('smartbin_last_scan');
+        
+        console.log('📡 localStorage check:', { processing, hasData: !!raw });
+        
         if (processing === '0' && raw) {
           console.log('📡 Found data in localStorage');
           const parsed = JSON.parse(raw);
@@ -58,7 +37,7 @@ function ScanResultContent() {
     }, 300);
     
     return () => clearInterval(interval);
-  }, [searchParams]);
+  }, []);
 
   // If still loading after 10 seconds, show error
   useEffect(() => {
