@@ -68,3 +68,21 @@ Redesign `/login` to match the new mobile-first prototype, using `public/login-h
 ### Result
 
 `/login` now visually matches the hi‑fi design for 390–430px widths while aligning with tokens and accessibility rules.
+
+## Session 4: FAQ Page Implementation
+
+### User Request
+
+Buat page `/faq` persis dari prototype; konten FAQ boleh digenerate. Gunakan aset `hubungi-kami.svg`, `panah-atas.svg`, dan `panah-bawah.svg`.
+
+### Actions Taken
+
+1. Menambahkan file `app/faq/page.js` dengan mobile frame `max-w-[430px]` dan safe area.
+2. Membangun komponen accordion aksesibel (keyboard friendly, ARIA) sesuai prototype.
+3. Menggunakan token warna/huruf/radius dari `app/globals.css` dan memastikan kontras teks di atas latar hijau.
+4. Mengintegrasikan aset `hubungi-kami.svg`, `panah-atas.svg`, `panah-bawah.svg` pada tombol dan indikator expand/collapse.
+5. Mengisi daftar pertanyaan/jawaban dummy sesuai domain Setorin.
+
+### Result
+
+Halaman `/faq` siap dipakai, konsisten dengan UI kit dan responsif di 390–430px. Accordion bekerja dengan baik dan ramah aksesibilitas.

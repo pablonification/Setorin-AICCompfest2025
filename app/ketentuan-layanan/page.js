@@ -11,12 +11,12 @@ export default function KetentuanLayananPage() {
       <main className="px-6 pt-6 pb-28 text-[var(--color-primary-700)]">
         {/* Logo */}
         <div className="mx-auto mt-2 mb-6 w-max">
-          <img src="/tentang-kami/setorin-logo.svg" alt="Setor.in" className="h-16" />
+          <img src="/tentang-kami/setorin-logo.svg" alt="Setorin" className="h-16" />
         </div>
 
         {/* Introduction */}
         <div className="mb-6">
-          <h1 className="text-center text-lg font-semibold mb-4">Ketentuan Layanan Setor.in</h1>
+          <h1 className="text-center text-lg font-semibold mb-4">Ketentuan Layanan Setorin</h1>
           <p className="text-center text-sm leading-6 text-[color:var(--color-muted)]">
             Terakhir diperbarui: {new Date().toLocaleDateString('id-ID')}
           </p>
@@ -28,7 +28,7 @@ export default function KetentuanLayananPage() {
           <section>
             <h2 className="font-semibold mb-2">1. Penerimaan Ketentuan</h2>
             <p className="text-[color:var(--color-muted)]">
-              Dengan mengakses dan menggunakan aplikasi Setor.in, Anda menyetujui dan terikat oleh Ketentuan Layanan ini. Jika Anda tidak menyetujui ketentuan ini, mohon untuk tidak menggunakan layanan kami.
+              Dengan mengakses dan menggunakan aplikasi Setorin, Anda menyetujui dan terikat oleh Ketentuan Layanan ini. Jika Anda tidak menyetujui ketentuan ini, mohon untuk tidak menggunakan layanan kami.
             </p>
           </section>
 
@@ -36,7 +36,7 @@ export default function KetentuanLayananPage() {
           <section>
             <h2 className="font-semibold mb-2">2. Deskripsi Layanan</h2>
             <p className="text-[color:var(--color-muted)] mb-2">
-              Setor.in adalah platform ekosistem yang membantu Anda mengubah sampah terpilah menjadi aset bernilai melalui:
+              Setorin adalah platform ekosistem yang membantu Anda mengubah sampah terpilah menjadi aset bernilai melalui:
             </p>
             <ul className="list-disc list-inside text-[color:var(--color-muted)] space-y-1 ml-2">
               <li>Pengumpulan sampah terpilah</li>
@@ -70,7 +70,7 @@ export default function KetentuanLayananPage() {
               <li>Donasi untuk program lingkungan</li>
             </ul>
             <p className="text-[color:var(--color-muted)] mt-2">
-              Points memiliki masa berlaku dan dapat berubah berdasarkan kebijakan Setor.in.
+              Points memiliki masa berlaku dan dapat berubah berdasarkan kebijakan Setorin.
             </p>
           </section>
 
@@ -86,7 +86,7 @@ export default function KetentuanLayananPage() {
           <section>
             <h2 className="font-semibold mb-2">6. Batasan Tanggung Jawab</h2>
             <p className="text-[color:var(--color-muted)]">
-              Setor.in tidak bertanggung jawab atas kerugian yang timbul dari penggunaan layanan ini, termasuk namun tidak terbatas pada kerusakan, kehilangan, atau gangguan layanan.
+              Setorin tidak bertanggung jawab atas kerugian yang timbul dari penggunaan layanan ini, termasuk namun tidak terbatas pada kerusakan, kehilangan, atau gangguan layanan.
             </p>
           </section>
 
@@ -94,7 +94,7 @@ export default function KetentuanLayananPage() {
           <section>
             <h2 className="font-semibold mb-2">7. Perubahan Layanan</h2>
             <p className="text-[color:var(--color-muted)]">
-              Setor.in berhak mengubah, menangguhkan, atau menghentikan layanan kapan saja tanpa pemberitahuan sebelumnya. Kami akan berupaya memberikan pemberitahuan kepada pengguna tentang perubahan signifikan.
+              Setorin berhak mengubah, menangguhkan, atau menghentikan layanan kapan saja tanpa pemberitahuan sebelumnya. Kami akan berupaya memberikan pemberitahuan kepada pengguna tentang perubahan signifikan.
             </p>
           </section>
 
@@ -122,7 +122,7 @@ export default function KetentuanLayananPage() {
         {/* Footer */}
         <div className="mt-8 text-center">
           <p className="text-xs text-[color:var(--color-muted)]">
-            Terima kasih telah menggunakan Setor.in untuk berkontribusi dalam menjaga lingkungan.
+            Terima kasih telah menggunakan Setorin untuk berkontribusi dalam menjaga lingkungan.
           </p>
         </div>
       </main>

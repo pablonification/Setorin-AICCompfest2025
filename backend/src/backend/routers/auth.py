@@ -11,7 +11,7 @@ import jwt
 from ..core.config import get_settings
 from ..models.user import User
 from ..db.mongo import ensure_connection
-from ..schemas.auth import GoogleAuthResponse, TokenResponse, UserResponse
+from ..schemas.auth import GoogleAuthResponse, TokenResponse, UserResponse, ProfileUpdateRequest
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 security = HTTPBearer()
@@ -197,7 +197,11 @@ async def get_current_user(payload: dict = Depends(verify_token)):
         photo_url=user.get("photo_url"),
         points=user.get("points", 0),
         role=user.get("role", "user"),
-        tier=user.get("tier")
+        tier=user.get("tier"),
+        phone=user.get("phone"),
+        birthdate=user.get("birthdate"),
+        city=user.get("city"),
+        gender=user.get("gender")
     )
 
 
@@ -208,8 +212,71 @@ async def refresh_token(payload: dict = Depends(verify_token)):
     access_token = create_access_token(
         data={"sub": payload["sub"], "email": payload["email"], "role": payload.get("role", "user")}
     )
-    
+
     return TokenResponse(
         access_token=access_token,
         token_type="bearer"
+    )
+
+
+@router.put("/profile", response_model=UserResponse)
+async def update_profile(
+    profile_data: ProfileUpdateRequest,
+    payload: dict = Depends(verify_token)
+):
+    """Update current user's profile"""
+    from bson import ObjectId
+
+    db = await ensure_connection()
+    users_collection = db.users
+
+    # Convert string ObjectId to ObjectId object
+    user_id = ObjectId(payload["sub"])
+
+    # Check if user exists
+    existing_user = await users_collection.find_one({"_id": user_id})
+    if not existing_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Prepare update data
+    update_data = {
+        "name": profile_data.name,
+        "email": profile_data.email,
+    }
+
+    # Add optional fields if provided
+    if profile_data.phone is not None:
+        update_data["phone"] = profile_data.phone
+    if profile_data.birthdate is not None:
+        update_data["birthdate"] = profile_data.birthdate
+    if profile_data.city is not None:
+        update_data["city"] = profile_data.city
+    if profile_data.gender is not None:
+        update_data["gender"] = profile_data.gender
+
+    # Update user in database
+    result = await users_collection.update_one(
+        {"_id": user_id},
+        {"$set": update_data}
+    )
+
+    if result.modified_count == 0:
+        raise HTTPException(status_code=500, detail="Failed to update profile")
+
+    # Fetch updated user data
+    updated_user = await users_collection.find_one({"_id": user_id})
+
+    # Return updated user response
+    return UserResponse(
+        id=str(updated_user["_id"]),
+        email=updated_user["email"],
+        name=updated_user.get("name", ""),
+        photo_url=updated_user.get("photo_url"),
+        points=updated_user.get("points", 0),
+        role=updated_user.get("role", "user"),
+        tier=updated_user.get("tier"),
+        phone=updated_user.get("phone"),
+        birthdate=updated_user.get("birthdate"),
+        city=updated_user.get("city"),
+        gender=updated_user.get("gender")
     )
