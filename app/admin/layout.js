@@ -7,16 +7,14 @@ export default function AdminLayout({ children }) {
 	return (
 		<AdminRoute>
 			<div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
-				<div className="mx-auto max-w-[1200px]">
-					<div className="flex">
-						<AdminSidebar />
-						<main className="flex-1 min-h-screen">
-							<div className="px-4 md:px-8 pt-4 pb-10">
-								{children}
-							</div>
-						</main>
+				{/* Fixed left sidebar */}
+				<AdminSidebar />
+				{/* Content area with left padding to avoid overlapping the fixed sidebar */}
+				<main className="min-h-screen md:pl-64">
+					<div className="mx-auto w-full max-w-[1200px] px-4 md:px-8 pt-4 pb-10">
+						{children}
 					</div>
-				</div>
+				</main>
 			</div>
 		</AdminRoute>
 	);

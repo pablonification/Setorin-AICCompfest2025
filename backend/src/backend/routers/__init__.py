@@ -1,4 +1,4 @@
-from . import health, scan, ws, auth, notification, statistics, educational, transactions, esp32  # , rag
+from . import health, scan, ws, auth, notification, statistics, educational, transactions, esp32, qr_code  # , rag
 
 __all__ = [
     "health",
@@ -10,5 +10,6 @@ __all__ = [
     "educational",
     "transactions",
     "esp32",
+    "qr_code",
     # "rag",
 ]

@@ -3,17 +3,18 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { 
-  FiUsers, 
-  FiDollarSign, 
-  FiBell, 
-  FiBookOpen, 
-  FiActivity, 
-  FiDownload, 
-  FiTrendingUp, 
-  FiSettings, 
-  FiShield 
+import {
+  FiUsers,
+  FiDollarSign,
+  FiBell,
+  FiBookOpen,
+  FiActivity,
+  FiDownload,
+  FiTrendingUp,
+  FiSettings,
+  FiShield
 } from 'react-icons/fi';
+import { RiQrCodeLine } from 'react-icons/ri';
 import AdminRoute from '../components/AdminRoute';
 
 export default function AdminPage() {
@@ -27,7 +28,10 @@ export default function AdminPage() {
     totalPoints: 0,
     pendingWithdrawals: 0,
     totalWithdrawals: 0,
-    activeConnections: 0
+    activeConnections: 0,
+    totalQrCodes: -1,
+    activeQrCodes: 0,
+    expiredQrCodes: 0
   });
   const apiBase = process.env.NEXT_PUBLIC_BROWSER_API_URL || 'http://localhost:8000';
 
@@ -43,7 +47,7 @@ export default function AdminPage() {
     try {
       setLoading(true);
       // Fetch various statistics
-      const [usersResp, scansResp, withdrawalsResp, wsResp] = await Promise.all([
+      const requests = [
         fetch(`${apiBase}/admin/users/count`, {
           headers: { 'Authorization': `Bearer ${token}` },
         }),
@@ -56,13 +60,28 @@ export default function AdminPage() {
         fetch(`${apiBase}/ws/status`, {
           headers: { 'Authorization': `Bearer ${token}` },
         })
-      ]);
+      ];
+
+      // Add QR stats request only if the endpoint might be available
+      let qrResp = null;
+      try {
+        qrResp = await fetch(`${apiBase}/api/qr/stats`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+      } catch (error) {
+        console.warn('QR stats endpoint not available:', error.message);
+      }
+
+      const [usersResp, scansResp, withdrawalsResp, wsResp] = await Promise.all(requests);
 
       let totalUsers = 0;
       let totalScans = 0;
       let totalPoints = 0;
       let pendingWithdrawals = 0;
       let activeConnections = 0;
+      let totalQrCodes = 0;
+      let activeQrCodes = 0;
+      let expiredQrCodes = 0;
 
       if (usersResp.ok) {
         const usersData = await usersResp.json();
@@ -85,13 +104,25 @@ export default function AdminPage() {
         activeConnections = wsData.total_connections || 0;
       }
 
+      if (qrResp && qrResp.ok) {
+        const qrData = await qrResp.json();
+        totalQrCodes = qrData.total_qr_codes || 0;
+        activeQrCodes = qrData.active_qr_codes || 0;
+        expiredQrCodes = qrData.expired_qr_codes || 0;
+      } else if (qrResp && !qrResp.ok) {
+        console.warn('QR stats endpoint not available:', qrResp.status);
+      }
+
       setStats({
         totalUsers,
         totalScans,
         totalPoints,
         pendingWithdrawals,
         totalWithdrawals: pendingWithdrawals, // Simplified for now
-        activeConnections
+        activeConnections,
+        totalQrCodes,
+        activeQrCodes,
+        expiredQrCodes
       });
     } catch (e) {
       console.error('Failed to fetch dashboard stats:', e);
@@ -103,7 +134,7 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading admin dashboard...</p>
@@ -115,12 +146,12 @@ export default function AdminPage() {
   return (
     <AdminRoute>
       <div className="min-h-screen">
-        <div className="max-w-[1000px] mx-auto">
+        <div className="max-w-7xl mx-auto px-4 py-8">
           {/* Page header */}
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-6">
             <div>
-              <h1 className="text-[22px] leading-7 font-semibold text-[var(--foreground)]">Admin Dashboard</h1>
-              <p className="text-[12px] leading-4 text-[color:var(--color-muted)] mt-1">Manage your Setorin system and monitor performance</p>
+              <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+              <p className="text-gray-600 mt-2">Manage your Setorin system and monitor performance</p>
             </div>
           </div>
 
@@ -203,6 +234,21 @@ export default function AdminPage() {
                 </div>
               </div>
             </div>
+
+            {stats.totalQrCodes >= 0 && (
+              <div className="bg-[var(--color-card)] rounded-[var(--radius-md)] [box-shadow:var(--shadow-card)] p-5">
+                <div className="flex items-center">
+                  <div className="p-2 bg-teal-100 rounded-[var(--radius-sm)]">
+                    <RiQrCodeLine className="h-6 w-6 text-teal-600" />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-[12px] leading-4 text-[color:var(--color-muted)]">Active QR Codes</p>
+                    <p className="text-[20px] leading-[1.75] font-semibold text-[var(--foreground)]">{stats.activeQrCodes}</p>
+                    <p className="text-[10px] leading-3 text-[color:var(--color-muted)]">{stats.totalQrCodes} total, {stats.expiredQrCodes} expired</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Quick Actions */}
@@ -215,6 +261,15 @@ export default function AdminPage() {
               >
                 Process Withdrawals
               </button>
+              {stats.totalQrCodes >= 0 && (
+                <button
+                  onClick={() => router.push('/admin/qr-codes')}
+                  className="px-4 py-2 bg-teal-600 text-white rounded-[var(--radius-sm)] hover:opacity-90 transition-colors flex items-center gap-2"
+                >
+                  <RiQrCodeLine className="h-4 w-4" />
+                  Manage QR Codes
+                </button>
+              )}
               <button
                 onClick={() => router.push('/admin/export')}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-[var(--radius-sm)] hover:opacity-90 transition-colors"

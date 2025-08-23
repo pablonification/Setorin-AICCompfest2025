@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import ProtectedRoute from '../components/ProtectedRoute';
 import MobileScanResult from '../components/MobileScanResult';
 import TopBar from '../components/TopBar';
+import jsQR from 'jsqr';
 
 export default function ScanPage() {
   const { user, token, logout, updateUser } = useAuth();
@@ -17,9 +18,17 @@ export default function ScanPage() {
   const [isScanning, setIsScanning] = useState(false);
   const [cameraStream, setCameraStream] = useState(null);
   const [capturedImage, setCapturedImage] = useState(null);
-  
+
+  // QR code related states
+  const [isScanningQR, setIsScanningQR] = useState(true); // Start with QR scanning
+  const [qrValidated, setQrValidated] = useState(false);
+  const [isLoadingAfterQR, setIsLoadingAfterQR] = useState(false);
+  const [qrScanInterval, setQrScanInterval] = useState(null);
+  const [qrValidationInProgress, setQrValidationInProgress] = useState(false);
+
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const qrCanvasRef = useRef(null); // Canvas for QR code scanning
   const attemptedAutoStartRef = useRef(false);
   const cameraStreamRef = useRef(null); // Store camera stream reference for cleanup
 
@@ -92,6 +101,12 @@ export default function ScanPage() {
     return () => {
       console.log('ScanPage: Starting component cleanup...');
 
+      // Clear QR scan interval
+      if (qrScanInterval) {
+        clearInterval(qrScanInterval);
+        setQrScanInterval(null);
+      }
+
       // Stop camera tracks directly using ref
       if (cameraStreamRef.current) {
         cameraStreamRef.current.getTracks().forEach(track => {
@@ -117,12 +132,16 @@ export default function ScanPage() {
       setCameraStream(null);
       setCapturedImage(null);
       setIsScanning(false);
+      setIsScanningQR(true);
+      setQrValidated(false);
+      setIsLoadingAfterQR(false);
+      setQrValidationInProgress(false);
       setStatus('Camera stopped');
       attemptedAutoStartRef.current = false; // Reset auto-start flag
 
       console.log('ScanPage: Component cleanup completed');
     };
-  }, []); // Empty dependency array means this runs on mount/unmount only
+  }, [qrScanInterval]); // Include qrScanInterval in dependencies
 
   // Additional cleanup for browser navigation events
   useEffect(() => {
@@ -164,24 +183,114 @@ export default function ScanPage() {
         if (navigator.permissions && navigator.permissions.query) {
           const permission = await navigator.permissions.query({ name: 'camera' });
           console.log('Camera permission state:', permission.state);
-          
+
           if (permission.state === 'denied') {
             setStatus('Camera permission denied - please allow in browser settings');
           }
         }
-        
+
         // List available devices
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter(device => device.kind === 'videoinput');
         console.log('Available video devices:', videoDevices.length);
-        
+
       } catch (error) {
         console.error('Error checking camera permissions:', error);
       }
     };
-    
+
     checkCameraPermissions();
   }, []);
+
+  // QR Code scanning function
+  const scanQRCode = async () => {
+    if (!videoRef.current || !qrCanvasRef.current || !isScanningQR || qrValidationInProgress) return;
+
+    const video = videoRef.current;
+    const canvas = qrCanvasRef.current;
+    const context = canvas.getContext('2d');
+
+    if (video.readyState < 2 || video.videoWidth === 0 || video.videoHeight === 0) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+    if (code) {
+      console.log('QR Code detected:', code.data);
+      setQrValidationInProgress(true);
+
+      // Validate QR code with server
+      try {
+        const validationResult = await validateQRCode(code.data);
+
+        if (validationResult.valid) {
+          console.log('Correct QR code validated!');
+          setIsScanningQR(false);
+          setQrValidated(true);
+          setIsLoadingAfterQR(true);
+          setStatus('QR code validated! Loading...');
+
+          // Show loading for 1 second, then show shutter button
+          setTimeout(() => {
+            setIsLoadingAfterQR(false);
+            setStatus('Ready to scan bottle');
+          }, 1000);
+        } else {
+          console.log('Invalid QR code detected:', validationResult.reason);
+          setStatus(`Invalid QR code: ${validationResult.reason}`);
+          // Reset status after 2 seconds
+          setTimeout(() => {
+            setStatus('Ready');
+          }, 2000);
+        }
+      } catch (error) {
+        console.error('QR code validation error:', error);
+        setStatus('Failed to validate QR code. Please try again.');
+        setTimeout(() => {
+          setStatus('Ready');
+        }, 2000);
+      } finally {
+        setQrValidationInProgress(false);
+      }
+    }
+  };
+
+  // Validate QR code with server
+  const validateQRCode = async (scannedToken) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BROWSER_API_URL || 'http://localhost:8000'}/api/qr/validate?token=${encodeURIComponent(scannedToken)}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Failed to validate QR code:', error);
+      return { valid: false, reason: 'Network error' };
+    }
+  };
+
+  // Start QR code scanning when camera is ready
+  useEffect(() => {
+    if (cameraStream && isScanningQR && !qrValidated) {
+      const interval = setInterval(scanQRCode, 500); // Scan every 500ms
+      setQrScanInterval(interval);
+
+      return () => {
+        clearInterval(interval);
+        setQrScanInterval(null);
+      };
+    }
+  }, [cameraStream, isScanningQR, qrValidated]);
 
   // WebSocket connection for real-time updates
   useEffect(() => {
@@ -585,7 +694,27 @@ export default function ScanPage() {
               >
                 Nyalakan Kamera
               </button>
-            ) : (
+            ) : isScanningQR ? (
+              <div className="flex flex-col items-center space-y-4">
+                <div className="text-center">
+                  <div className={`w-24 h-24 rounded-full border-4 border-t-transparent animate-spin ${
+                    qrValidationInProgress
+                      ? 'border-yellow-500'
+                      : 'border-[var(--color-primary-600)]'
+                  }`}></div>
+                  <p className="mt-2 text-sm text-[var(--color-muted)]">
+                    {qrValidationInProgress ? 'Validating QR Code...' : 'Scan QR Code'}
+                  </p>
+                </div>
+              </div>
+            ) : isLoadingAfterQR ? (
+              <div className="flex flex-col items-center space-y-4">
+                <div className="text-center">
+                  <div className="w-24 h-24 rounded-full border-4 border-[var(--color-primary-600)] border-t-transparent animate-spin"></div>
+                  <p className="mt-2 text-sm text-[var(--color-muted)]">Loading...</p>
+                </div>
+              </div>
+            ) : qrValidated ? (
               <button
                 onClick={captureAndScan}
                 disabled={isScanning}
@@ -595,7 +724,7 @@ export default function ScanPage() {
               >
                 <img src="/shutter.svg" alt="Shutter" className="w-12 h-12 select-none" draggable="false" />
               </button>
-            )}
+            ) : null}
           </div>
 
           {cameraStream && (
@@ -614,6 +743,9 @@ export default function ScanPage() {
 
         {/* Hidden canvas for image capture */}
         <canvas ref={canvasRef} className="hidden" />
+
+        {/* Hidden canvas for QR code scanning */}
+        <canvas ref={qrCanvasRef} className="hidden" />
       </div>
     </ProtectedRoute>
   );

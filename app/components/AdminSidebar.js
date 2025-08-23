@@ -16,6 +16,7 @@ import {
 	FiX,
 	FiLogOut
 } from 'react-icons/fi';
+import { RiQrCodeLine } from 'react-icons/ri';
 
 const navItems = [
 	{ title: 'Dashboard', href: '/admin', icon: FiHome },
@@ -24,7 +25,8 @@ const navItems = [
 	{ title: 'Education', href: '/admin/education', icon: FiBookOpen },
 	{ title: 'Monitoring', href: '/admin/monitoring', icon: FiActivity },
 	{ title: 'Export', href: '/admin/export', icon: FiDownload },
-	{ title: 'Settings', href: '/admin/settings', icon: FiSettings }
+	{ title: 'QR Codes', href: '/admin/qr-codes', icon: RiQrCodeLine },
+
 ];
 
 export default function AdminSidebar() {
@@ -119,8 +121,8 @@ export default function AdminSidebar() {
 				</div>
 			</div>
 
-			{/* Desktop sidebar */}
-			<aside className="hidden md:flex md:flex-col md:w-64 md:shrink-0 md:sticky md:top-0 md:h-screen bg-[var(--color-card)] [box-shadow:var(--shadow-card)]">
+			{/* Desktop sidebar (fixed to the very left) */}
+			<aside className="hidden md:block fixed left-0 top-0 h-screen w-64 bg-[var(--color-card)] [box-shadow:var(--shadow-card)] z-30">
 				<SidebarContents />
 			</aside>
 

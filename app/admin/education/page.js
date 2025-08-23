@@ -183,17 +183,10 @@ export default function AdminEducation() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-6">
-          <button
-            onClick={() => router.push('/admin')}
-            className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4"
-          >
-            <FiArrowLeft className="mr-2" />
-            Back to Dashboard
-          </button>
           <h1 className="text-3xl font-bold text-gray-900">Educational Content Management</h1>
           <p className="text-gray-600 mt-2">Create, edit, and manage educational materials for users</p>
         </div>
