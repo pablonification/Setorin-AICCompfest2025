@@ -475,10 +475,25 @@ export default function ScanPage() {
                 },
               });
 
-              const validationResult = await response.json();
-              console.log('📡 QR validation result:', validationResult);
+              let validationResult = {};
+              try {
+                validationResult = await response.json();
+              } catch (_) {
+                validationResult = {};
+              }
+              console.log('📡 QR validation result:', validationResult, 'status:', response.status);
 
               if (!mountedRef.current) return;
+
+              if (!response.ok) {
+                const reason = validationResult.reason || validationResult.detail || validationResult.message || `Server error: ${response.status}`;
+                console.log('❌ QR validation server error:', reason);
+                setStatus(`Invalid QR code: ${reason}`);
+                setTimeout(() => {
+                  if (mountedRef.current) setStatus('Scan QR code on SmartBin');
+                }, 2000);
+                return;
+              }
 
               if (validationResult.valid) {
                 console.log('✅ Correct QR code validated!');
@@ -494,8 +509,9 @@ export default function ScanPage() {
                   }
                 }, 1000);
               } else {
-                console.log('❌ Invalid QR code detected:', validationResult.reason);
-                setStatus(`Invalid QR code: ${validationResult.reason}`);
+                const reason = validationResult.reason || validationResult.detail || validationResult.message || 'Invalid';
+                console.log('❌ Invalid QR code detected:', reason);
+                setStatus(`Invalid QR code: ${reason}`);
                 setTimeout(() => {
                   if (mountedRef.current) {
                     setStatus('Scan QR code on SmartBin');
@@ -823,9 +839,17 @@ export default function ScanPage() {
           'Content-Type': 'application/json',
         },
       });
-      const validationResult = await resp.json();
+      let validationResult = {};
+      try { validationResult = await resp.json(); } catch (_) { validationResult = {}; }
 
       if (!mountedRef.current) return;
+
+      if (!resp.ok) {
+        const reason = validationResult.reason || validationResult.detail || validationResult.message || `Server error: ${resp.status}`;
+        setStatus(`Invalid QR code: ${reason}`);
+        setTimeout(() => mountedRef.current && setStatus('Camera ready'), 1500);
+        return;
+      }
 
       if (validationResult?.valid) {
         setIsScanningQR(false);
@@ -839,7 +863,7 @@ export default function ScanPage() {
           }
         }, 800);
       } else {
-        const reason = validationResult?.reason || 'Invalid QR';
+        const reason = validationResult?.reason || validationResult?.detail || validationResult?.message || 'Invalid QR';
         setStatus(`Invalid QR code: ${reason}`);
         setTimeout(() => mountedRef.current && setStatus('Camera ready'), 1500);
       }
