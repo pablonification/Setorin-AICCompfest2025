@@ -45,7 +45,7 @@ export default function HomePage() {
         </div>
       </div>
       {/* Main content with safe area padding */}
-      <div className="px-4 pb-24 pt-4 space-y-4">
+      <div className="px-4 pb-32 pt-4 space-y-4">
         <HeroCarousel />
         <HistoryList />
       </div>

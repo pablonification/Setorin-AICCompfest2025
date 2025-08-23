@@ -9,6 +9,7 @@ import { makeAuthenticatedRequest } from "../utils/auth";
 import SectionHeader from "../components/SectionHeader";
 import SettingsRow from "../components/SettingsRow";
 import HeaderBar from "../components/HeaderBar";
+import ChatFab from "../components/ChatFab";
 import {
   BiArrowToTop,
   BiBeer,
@@ -521,7 +522,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Content */}
-      <div className="px-4 pb-24 pt-4 space-y-6">
+      <div className="px-4 pb-32 pt-4 space-y-6">
         <StatisticsSection user={auth?.user} />
 
         {/* <div className="rounded-[16px] bg-white [box-shadow:var(--shadow-card)] p-4">
@@ -557,6 +558,9 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+      
+      {/* ChatFab */}
+      <ChatFab />
     </div>
   );
 }

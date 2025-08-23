@@ -3,6 +3,7 @@ import "./globals.css";
 import { AuthProvider } from "./contexts/AuthContext";
 import AuthDebugger from "./components/AuthDebugger";
 import BottomNav from "./components/BottomNav";
+import MobileOnlyGuard from './components/MobileOnlyGuard';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Setorin - Smart Recycling System",
-  description: "Recycle plastic bottles and earn rewards with AI-powered validation",
+  title: "Setorin - Smart Waste Management",
+  description: "Aplikasi pintar untuk mengelola sampah plastik dengan teknologi AI",
 };
 
 export default function RootLayout({ children }) {
@@ -26,9 +27,11 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased font-inter`}
       >
         <AuthProvider>
-          {children}
-          {/* <AuthDebugger /> */}
-          <BottomNav />
+          <MobileOnlyGuard>
+            {children}
+            {/* <AuthDebugger /> */}
+            <BottomNav />
+          </MobileOnlyGuard>
         </AuthProvider>
       </body>
     </html>

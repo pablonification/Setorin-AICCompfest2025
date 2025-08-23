@@ -1146,8 +1146,7 @@ export default function ScanPage() {
               // Show processing state
               <div className="flex flex-col items-center space-y-4 w-full">
                 <div className="text-center">
-                  <div className="w-20 h-20 rounded-full border-4 border-[var(--color-primary-600)] border-t-transparent animate-spin mx-auto"></div>
-                  <p className="mt-3 text-sm text-[var(--color-muted)]">
+                  <p className="text-sm text-[var(--color-muted)]">
                     Memproses gambar botol...
                   </p>
                   <p className="text-xs text-[var(--color-muted)] mt-1">
