@@ -125,7 +125,7 @@ export default function ScanPage() {
     if (result && mountedRef.current) {
       console.log('🎯 Result received, ensuring navigation...');
       
-      // Clear all loading states
+      // Clear all loading states immediately
       setIsScanning(false);
       setIsScanningQR(false);
       setQrValidated(false);
@@ -135,13 +135,21 @@ export default function ScanPage() {
       // Set completion status
       setStatus('Scan completed successfully!');
       
+      // Store result in localStorage for result page
+      try {
+        localStorage.setItem('smartbin_last_scan', JSON.stringify(result));
+        localStorage.setItem('smartbin_scan_processing', '0');
+      } catch (e) {
+        console.warn('LocalStorage not available:', e);
+      }
+      
       // Navigate to result page if not already there
       setTimeout(() => {
         if (mountedRef.current && window.location.pathname === '/scan') {
           console.log('🚀 Navigating to result page from result monitor...');
           router.push('/scan/result');
         }
-      }, 500);
+      }, 800);
     }
   }, [result, router]);
 
@@ -651,49 +659,54 @@ export default function ScanPage() {
         if (msg.type === 'scan_result') {
           console.log('✅ Scan result received via WebSocket:', msg.data);
           
-          // Clear all loading and scanning states immediately
-          setIsScanning(false);
-          setIsScanningQR(false);
-          setQrValidated(false);
-          setIsLoadingAfterQR(false);
-          
-          // Set the result
-          setResult(msg.data);
-          
-          // Update user points if available
-          if (msg.data && user) {
-            const current = user?.points ?? 0;
-            const totalFromServer = typeof msg.data.total_points === 'number' ? msg.data.total_points : null;
-            const awarded = typeof msg.data.points === 'number' ? msg.data.points : (
-              typeof msg.data.points_awarded === 'number' ? msg.data.points_awarded : null
-            );
-            let candidate = current;
-            if (totalFromServer !== null) candidate = Math.max(candidate, totalFromServer);
-            if (awarded !== null) candidate = Math.max(candidate, current + awarded);
-            if (candidate > current) {
-              console.log('Optimistic WS points update:', { current, totalFromServer, awarded, candidate });
-              updateUser({ ...user, points: candidate });
+          // Only process WebSocket result if we don't already have a manual result
+          if (!result) {
+            // Clear all loading and scanning states immediately
+            setIsScanning(false);
+            setIsScanningQR(false);
+            setQrValidated(false);
+            setIsLoadingAfterQR(false);
+            
+            // Set the result
+            setResult(msg.data);
+            
+            // Update user points if available
+            if (msg.data && user) {
+              const current = user?.points ?? 0;
+              const totalFromServer = typeof msg.data.total_points === 'number' ? msg.data.total_points : null;
+              const awarded = typeof msg.data.points === 'number' ? msg.data.points : (
+                typeof msg.data.points_awarded === 'number' ? msg.data.points_awarded : null
+              );
+              let candidate = current;
+              if (totalFromServer !== null) candidate = Math.max(candidate, totalFromServer);
+              if (awarded !== null) candidate = Math.max(candidate, current + awarded);
+              if (candidate > current) {
+                console.log('Optimistic WS points update:', { current, totalFromServer, awarded, candidate });
+                updateUser({ ...user, points: candidate });
+              }
             }
-          }
-          
-          // Set completion status
-          setStatus('Scan completed successfully!');
-          
-          // Persist result for result page to read
-          try {
-            localStorage.setItem('smartbin_last_scan', JSON.stringify(msg.data));
-            localStorage.setItem('smartbin_scan_processing', '0');
-          } catch (e) {
-            console.warn('LocalStorage not available:', e);
-          }
+            
+            // Set completion status
+            setStatus('Scan completed successfully!');
+            
+            // Persist result for result page to read
+            try {
+              localStorage.setItem('smartbin_last_scan', JSON.stringify(msg.data));
+              localStorage.setItem('smartbin_scan_processing', '0');
+            } catch (e) {
+              console.warn('LocalStorage not available:', e);
+            }
 
-          // Navigate to result page after successful scan with proper delay
-          setTimeout(() => {
-            if (mountedRef.current) {
-              console.log('🚀 Navigating to result page...');
-              router.push('/scan/result');
-            }
-          }, 1000); // Increased delay to ensure state is properly updated
+            // Navigate to result page after successful scan with proper delay
+            setTimeout(() => {
+              if (mountedRef.current) {
+                console.log('🚀 Navigating to result page from WebSocket...');
+                router.push('/scan/result');
+              }
+            }, 1000); // Increased delay to ensure state is properly updated
+          } else {
+            console.log('⚠️ WebSocket result received but manual result already exists, skipping...');
+          }
         }
       } catch (error) {
         console.error('Error parsing WebSocket message:', error);
@@ -719,7 +732,7 @@ export default function ScanPage() {
         ws.close();
       }
     };
-  }, [token, updateUser, user, router]);
+  }, [token, updateUser, user, router, result]);
 
   const stopCamera = useCallback(() => {
     cleanupCamera();
@@ -773,24 +786,14 @@ export default function ScanPage() {
       setIsScanning(true);
       setStatus('Processing image...');
       
-      // Set a timeout to prevent getting stuck
-      const scanTimeout = setTimeout(() => {
-        if (mountedRef.current && isScanning) {
-          console.warn('⚠️ Scan timeout reached, resetting state...');
-          setIsScanning(false);
-          setStatus('Scan timeout - please try again');
-        }
-      }, 30000); // 30 second timeout
+      // Clear any existing result to prevent conflicts
+      setResult(null);
       
       // Navigate to result screen immediately
-      
       router.push('/scan/result');
       
       // Continue processing in background
       await scanWithBlob(blob);
-      
-      // Clear timeout if scan completes successfully
-      clearTimeout(scanTimeout);
       
     } catch (error) {
       console.error('Capture error:', error);
@@ -825,10 +828,10 @@ export default function ScanPage() {
       
       if (!mountedRef.current) return;
       
-      // Only update result if we haven't already received one via WebSocket
-      if (!result) {
-        setResult(data);
-      }
+      // Always update result and clear loading states
+      setResult(data);
+      setIsScanning(false);
+      setStatus('Scan completed successfully!');
       
       try {
         localStorage.setItem('smartbin_last_scan', JSON.stringify(data));
@@ -853,12 +856,13 @@ export default function ScanPage() {
         }
       }
       
-      // Clear scanning state
-      setIsScanning(false);
-      setStatus('Scan completed');
-      
-      // Note: Navigation is already handled in captureAndScan
-      // No need to navigate again here
+      // Force navigation to result page after successful scan
+      setTimeout(() => {
+        if (mountedRef.current && window.location.pathname === '/scan') {
+          console.log('🚀 Navigating to result page from manual scan...');
+          router.push('/scan/result');
+        }
+      }, 500);
       
     } catch (error) {
       console.error('Scan error:', error);
@@ -990,6 +994,64 @@ export default function ScanPage() {
       mountedRef.current && setStatus('QR scan failed. Try again.');
     }
   }, [token]);
+
+  // Fallback mechanism to prevent getting stuck in loading state
+  useEffect(() => {
+    if (isScanning && mountedRef.current) {
+      const fallbackTimeout = setTimeout(() => {
+        if (mountedRef.current && isScanning) {
+          console.warn('⚠️ Fallback: Scan stuck in loading state, checking for result...');
+          
+          // Check if we have a result in localStorage
+          try {
+            const storedResult = localStorage.getItem('smartbin_last_scan');
+            const processing = localStorage.getItem('smartbin_scan_processing');
+            
+            if (storedResult && processing === '0') {
+              console.log('🔄 Fallback: Found stored result, updating state...');
+              const parsedResult = JSON.parse(storedResult);
+              setResult(parsedResult);
+              setIsScanning(false);
+              setStatus('Scan completed (fallback)');
+              
+              // Navigate to result page
+              setTimeout(() => {
+                if (mountedRef.current && window.location.pathname === '/scan') {
+                  console.log('🚀 Fallback navigation to result page...');
+                  router.push('/scan/result');
+                }
+              }, 500);
+            } else {
+              console.warn('⚠️ Fallback: No stored result found, resetting scan state...');
+              setIsScanning(false);
+              setStatus('Scan timeout - please try again');
+            }
+          } catch (e) {
+            console.error('Fallback error:', e);
+            setIsScanning(false);
+            setStatus('Scan error - please try again');
+          }
+        }
+      }, 15000); // 15 second fallback
+      
+      return () => clearTimeout(fallbackTimeout);
+    }
+  }, [isScanning, router]);
+
+  // Aggressive navigation check to prevent getting stuck
+  useEffect(() => {
+    if (result && mountedRef.current) {
+      const navigationCheck = setInterval(() => {
+        if (mountedRef.current && window.location.pathname === '/scan' && result) {
+          console.log('🔄 Navigation check: Still on scan page with result, forcing navigation...');
+          router.push('/scan/result');
+          clearInterval(navigationCheck);
+        }
+      }, 2000); // Check every 2 seconds
+      
+      return () => clearInterval(navigationCheck);
+    }
+  }, [result, router]);
 
   return (
     <ProtectedRoute userOnly={true}>
