@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
+import os
 
 from .routers import health, scan, ws, auth, notification, statistics, educational, transactions
 from .routers.payout import router as payout_router
@@ -36,16 +37,29 @@ app = FastAPI(lifespan=lifespan)
 Path("debug_images").mkdir(exist_ok=True)
 
 # Add CORS middleware
+# Build CORS allowed origins list from defaults plus environment overrides
+default_allowed_origins = [
+    "http://localhost:3000",  # Frontend dev
+    "http://127.0.0.1:3000",  # Frontend dev alternative
+    "http://localhost:8081",  # RAG test frontend
+    "http://127.0.0.1:8081",  # RAG test frontend alternative
+    "http://smartbin-frontend:3000",  # Frontend container
+    "http://smartbin-frontend:8081",  # RAG frontend container
+]
+
+extra_allowed = []
+env_single = os.getenv("ALLOWED_ORIGIN")
+env_multi = os.getenv("ALLOWED_ORIGINS")
+if env_single:
+    extra_allowed.append(env_single)
+if env_multi:
+    extra_allowed.extend([o.strip() for o in env_multi.split(",") if o.strip()])
+
+allow_origins = [o for o in (default_allowed_origins + extra_allowed) if o]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # Frontend dev
-        "http://127.0.0.1:3000",  # Frontend dev alternative
-        "http://localhost:8081",   # RAG test frontend
-        "http://127.0.0.1:8081",  # RAG test frontend alternative
-        "http://smartbin-frontend:3000",  # Frontend container
-        "http://smartbin-frontend:8081",  # RAG frontend container
-    ],
+    allow_origins=allow_origins,
     allow_credentials=False,  # Set to False to avoid conflicts with allow_origins
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],

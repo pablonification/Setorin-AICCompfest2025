@@ -64,8 +64,6 @@ services:
     image: mongo:5.0
     container_name: smartbin-mongodb
     restart: unless-stopped
-    ports:
-      - "27017:27017"
     volumes:
       - mongo_data:/data/db
 
@@ -73,8 +71,6 @@ services:
     image: redis:alpine
     container_name: smartbin-redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
 
   iot_simulator:
     build:
