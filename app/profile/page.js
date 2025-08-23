@@ -439,12 +439,6 @@ export default function ProfilePage() {
                       {auth?.user?.email}
                     </div>
                   </div>
-                  <Link
-                    href="/profile/edit"
-                    className="font-inter text-xs leading-none px-3 py-1 rounded-[var(--radius-pill)] border border-[var(--color-primary-700)] text-[var(--color-primary-700)]"
-                  >
-                    Edit Profil
-                  </Link>
                 </div>
               </div>
             </div>
