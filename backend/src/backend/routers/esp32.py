@@ -9,6 +9,8 @@ import asyncio
 
 from ..db.mongo import ensure_connection
 from ..services.ws_manager import manager
+from ..services.iot_client import SmartBinClient
+from bson import ObjectId
 
 router = APIRouter(prefix="/api/esp32", tags=["esp32"])
 logger = logging.getLogger(__name__)
@@ -182,11 +184,11 @@ async def control_lid(request: LidControlRequest, background_tasks: BackgroundTa
             response_message = f"Device status: {device_status}"
 
         else:
-            # Update log as error
-            await db["esp32_logs"].update_one(
-                {"_id": ObjectId(str(log_result.inserted_id))},
-                {"$set": {"status": "error", "error_message": f"Unknown action: {action}"}}
-            )
+                    # Update log as error
+        await db["esp32_logs"].update_one(
+            {"_id": ObjectId(action_id)},
+            {"$set": {"status": "error", "error_message": f"Unknown action: {action}"}}
+        )
             raise HTTPException(status_code=400, detail=f"Unknown action: {action}")
 
         # Broadcast control action to connected clients
@@ -267,7 +269,6 @@ async def get_esp32_logs(
 async def get_esp32_log_by_id(action_id: str):
     """Get a specific ESP32 log by action ID."""
     try:
-        from bson import ObjectId
         db = await ensure_connection()
 
         log = await db["esp32_logs"].find_one({"_id": ObjectId(action_id)})
@@ -293,21 +294,34 @@ async def handle_lid_open_sequence(device_id: str, duration_seconds: int, action
         db = await ensure_connection()
 
         # Update initial action as in progress
-        from bson import ObjectId
         logger.info("Updating action %s to in_progress", action_id)
         await db["esp32_logs"].update_one(
             {"_id": ObjectId(action_id)},
             {"$set": {"status": "in_progress", "details.sequence": "opening"}}
         )
 
-        # Simulate lid opening (in real ESP32, this would be an HTTP call or WebSocket)
-        logger.info("ESP32 %s: Opening lid", device_id)
-        await asyncio.sleep(1.5)  # Simulate opening time
+        # Real hardware communication - use IoT client
+        logger.info("ESP32 %s: Opening lid via hardware", device_id)
+
+        # Broadcast lid opening event
+        await manager.broadcast_notification({
+            "type": "esp32_event",
+            "data": {
+                "device_id": device_id,
+                "event": "lid_opening",
+                "action_id": action_id,
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        })
+
+        # Send open command to hardware
+        iot_client = SmartBinClient()
+        events = await iot_client.open_bin()
 
         # Update as lid opened
         await db["esp32_logs"].update_one(
             {"_id": ObjectId(action_id)},
-            {"$set": {"status": "in_progress", "details.sequence": "opened"}}
+            {"$set": {"status": "in_progress", "details.sequence": "opened", "hardware_events": events}}
         )
 
         # Broadcast lid opened event
@@ -317,6 +331,7 @@ async def handle_lid_open_sequence(device_id: str, duration_seconds: int, action
                 "device_id": device_id,
                 "event": "lid_opened",
                 "action_id": action_id,
+                "hardware_events": events,
                 "timestamp": datetime.now(timezone.utc).isoformat()
             }
         })
@@ -331,30 +346,17 @@ async def handle_lid_open_sequence(device_id: str, duration_seconds: int, action
             {"$set": {"status": "in_progress", "details.sequence": "closing"}}
         )
 
-        # Simulate sensor trigger (bottle dropped)
-        logger.info("ESP32 %s: Simulating sensor trigger", device_id)
-        await asyncio.sleep(1)  # Simulate sensor trigger delay
-
-        # Update as sensor triggered
-        await db["esp32_logs"].update_one(
-            {"_id": ObjectId(action_id)},
-            {"$set": {"status": "in_progress", "details.sequence": "sensor_triggered"}}
-        )
-
-        # Broadcast sensor triggered event
+        # The IoT client should handle the closing automatically
+        # but we'll broadcast the closing event for consistency
         await manager.broadcast_notification({
             "type": "esp32_event",
             "data": {
                 "device_id": device_id,
-                "event": "sensor_triggered",
+                "event": "lid_closing",
                 "action_id": action_id,
                 "timestamp": datetime.now(timezone.utc).isoformat()
             }
         })
-
-        # Simulate lid closing
-        logger.info("ESP32 %s: Closing lid", device_id)
-        await asyncio.sleep(1)  # Simulate closing time
 
         # Update as completed
         await db["esp32_logs"].update_one(
@@ -373,7 +375,7 @@ async def handle_lid_open_sequence(device_id: str, duration_seconds: int, action
             }
         })
 
-        logger.info("ESP32 %s: Lid sequence completed", device_id)
+        logger.info("ESP32 %s: Lid sequence completed with hardware events: %s", device_id, events)
 
     except Exception as exc:
         logger.error("Error in lid open sequence for %s: %s", device_id, exc)
