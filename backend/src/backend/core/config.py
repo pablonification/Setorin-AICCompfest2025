@@ -8,6 +8,7 @@ class Settings:
     MONGODB_URI: str = os.getenv("MONGODB_URI", "")
     MONGODB_DB_NAME: str = os.getenv("MONGODB_DB_NAME", "smartbin")
     IOT_WS_URL: str = os.getenv("IOT_WS_URL", "ws://iot_simulator:8080")
+    BACKEND_URL: str = os.getenv("BACKEND_URL", "https://api.setorin.app")
 
     # Roboflow inference
     ROBOFLOW_API_KEY: str = os.getenv("ROBOFLOW_API_KEY", "")

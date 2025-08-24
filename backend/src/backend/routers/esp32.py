@@ -285,6 +285,75 @@ async def get_esp32_log_by_id(action_id: str):
         logger.error("Failed to get ESP32 log: %s", exc)
         raise HTTPException(status_code=500, detail="Failed to get log")
 
+@router.get("/commands/{device_id}", response_model=List[Dict[str, Any]])
+async def get_pending_commands(device_id: str):
+    """Get pending commands for ESP32 to execute (polling approach)."""
+    try:
+        db = await ensure_connection()
+
+        # Get pending commands for this device
+        query = {
+            "device_id": device_id,
+            "status": "pending"
+        }
+
+        cursor = db["esp32_commands"].find(query).sort("timestamp", -1).limit(10)
+
+        commands = []
+        async for command in cursor:
+            command["id"] = str(command.pop("_id"))
+            command["timestamp"] = command["timestamp"].isoformat()
+            commands.append(command)
+
+        return commands
+
+    except Exception as exc:
+        logger.error("Failed to get pending commands for %s: %s", device_id, exc)
+        raise HTTPException(status_code=500, detail="Failed to get commands")
+
+@router.put("/commands/{command_id}/complete", status_code=status.HTTP_200_OK)
+async def mark_command_complete(command_id: str):
+    """Mark a command as completed by ESP32."""
+    try:
+        db = await ensure_connection()
+
+        result = await db["esp32_commands"].update_one(
+            {"_id": ObjectId(command_id)},
+            {"$set": {"status": "completed", "completed_at": datetime.now(timezone.utc)}}
+        )
+
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="Command not found")
+
+        return {"message": "Command marked as completed"}
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Failed to mark command complete: %s", exc)
+        raise HTTPException(status_code=500, detail="Failed to update command")
+
+
+# Helper functions
+async def queue_command_for_esp32(device_id: str, action: str, duration_seconds: int = 3):
+    """Queue a command for ESP32 to poll later."""
+    try:
+        db = await ensure_connection()
+
+        command_data = {
+            "device_id": device_id,
+            "action": action,
+            "duration_seconds": duration_seconds,
+            "status": "pending",
+            "timestamp": datetime.now(timezone.utc)
+        }
+
+        await db["esp32_commands"].insert_one(command_data)
+        logger.info("Command queued for ESP32 %s: %s", device_id, action)
+
+    except Exception as exc:
+        logger.error("Failed to queue command for %s: %s", device_id, exc)
+        raise
 
 # Background task handlers
 async def handle_lid_open_sequence(device_id: str, duration_seconds: int, action_id: str):
@@ -314,9 +383,33 @@ async def handle_lid_open_sequence(device_id: str, duration_seconds: int, action
             }
         })
 
-        # Send open command to hardware
-        iot_client = SmartBinClient()
-        events = await iot_client.open_bin()
+        # Get device IP address from connections
+        device_info = esp32_connections.get(device_id)
+        if not device_info:
+            logger.error("ESP32 device %s not registered", device_id)
+            raise HTTPException(status_code=404, detail=f"ESP32 device {device_id} not found or not registered")
+
+        device_ip = device_info.get("ip_address")
+
+        # Try direct IP communication first (if IP is available)
+        if device_ip:
+            logger.info("ESP32 %s found at IP: %s - attempting direct communication", device_id, device_ip)
+            iot_client = SmartBinClient(esp32_ip=device_ip)
+            events = await iot_client.open_bin(device_id=device_id, duration_seconds=duration_seconds)
+
+            # Check if direct communication succeeded
+            if any(event.get("event") == "lid_opened" and event.get("status") == "success" for event in events):
+                logger.info("Direct IP communication successful for %s", device_id)
+            else:
+                logger.warning("Direct IP communication failed for %s, falling back to command queuing", device_id)
+                # Fall back to command queuing
+                await queue_command_for_esp32(device_id, action, duration_seconds)
+                events = [{"event": "command_queued", "status": "success"}]
+        else:
+            # No IP available, use command queuing
+            logger.info("No IP address available for %s, using command queuing", device_id)
+            await queue_command_for_esp32(device_id, action, duration_seconds)
+            events = [{"event": "command_queued", "status": "success"}]
 
         # Update as lid opened
         await db["esp32_logs"].update_one(
@@ -401,14 +494,49 @@ async def handle_lid_close(device_id: str, action_id: str):
             {"$set": {"status": "in_progress"}}
         )
 
-        logger.info("ESP32 %s: Closing lid", device_id)
-        await asyncio.sleep(1)  # Simulate closing time
+        # Get device IP address from connections
+        device_info = esp32_connections.get(device_id)
+        if not device_info:
+            logger.error("ESP32 device %s not registered", device_id)
+            raise Exception(f"ESP32 device {device_id} not found or not registered")
 
-        # Update as completed
-        await db["esp32_logs"].update_one(
-            {"_id": ObjectId(action_id)},
-            {"$set": {"status": "completed"}}
-        )
+        device_ip = device_info.get("ip_address")
+
+        # Try direct IP communication first (if IP is available)
+        if device_ip:
+            logger.info("ESP32 %s found at IP: %s - attempting direct communication", device_id, device_ip)
+            iot_client = SmartBinClient(esp32_ip=device_ip)
+            events = await iot_client.close_bin(device_id=device_id)
+
+            # Check if direct communication succeeded
+            if any(event.get("event") == "lid_closed" and event.get("status") == "success" for event in events):
+                logger.info("Direct IP communication successful for %s", device_id)
+            else:
+                logger.warning("Direct IP communication failed for %s, falling back to command queuing", device_id)
+                # Fall back to command queuing
+                await queue_command_for_esp32(device_id, "close", 0)
+                events = [{"event": "command_queued", "status": "success"}]
+        else:
+            # No IP available, use command queuing
+            logger.info("No IP address available for %s, using command queuing", device_id)
+            await queue_command_for_esp32(device_id, "close", 0)
+            events = [{"event": "command_queued", "status": "success"}]
+
+        # Check if there were any errors
+        has_error = any(event.get("event") == "error" for event in events)
+
+        if has_error:
+            logger.error("ESP32 %s: Close command failed", device_id)
+            await db["esp32_logs"].update_one(
+                {"_id": ObjectId(action_id)},
+                {"$set": {"status": "error", "error_message": "Hardware communication failed", "hardware_events": events}}
+            )
+        else:
+            # Update as completed
+            await db["esp32_logs"].update_one(
+                {"_id": ObjectId(action_id)},
+                {"$set": {"status": "completed", "hardware_events": events}}
+            )
 
         # Broadcast lid closed event
         await manager.broadcast_notification({
@@ -421,7 +549,7 @@ async def handle_lid_close(device_id: str, action_id: str):
             }
         })
 
-        logger.info("ESP32 %s: Lid closed", device_id)
+        logger.info("ESP32 %s: Lid close sequence completed", device_id)
 
     except Exception as exc:
         logger.error("Error closing lid for %s: %s", device_id, exc)
