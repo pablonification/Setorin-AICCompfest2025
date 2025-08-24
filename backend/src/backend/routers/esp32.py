@@ -184,11 +184,11 @@ async def control_lid(request: LidControlRequest, background_tasks: BackgroundTa
             response_message = f"Device status: {device_status}"
 
         else:
-                    # Update log as error
-        await db["esp32_logs"].update_one(
-            {"_id": ObjectId(action_id)},
-            {"$set": {"status": "error", "error_message": f"Unknown action: {action}"}}
-        )
+            # Update log as error
+            await db["esp32_logs"].update_one(
+                {"_id": ObjectId(action_id)},
+                {"$set": {"status": "error", "error_message": f"Unknown action: {action}"}}
+            )
             raise HTTPException(status_code=400, detail=f"Unknown action: {action}")
 
         # Broadcast control action to connected clients
