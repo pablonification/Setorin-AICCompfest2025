@@ -19,6 +19,8 @@ from ..routers.auth import verify_token
 import base64, binascii
 from pathlib import Path
 from uuid import uuid4
+import httpx
+from bson import ObjectId
 
 router = APIRouter(prefix="/api/scan", tags=["scan"])
 logger = logging.getLogger(__name__)
@@ -27,6 +29,59 @@ bottle_measurer = BottleMeasurer()  # default settings; could be injected
 roboflow_client = RoboflowClient()
 smartbin_client = SmartBinClient()
 transaction_service = get_transaction_service()  # Get transaction service instance
+
+
+async def control_esp32_lid(device_id: str, duration_seconds: int = 3):
+    """Control ESP32 lid via HTTP API."""
+    try:
+        db = await ensure_connection()
+
+        # Create log entry
+        log_result = await db["esp32_logs"].insert_one({
+            "device_id": device_id,
+            "action": "open",
+            "timestamp": datetime.now(timezone.utc),
+            "status": "pending",
+            "details": {"duration_seconds": duration_seconds}
+        })
+
+        # Make HTTP call to production ESP32 endpoint
+        async with httpx.AsyncClient() as client:
+            payload = {
+                "device_id": device_id,
+                "action": "open",
+                "duration_seconds": duration_seconds
+            }
+
+            response = await client.post(
+                "https://api.setorin.app/api/esp32/control",
+                json=payload,
+                headers={"Content-Type": "application/json"}
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+                # Update log as completed
+                await db["esp32_logs"].update_one(
+                    {"_id": log_result.inserted_id},
+                    {"$set": {"status": "completed", "api_response": result}}
+                )
+                return {"events": result, "action_id": str(log_result.inserted_id)}
+            else:
+                error_text = response.text
+                raise Exception(f"ESP32 API error: {response.status_code} - {error_text}")
+
+    except Exception as exc:
+        logger.error("ESP32 control failed: %s", exc)
+        # Update log as error
+        try:
+            await db["esp32_logs"].update_one(
+                {"_id": log_result.inserted_id},
+                {"$set": {"status": "error", "error_message": str(exc)}}
+            )
+        except:
+            pass
+        return {"events": [], "error": str(exc)}
 
 
 # Add OPTIONS handlers for CORS preflight
@@ -46,6 +101,8 @@ async def scan_options_with_slash():
 async def scan_bottle(
     image: UploadFile = File(...),
     payload: dict = Depends(verify_token),
+    device_id: str = Query("ESP32-SMARTBIN-001", description="ESP32 device ID to control"),
+    duration_seconds: int = Query(3, ge=1, le=10, description="Duration to keep lid open (1-10 seconds)"),
 ) -> Any:  # noqa: WPS110
     """Handle bottle scanning.
 
@@ -53,8 +110,9 @@ async def scan_bottle(
     2. Run OpenCV measurement.
     3. Call Roboflow for brand prediction.
     4. Validate and compute reward.
-    5. Store result in MongoDB.
-    6. Return validation payload.
+    5. Open ESP32 bin lid if valid (using provided device_id and duration).
+    6. Store result in MongoDB.
+    7. Return validation payload.
     """
     logger.info("Scan request received from user: %s", payload.get("email", "unknown"))
 
@@ -113,10 +171,12 @@ async def scan_bottle(
     logger.info("Validation result: is_valid=%s, brand=%s, confidence=%s, reason=%s", 
                 validation_result.is_valid, validation_result.brand, validation_result.confidence, validation_result.reason)
 
-    # 5. Open bin via IoT if valid
+    # 5. Open bin via ESP32 if valid
     iot_events = []
     if validation_result.is_valid:
-        iot_events = await smartbin_client.open_bin()
+        # Call ESP32 lid control with dynamic parameters
+        esp32_response = await control_esp32_lid(device_id, duration_seconds)
+        iot_events = esp32_response.get("events", [])
 
     user_total_points: Optional[int] = None
     if validation_result.is_valid and user_email:
@@ -232,10 +292,12 @@ async def scan_bottle(
 async def scan_bottle_no_slash(
     image: UploadFile = File(...),
     payload: dict = Depends(verify_token),
+    device_id: str = Query("ESP32-SMARTBIN-001", description="ESP32 device ID to control"),
+    duration_seconds: int = Query(3, ge=1, le=10, description="Duration to keep lid open (1-10 seconds)"),
 ) -> Any:
     """Alias for scan_bottle to handle calls without trailing slash."""
     logger.info("Scan request (no-slash) received from user: %s", payload.get("email", "unknown"))
-    return await scan_bottle(image=image, payload=payload)
+    return await scan_bottle(image=image, payload=payload, device_id=device_id, duration_seconds=duration_seconds)
 
 
 @router.get("/transactions", response_model=List[dict])
