@@ -20,7 +20,7 @@ export default function MobileScanResult({ result }) {
     <div className="rounded-[var(--radius-md)] bg-white p-4 shadow-md mt-6">
       <div className="flex items-center justify-between">
         <h3 className="text-base font-semibold text-gray-900 truncate">
-          {result.brand || 'Unknown Brand'}
+          {result.brand || 'Botol Plastik'}
         </h3>
         <span
           className={`px-3 py-0.5 rounded-[999px] text-xs font-medium ${

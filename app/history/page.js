@@ -130,10 +130,10 @@ export default function HistoryPage() {
           )}
         </div>
       ),
-      title: transaction.brand || 'Unknown Brand',
+      title: transaction.brand || 'Botol Plastik',
       time: formatDate(transaction.timestamp),
-      amount: transaction.valid && transaction.points > 0 ? transaction.points * 50 : 0, // Convert points to currency
-      points: transaction.valid ? transaction.points : 0
+      amount: transaction.valid ? transaction.points : 0, // Points directly as currency
+      points: 0 // Remove points display since it's redundant
     }));
   };
 

@@ -43,9 +43,6 @@ export default function HistoryListItem({ transaction }) {
         <div className={`text-sm leading-5 font-semibold ${amountColor}`}>
           {formatAmount(amount)}
         </div>
-        <div className={`text-xs leading-4 ${pointsColor}`}>
-          {formatPoints(points)}
-        </div>
       </div>
     </div>
   );
