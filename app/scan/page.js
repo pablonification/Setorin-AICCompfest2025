@@ -1116,21 +1116,20 @@ export default function ScanPage() {
                 <div className="absolute inset-0 border-4 border-white/60 rounded-[var(--radius-md)] pointer-events-none" />
                 
                 {/* Debug overlay with more info */}
-                <div className="absolute top-2 left-2 bg-black/70 text-white text-xs p-2 rounded max-w-[280px]">
-                  <div>Stream: {cameraStream ? '✓' : '✗'}</div>
-                  <div>Video: {videoRef.current?.videoWidth || 0}x{videoRef.current?.videoHeight || 0}</div>
-                  <div>ReadyState: {videoRef.current?.readyState || 0}</div>
-                  <div>Paused: {videoRef.current?.paused ? 'Yes' : 'No'}</div>
-                  <div>SrcObject: {videoRef.current?.srcObject ? '✓' : '✗'}</div>
-                  <div>QR Scanning: {isScanningQR ? '✓' : '✗'}</div>
-                  <div>QR Validated: {qrValidated ? '✓' : '✗'}</div>
-                  {videoRef.current?.videoWidth === 0 && (
-                    <div className="text-yellow-300 mt-1">Tap video to play</div>
-                  )}
-                  {videoRef.current?.videoWidth > 0 && isScanningQR && (
-                    <div className="text-green-300 mt-1">Scanning for QR...</div>
-                  )}
-                </div>
+                {(videoRef.current?.videoWidth === 0) && !userGestureBoundRef.current && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none z-10">
+                    <img
+                      src="/logo-white.svg"
+                      alt="Setorin Logo"
+                      className="w-32 h-32 opacity-90"
+                      style={{ maxWidth: '80%', maxHeight: '80%' }}
+                      draggable={false}
+                    />
+                    <div className="mt-4 text-center text-white font-semibold text-base drop-shadow">
+                      Tap Setorin logo to start
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
               <div className="flex flex-col items-center justify-center">
@@ -1145,14 +1144,6 @@ export default function ScanPage() {
             {isScanning ? (
               // Show processing state
               <div className="flex flex-col items-center space-y-4 w-full">
-                <div className="text-center">
-                  <p className="text-sm text-[var(--color-muted)]">
-                    Memproses gambar botol...
-                  </p>
-                  <p className="text-xs text-[var(--color-muted)] mt-1">
-                    Processing bottle image...
-                  </p>
-                </div>
                 {/* Show cancel button during processing */}
                 <button
                   onClick={() => {
@@ -1263,35 +1254,6 @@ export default function ScanPage() {
                   Lihat Hasil
                 </button>
               )}
-            </div>
-          )}
-
-          {/* Status display */}
-          {status && (
-            <div className="mt-2 text-sm text-center text-[var(--color-muted)]">
-              {status}
-              {/* Show additional debug info in development */}
-              {process.env.NODE_ENV === 'development' && (
-                <div className="mt-1 text-xs opacity-60">
-                  <div>Scanning: {isScanning ? 'Yes' : 'No'}</div>
-                  <div>QR Validated: {qrValidated ? 'Yes' : 'No'}</div>
-                  <div>Loading: {isLoadingAfterQR ? 'Yes' : 'No'}</div>
-                  <div>Result: {result ? 'Received' : 'None'}</div>
-                  <div>Processing: {isScanning ? 'Yes' : 'No'}</div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Progress indicator during scanning */}
-          {isScanning && (
-            <div className="mt-4 w-full max-w-[320px]">
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-[var(--color-primary-600)] h-2 rounded-full animate-pulse" style={{ width: '100%' }}></div>
-              </div>
-              <p className="text-xs text-center text-[var(--color-muted)] mt-2">
-                Processing scan... Please wait
-              </p>
             </div>
           )}
         </div>

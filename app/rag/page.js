@@ -47,6 +47,7 @@ function RagChat() {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [retrying, setRetrying] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -57,7 +58,7 @@ function RagChat() {
     scrollToBottom();
   }, [messages]);
 
-  const send = async (content = null) => {
+  const send = async (content = null, retryCount = 0) => {
     const messageContent = content || input.trim();
     if (!auth?.token || !messageContent || loading) return;
     
@@ -67,28 +68,98 @@ function RagChat() {
     setLoading(true);
 
     try {
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      
       const resp = await fetch('/api/rag/query', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${auth.token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ query: userMsg.content })
+        body: JSON.stringify({ query: userMsg.content }),
+        signal: controller.signal
       });
       
-      const data = await resp.json();
-      if (resp.ok) {
-        const aiMsg = { role: 'assistant', content: data.answer || 'Maaf, saya tidak bisa memproses pertanyaan Anda saat ini.', ts: new Date().toISOString() };
+      clearTimeout(timeoutId);
+      
+      let data;
+      try {
+        data = await resp.json();
+      } catch (parseError) {
+        console.error('Failed to parse response:', parseError);
+        throw new Error('Invalid response format from server');
+      }
+      
+      if (resp.ok && data.answer) {
+        const aiMsg = { role: 'assistant', content: data.answer, ts: new Date().toISOString() };
         setMessages((m) => [...m, aiMsg]);
       } else {
-        const errMsg = { role: 'assistant', content: data.error || 'Gagal memproses pertanyaan. Silakan coba lagi.', ts: new Date().toISOString() };
+        // Handle different error scenarios
+        let errorMessage = 'Gagal memproses pertanyaan. Silakan coba lagi.';
+        
+        if (resp.status === 401) {
+          errorMessage = 'Sesi Anda telah berakhir. Silakan login ulang.';
+        } else if (resp.status === 403) {
+          errorMessage = 'Anda tidak memiliki akses ke fitur ini.';
+        } else if (resp.status === 404) {
+          errorMessage = 'Layanan RAG tidak tersedia saat ini.';
+        } else if (resp.status === 500) {
+          errorMessage = 'Terjadi kesalahan pada server. Silakan coba lagi nanti.';
+        } else if (resp.status === 503) {
+          errorMessage = 'Layanan RAG sedang dalam pemeliharaan.';
+        } else if (data?.error) {
+          errorMessage = data.error;
+        } else if (data?.detail) {
+          errorMessage = data.detail;
+        }
+        
+        const errMsg = { role: 'assistant', content: errorMessage, ts: new Date().toISOString() };
         setMessages((m) => [...m, errMsg]);
+        
+        // Log error for debugging
+        console.error('RAG API Error:', {
+          status: resp.status,
+          statusText: resp.statusText,
+          data: data,
+          query: messageContent
+        });
+        
+        // Retry for certain errors (max 2 retries)
+        if (retryCount < 2 && (resp.status >= 500 || resp.status === 503)) {
+          console.log(`Retrying RAG query (attempt ${retryCount + 1})`);
+          setRetrying(true);
+          setTimeout(() => send(messageContent, retryCount + 1), 1000 * (retryCount + 1));
+          return;
+        }
       }
     } catch (e) {
-      const errMsg = { role: 'assistant', content: 'Terjadi kesalahan jaringan. Silakan coba lagi.', ts: new Date().toISOString() };
+      console.error('RAG Chat Error:', e);
+      
+      let errorMessage = 'Terjadi kesalahan jaringan. Silakan coba lagi.';
+      
+      if (e.name === 'AbortError') {
+        errorMessage = 'Permintaan terlalu lama. Silakan coba lagi.';
+      } else if (e.name === 'TypeError' && e.message.includes('fetch')) {
+        errorMessage = 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.';
+      } else if (e.message.includes('Invalid response format')) {
+        errorMessage = 'Server mengembalikan respons yang tidak valid. Silakan coba lagi.';
+      }
+      
+      const errMsg = { role: 'assistant', content: errorMessage, ts: new Date().toISOString() };
       setMessages((m) => [...m, errMsg]);
+      
+      // Retry for network errors (max 2 retries)
+      if (retryCount < 2 && (e.name === 'TypeError' || e.name === 'AbortError')) {
+        console.log(`Retrying RAG query due to network error (attempt ${retryCount + 1})`);
+        setRetrying(true);
+        setTimeout(() => send(messageContent, retryCount + 1), 1000 * (retryCount + 1));
+        return;
+      }
     } finally {
       setLoading(false);
+      setRetrying(false);
     }
   };
 
@@ -169,10 +240,15 @@ function RagChat() {
               <img src="/robin.svg" alt="Robin" className="w-5 h-5" />
             </div>
             <div className="bg-white border border-gray-200 rounded-[var(--radius-md)] px-3 py-2">
-              <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+              <div className="flex items-center space-x-2">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                </div>
+                {retrying && (
+                  <span className="text-xs text-gray-500">Mencoba lagi...</span>
+                )}
               </div>
             </div>
           </div>

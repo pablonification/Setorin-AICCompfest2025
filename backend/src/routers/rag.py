@@ -55,23 +55,55 @@ async def query_knowledge_base(
         raise HTTPException(status_code=503, detail="RAG agent not available")
     
     try:
+        # Validate query
+        if not query_req.query or not query_req.query.strip():
+            raise HTTPException(status_code=400, detail="Query cannot be empty")
+        
         # Use the compiled LangGraph app to process the query
-        final_state = app.invoke(
-            {"messages": [HumanMessage(content=query_req.query)]},
-            config={"configurable": {"thread_id": query_req.thread_id}}
-        )
+        try:
+            final_state = app.invoke(
+                {"messages": [HumanMessage(content=query_req.query)]},
+                config={"configurable": {"thread_id": query_req.thread_id}}
+            )
+        except Exception as rag_error:
+            print(f"RAG agent error: {rag_error}")
+            raise HTTPException(status_code=500, detail=f"RAG processing failed: {str(rag_error)}")
         
         # Extract the final answer
-        final_message = final_state["messages"][-1]
-        answer = final_message.content if hasattr(final_message, 'content') else str(final_message)
+        if not final_state or "messages" not in final_state:
+            raise HTTPException(status_code=500, detail="Invalid response from RAG agent")
+        
+        messages = final_state["messages"]
+        if not messages:
+            raise HTTPException(status_code=500, detail="No response generated from RAG agent")
+        
+        final_message = messages[-1]
+        if not final_message:
+            raise HTTPException(status_code=500, detail="Invalid final message from RAG agent")
+        
+        # Extract content safely
+        if hasattr(final_message, 'content'):
+            answer = final_message.content
+        elif isinstance(final_message, dict):
+            answer = final_message.get('content', str(final_message))
+        else:
+            answer = str(final_message)
+        
+        if not answer or not answer.strip():
+            raise HTTPException(status_code=500, detail="Empty response from RAG agent")
         
         return QueryResponse(
-            answer=answer,
+            answer=answer.strip(),
             thread_id=query_req.thread_id,
-            message_count=len(final_state["messages"])
+            message_count=len(messages)
         )
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"RAG processing failed: {str(e)}")
+        print(f"Unexpected error in RAG query: {e}")
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
 
 @router.get("/threads/{thread_id}/history", response_model=ThreadHistoryResponse)
