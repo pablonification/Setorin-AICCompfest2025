@@ -32,7 +32,7 @@ transaction_service = get_transaction_service()  # Get transaction service insta
 
 
 async def control_esp32_lid(device_id: str, duration_seconds: int = 3):
-    """Control ESP32 lid via HTTP API."""
+    """Control ESP32 lid via our new communication system."""
     try:
         db = await ensure_connection()
 
@@ -45,40 +45,39 @@ async def control_esp32_lid(device_id: str, duration_seconds: int = 3):
             "details": {"duration_seconds": duration_seconds}
         })
 
-        # Make HTTP call to production ESP32 endpoint
-        async with httpx.AsyncClient() as client:
-            payload = {
-                "device_id": device_id,
-                "action": "open",
-                "duration_seconds": duration_seconds
-            }
+        # Use our new ESP32 communication system
+        iot_client = SmartBinClient()
+        events = await iot_client.open_bin(device_id=device_id, duration_seconds=duration_seconds)
 
-            response = await client.post(
-                "https://api.setorin.app/api/esp32/control",
-                json=payload,
-                headers={"Content-Type": "application/json"}
+        # Check if the operation was successful
+        success = any(event.get("event") == "lid_opened" and event.get("status") == "success" for event in events)
+
+        if success:
+            # Update log as completed
+            await db["esp32_logs"].update_one(
+                {"_id": log_result.inserted_id},
+                {"$set": {"status": "completed", "hardware_events": events}}
             )
-
-            if response.status_code == 200:
-                result = response.json()
-                # Update log as completed
-                await db["esp32_logs"].update_one(
-                    {"_id": log_result.inserted_id},
-                    {"$set": {"status": "completed", "api_response": result}}
-                )
-                return {"events": result, "action_id": str(log_result.inserted_id)}
-            else:
-                error_text = response.text
-                raise Exception(f"ESP32 API error: {response.status_code} - {error_text}")
+            return {"events": events, "action_id": str(log_result.inserted_id)}
+        else:
+            # Update log as error
+            error_events = [event for event in events if event.get("event") == "error"]
+            error_message = error_events[0].get("error", "Unknown error") if error_events else "ESP32 communication failed"
+            await db["esp32_logs"].update_one(
+                {"_id": log_result.inserted_id},
+                {"$set": {"status": "error", "error_message": error_message, "hardware_events": events}}
+            )
+            raise Exception(f"ESP32 control failed: {error_message}")
 
     except Exception as exc:
         logger.error("ESP32 control failed: %s", exc)
-        # Update log as error
+        # Update log as error if we have a log_result
         try:
-            await db["esp32_logs"].update_one(
-                {"_id": log_result.inserted_id},
-                {"$set": {"status": "error", "error_message": str(exc)}}
-            )
+            if 'log_result' in locals():
+                await db["esp32_logs"].update_one(
+                    {"_id": log_result.inserted_id},
+                    {"$set": {"status": "error", "error_message": str(exc)}}
+                )
         except:
             pass
         return {"events": [], "error": str(exc)}
@@ -101,7 +100,7 @@ async def scan_options_with_slash():
 async def scan_bottle(
     image: UploadFile = File(...),
     payload: dict = Depends(verify_token),
-    device_id: str = Query("ESP32-SMARTBIN-001", description="ESP32 device ID to control"),
+    device_id: str = Query("ESP32-SPARTANS", description="ESP32 device ID to control"),
     duration_seconds: int = Query(3, ge=1, le=10, description="Duration to keep lid open (1-10 seconds)"),
 ) -> Any:  # noqa: WPS110
     """Handle bottle scanning.
@@ -292,7 +291,7 @@ async def scan_bottle(
 async def scan_bottle_no_slash(
     image: UploadFile = File(...),
     payload: dict = Depends(verify_token),
-    device_id: str = Query("ESP32-SMARTBIN-001", description="ESP32 device ID to control"),
+    device_id: str = Query("ESP32-SPARTANS", description="ESP32 device ID to control"),
     duration_seconds: int = Query(3, ge=1, le=10, description="Duration to keep lid open (1-10 seconds)"),
 ) -> Any:
     """Alias for scan_bottle to handle calls without trailing slash."""

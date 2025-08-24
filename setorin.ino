@@ -19,7 +19,7 @@ const char* password = "1234nais";
 const char* serverUrl = "https://api.setorin.app";
 
 // Device Configuration
-const char* deviceId = "ESP32-SMARTBIN-420";
+const char* deviceId = "ESP32-SPARTANS";
 const char* firmwareVersion = "2.1.0";
 const char* location = "Main Entrance";
 
