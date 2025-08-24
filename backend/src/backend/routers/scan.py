@@ -131,7 +131,7 @@ async def scan_bottle(
     image: UploadFile = File(...),
     payload: dict = Depends(verify_token),
     device_id: str = Query("ESP32-SPARTANS", description="ESP32 device ID to control"),
-    duration_seconds: int = Query(3, ge=1, le=10, description="Duration to keep lid open (1-10 seconds)"),
+    duration_seconds: int = Query(2, ge=1, le=10, description="Duration to keep lid open (1-10 seconds)"),
 ) -> Any:  # noqa: WPS110
     """Handle bottle scanning.
 
@@ -322,7 +322,7 @@ async def scan_bottle_no_slash(
     image: UploadFile = File(...),
     payload: dict = Depends(verify_token),
     device_id: str = Query("ESP32-SPARTANS", description="ESP32 device ID to control"),
-    duration_seconds: int = Query(3, ge=1, le=10, description="Duration to keep lid open (1-10 seconds)"),
+    duration_seconds: int = Query(2, ge=1, le=10, description="Duration to keep lid open (1-10 seconds)"),
 ) -> Any:
     """Alias for scan_bottle to handle calls without trailing slash."""
     logger.info("Scan request (no-slash) received from user: %s", payload.get("email", "unknown"))

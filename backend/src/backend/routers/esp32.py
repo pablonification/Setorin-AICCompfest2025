@@ -36,7 +36,7 @@ class ESP32Status(BaseModel):
 class LidControlRequest(BaseModel):
     device_id: str
     action: str  # "open", "close", "status"
-    duration_seconds: Optional[int] = 3  # Default 3 seconds for open
+    duration_seconds: Optional[int] = 2  # Default 3 seconds for open
 
 class ActionLog(BaseModel):
     device_id: str
