@@ -5,13 +5,16 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import QRCode from 'react-qr-code';
 import { useIsMobile } from '../hooks/useIsMobile'; // Adjust path if needed
+import { usePathname } from 'next/navigation';
 
 /**
  * A guard component that only renders its children on mobile devices.
  * On desktop, it displays a helpful fallback screen.
+ * Admin pages are always allowed on desktop for administrative purposes.
  */
 export default function MobileOnlyGuard({ children }) {
   const isMobile = useIsMobile();
+  const pathname = usePathname();
   const [isMounted, setIsMounted] = useState(false);
   
   // This effect ensures we don't have a server-client mismatch (hydration error)
@@ -24,8 +27,21 @@ export default function MobileOnlyGuard({ children }) {
     return null; 
   }
 
-  // If on mobile, render the app. Otherwise, show the desktop fallback.
-  return isMobile ? children : <DesktopFallback />;
+  // Always allow admin pages on desktop for administrative purposes
+  const isAdminPage = pathname?.startsWith('/admin');
+  
+  // Also allow certain informational/educational pages on desktop
+  const isDesktopAllowedPage = isAdminPage || 
+    pathname?.startsWith('/login') ||
+    pathname?.startsWith('/auth')
+  
+  // If on mobile OR if it's a desktop-allowed page, render the app
+  if (isMobile || isDesktopAllowedPage) {
+    return children;
+  }
+  
+  // Otherwise, show the desktop fallback
+  return <DesktopFallback />;
 }
 
 /**
