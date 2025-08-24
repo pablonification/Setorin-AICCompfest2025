@@ -45,29 +45,59 @@ async def control_esp32_lid(device_id: str, duration_seconds: int = 3):
             "details": {"duration_seconds": duration_seconds}
         })
 
-        # Use our new ESP32 communication system
-        iot_client = SmartBinClient()
-        events = await iot_client.open_bin(device_id=device_id, duration_seconds=duration_seconds)
-
-        # Check if the operation was successful
-        success = any(event.get("event") == "lid_opened" and event.get("status") == "success" for event in events)
-
-        if success:
-            # Update log as completed
-            await db["esp32_logs"].update_one(
-                {"_id": log_result.inserted_id},
-                {"$set": {"status": "completed", "hardware_events": events}}
+        # Call the ESP32 router's control endpoint instead of IoT client directly
+        import httpx
+        from ..core.config import get_settings
+        
+        settings = get_settings()
+        backend_url = getattr(settings, 'BACKEND_URL', 'http://localhost:8000')
+        esp32_control_url = f"{backend_url}/api/esp32/control"
+        
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            payload = {
+                "device_id": device_id,
+                "action": "open",
+                "duration_seconds": duration_seconds
+            }
+            
+            logger.info("Calling ESP32 control endpoint: %s with payload: %s", esp32_control_url, payload)
+            
+            response = await client.post(
+                esp32_control_url,
+                json=payload,
+                headers={"Content-Type": "application/json"}
             )
-            return {"events": events, "action_id": str(log_result.inserted_id)}
-        else:
-            # Update log as error
-            error_events = [event for event in events if event.get("event") == "error"]
-            error_message = error_events[0].get("error", "Unknown error") if error_events else "ESP32 communication failed"
-            await db["esp32_logs"].update_one(
-                {"_id": log_result.inserted_id},
-                {"$set": {"status": "error", "error_message": error_message, "hardware_events": events}}
-            )
-            raise Exception(f"ESP32 control failed: {error_message}")
+            
+            if response.status_code == 200:
+                response_data = response.json()
+                logger.info("ESP32 control successful: %s", response_data)
+                
+                # Update log as completed
+                await db["esp32_logs"].update_one(
+                    {"_id": log_result.inserted_id},
+                    {"$set": {"status": "completed", "response": response_data}}
+                )
+                
+                # Return events in the expected format
+                events = [
+                    {
+                        "event": "lid_opened",
+                        "status": "success",
+                        "response": response_data
+                    }
+                ]
+                
+                return {"events": events, "action_id": str(log_result.inserted_id)}
+            else:
+                error_message = f"ESP32 control failed with status {response.status_code}: {response.text}"
+                logger.error(error_message)
+                
+                # Update log as error
+                await db["esp32_logs"].update_one(
+                    {"_id": log_result.inserted_id},
+                    {"$set": {"status": "error", "error_message": error_message}}
+                )
+                raise Exception(error_message)
 
     except Exception as exc:
         logger.error("ESP32 control failed: %s", exc)
