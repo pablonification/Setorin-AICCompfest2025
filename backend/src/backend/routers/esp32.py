@@ -285,6 +285,48 @@ async def get_esp32_log_by_id(action_id: str):
         logger.error("Failed to get ESP32 log: %s", exc)
         raise HTTPException(status_code=500, detail="Failed to get log")
 
+class ManualCommandRequest(BaseModel):
+    device_id: str
+    action: str  # "open", "close"
+    duration_seconds: Optional[int] = 3
+
+@router.post("/commands", status_code=status.HTTP_201_CREATED)
+async def create_manual_command(request: ManualCommandRequest):
+    """Manually create a command for ESP32 (for testing/debugging)."""
+    try:
+        db = await ensure_connection()
+
+        # Check if device is registered
+        if request.device_id not in esp32_connections:
+            raise HTTPException(status_code=404, detail=f"Device {request.device_id} not registered")
+
+        command_data = {
+            "device_id": request.device_id,
+            "action": request.action,
+            "duration_seconds": request.duration_seconds,
+            "status": "pending",
+            "timestamp": datetime.now(timezone.utc),
+            "source": "manual"
+        }
+
+        result = await db["esp32_commands"].insert_one(command_data)
+        command_id = str(result.inserted_id)
+
+        logger.info("Manual command created: %s for device %s", request.action, request.device_id)
+
+        return {
+            "message": "Command created successfully",
+            "command_id": command_id,
+            "device_id": request.device_id,
+            "action": request.action
+        }
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Failed to create manual command: %s", exc)
+        raise HTTPException(status_code=500, detail="Failed to create command")
+
 @router.get("/commands/{device_id}", response_model=List[Dict[str, Any]])
 async def get_pending_commands(device_id: str):
     """Get pending commands for ESP32 to execute (polling approach)."""
