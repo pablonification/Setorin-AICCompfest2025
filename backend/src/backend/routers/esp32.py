@@ -172,7 +172,7 @@ async def control_lid(request: LidControlRequest, background_tasks: BackgroundTa
             # For opening, we need to sequence: open -> wait -> close
             logger.info("Starting background task for lid open sequence")
             # Start the background task
-            asyncio.create_task(handle_lid_open_sequence(device_id, request.duration_seconds or 3, action_id))
+            asyncio.create_task(handle_lid_open_sequence(device_id, request.action, request.duration_seconds or 3, action_id))
             response_message = f"Lid opening sequence started for {request.duration_seconds}s"
 
         elif action == "close":
@@ -356,7 +356,7 @@ async def queue_command_for_esp32(device_id: str, action: str, duration_seconds:
         raise
 
 # Background task handlers
-async def handle_lid_open_sequence(device_id: str, duration_seconds: int, action_id: str):
+async def handle_lid_open_sequence(device_id: str, action: str, duration_seconds: int, action_id: str):
     """Handle the lid open sequence: open -> wait -> close."""
     try:
         logger.info("Background task started for device %s with action_id %s", device_id, action_id)
@@ -403,12 +403,12 @@ async def handle_lid_open_sequence(device_id: str, duration_seconds: int, action
             else:
                 logger.warning("Direct IP communication failed for %s, falling back to command queuing", device_id)
                 # Fall back to command queuing
-                await queue_command_for_esp32(device_id, request.action, duration_seconds)
+                await queue_command_for_esp32(device_id, action, duration_seconds)
                 events = [{"event": "command_queued", "status": "success"}]
         else:
             # No IP available, use command queuing
             logger.info("No IP address available for %s, using command queuing", device_id)
-            await queue_command_for_esp32(device_id, request.action, duration_seconds)
+            await queue_command_for_esp32(device_id, action, duration_seconds)
             events = [{"event": "command_queued", "status": "success"}]
 
         # Update as lid opened
