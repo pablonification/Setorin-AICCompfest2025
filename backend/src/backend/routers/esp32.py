@@ -403,12 +403,12 @@ async def handle_lid_open_sequence(device_id: str, duration_seconds: int, action
             else:
                 logger.warning("Direct IP communication failed for %s, falling back to command queuing", device_id)
                 # Fall back to command queuing
-                await queue_command_for_esp32(device_id, action, duration_seconds)
+                await queue_command_for_esp32(device_id, request.action, duration_seconds)
                 events = [{"event": "command_queued", "status": "success"}]
         else:
             # No IP available, use command queuing
             logger.info("No IP address available for %s, using command queuing", device_id)
-            await queue_command_for_esp32(device_id, action, duration_seconds)
+            await queue_command_for_esp32(device_id, request.action, duration_seconds)
             events = [{"event": "command_queued", "status": "success"}]
 
         # Update as lid opened
