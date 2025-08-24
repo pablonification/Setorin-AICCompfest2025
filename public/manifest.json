@@ -1,0 +1,26 @@
+{
+  "name": "Setorin - Smart Waste Management",
+  "short_name": "Setorin",
+  "description": "Aplikasi pintar untuk mengelola sampah plastik dengan teknologi AI dan sistem reward yang inovatif",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0e7f4e",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "id",
+  "categories": ["environment", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "16x16 32x32 48x48",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
