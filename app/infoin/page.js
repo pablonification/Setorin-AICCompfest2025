@@ -99,27 +99,65 @@ export default function InfoinPage() {
 
         {/* Content */}
         {loading ? (
-          <div className="py-8 text-center text-[color:var(--color-muted)]">Memuat...</div>
+          // Loading state
+          <div className="space-y-6 mt-6">
+            <div>
+              <div className="h-7 w-32 bg-gray-200 rounded mb-3 animate-pulse"></div>
+              {Array(2).fill().map((_, i) => (
+                <div key={i} className="mb-4 bg-white rounded-lg [box-shadow:var(--shadow-card)] p-4">
+                  <div className="space-y-2">
+                    <div className="h-4 w-1/3 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-6 w-4/5 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-28 bg-gray-200 rounded w-full animate-pulse"></div>
+                    <div className="h-4 w-2/3 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div>
+              <div className="h-7 w-32 bg-gray-200 rounded mb-3 animate-pulse"></div>
+              {Array(2).fill().map((_, i) => (
+                <div key={i} className="mb-4 bg-white rounded-lg [box-shadow:var(--shadow-card)] p-4">
+                  <div className="space-y-2">
+                    <div className="h-4 w-1/3 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-6 w-4/5 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-28 bg-gray-200 rounded w-full animate-pulse"></div>
+                    <div className="h-4 w-2/3 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         ) : (
-          <>
-            <div className="mt-6">
-              <div className="text-xl leading-7 font-semibold mb-3">Tutorial</div>
-              {filteredTutorials.map((item) => (
-                <InfoCard key={item.id} item={item} />
-              ))}
-            </div>
-
-            <div className="mt-6">
-              <div className="text-xl leading-7 font-semibold mb-3">Artikel</div>
-              {filteredArticles.map((item) => (
-                <InfoCard key={item.id} item={item} />
-              ))}
-            </div>
-          </>
+          // Loaded state with content
+          <div className="space-y-6 mt-6">
+            {filteredTutorials.length > 0 && (
+              <div>
+                <div className="text-[18px] leading-6 font-semibold mb-3">Tutorial</div>
+                {filteredTutorials.map((item) => (
+                  <InfoCard key={item.id} item={item} />
+                ))}
+              </div>
+            )}
+            
+            {filteredArticles.length > 0 && (
+              <div>
+                <div className="text-[18px] leading-6 font-semibold mb-3">Artikel</div>
+                {filteredArticles.map((item) => (
+                  <InfoCard key={item.id} item={item} />
+                ))}
+              </div>
+            )}
+            
+            {filteredTutorials.length === 0 && filteredArticles.length === 0 && (
+              <div className="text-center py-10 text-[color:var(--color-muted)]">
+                {query ? 'Tidak ada hasil yang ditemukan' : 'Tidak ada konten tersedia'}
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>
   );
 }
-
-

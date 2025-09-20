@@ -6,7 +6,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '../components/ProtectedRoute';
-import MobileScanResult from '../components/MobileScanResult';
+import MobileScanResult, { MobileScanResultSkeleton } from '../components/MobileScanResult';
 
 export default function ScanPage() {
   const { user, token, logout, updateUser } = useAuth();
@@ -496,7 +496,27 @@ export default function ScanPage() {
         <div className="flex flex-col items-center mt-6 px-4">
           <div className="w-full max-w-[320px] h-[420px] bg-black rounded-[var(--radius-md)] flex items-center justify-center overflow-hidden relative">
             {cameraStream ? (
-              <video ref={videoRef} autoPlay playsInline muted className="object-cover w-full h-full" />
+              <>
+                <video ref={videoRef} autoPlay playsInline muted className="object-cover w-full h-full" />
+                
+                {/* Bottle placement guide overlay */}
+                <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
+                  <div className="relative w-full h-full">
+                    {/* Center bottle silhouette guide */}
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-64">
+                      <svg width="100%" height="100%" viewBox="0 0 100 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-40">
+                        <path d="M30 40 L30 10 L70 10 L70 40 L85 70 L85 180 L15 180 L15 70 Z" stroke="white" strokeWidth="3" strokeDasharray="5,5" />
+                        <rect x="38" y="170" width="24" height="4" fill="white" fillOpacity="0.6" />
+                      </svg>
+                    </div>
+                    
+                    {/* Guide text */}
+                    <div className="absolute bottom-6 left-0 right-0 text-center text-white text-xs bg-black bg-opacity-40 py-1">
+                      Posisikan botol tegak dalam bingkai
+                    </div>
+                  </div>
+                </div>
+              </>
             ) : (
               <img src="/scan-yellow.svg" alt="Placeholder" className="w-20 h-20 opacity-60" />
             )}
@@ -536,7 +556,11 @@ export default function ScanPage() {
 
         {/* Scan result */}
         <div className="px-4">
-          <MobileScanResult result={result} />
+          {isScanning ? (
+            <MobileScanResultSkeleton />
+          ) : (
+            <MobileScanResult result={result} />
+          )}
         </div>
 
         {/* Hidden canvas for image capture */}

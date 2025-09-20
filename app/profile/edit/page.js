@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import TopBar from "../../components/TopBar";
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function EditProfilePage() {
   const router = useRouter();
-  const { user, updateUser, token } = useAuth();
+  const { user, updateUser } = useAuth();
 
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
@@ -48,65 +49,54 @@ export default function EditProfilePage() {
   return (
     <div className="mobile-container font-inter">
       {/* Top bar */}
-      <div className="bg-[var(--color-primary-700)] text-white">
-        <div className="max-w-[430px] mx-auto px-4 pt-4 pb-6 flex items-center gap-3">
-          <button onClick={() => router.back()} aria-label="Kembali" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
-            <img src="/profile/back.svg" alt="Kembali"/>
-          </button>
-          <h1 className="text-[18px] font-semibold">Edit Profil</h1>
-        </div>
-      </div>
+      <TopBar title="Edit Profil" />
 
       {/* Avatar */}
-      <div className="px-4 -mt-8">
-        <div className="relative mx-auto w-40 h-40 rounded-full border-4 border-[var(--color-primary-700)] bg-white flex items-center justify-center [box-shadow:var(--shadow-card)] overflow-hidden">
-          <Image src="/placeholders/avatar.svg" width={64} height={64} alt="Avatar" />
-          <div className="absolute -bottom-1 -right-1 w-10 h-10 rounded-full bg-white border-2 border-[var(--color-primary-700)] flex items-center justify-center">
-            <Image src="/placeholders/camera.svg" width={18} height={18} alt="Ubah foto" />
+      <div className="px-4 -mt-16">
+        <div className="relative mx-auto w-max">
+          <div className="w-36 h-36 rounded-full border-4 border-[var(--color-primary-700)] bg-white flex items-center justify-center [box-shadow:var(--shadow-card)] overflow-hidden">
+            <img src="/profile/default-profile.jpg" alt="Avatar" />
           </div>
+          <button
+            type="button"
+            aria-label="Ubah foto"
+            className="absolute -bottom-1 -right-1 z-10 w-10 h-10 rounded-full bg-white border-2 border-[var(--color-primary-700)] flex items-center justify-center"
+          >
+            <Image src="/profile/edit/camera.svg" fill alt="Ubah foto" />
+          </button>
         </div>
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="px-4 pt-6 pb-28 space-y-4">
+      <form onSubmit={handleSubmit} className="px-4 pt-6 pb-28 space-y-5">
         <Field label="Nama">
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-4 py-3 rounded-[var(--radius-sm)] bg-gray-50 outline-none"
+            className="w-full px-4 py-3 rounded-[var(--radius-sm)] bg-gray-50 outline-none text-[var(--color-primary-700)] font-semibold"
             placeholder="Nama Lengkap"
           />
         </Field>
 
         <Field label="Email">
-          <div className="flex items-center gap-3">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="flex-1 px-4 py-3 rounded-[var(--radius-sm)] bg-gray-50 outline-none"
-              placeholder="email@contoh.com"
-            />
-            <div className="w-9 h-9 rounded-md bg-gray-100 flex items-center justify-center">
-              <Image src="/placeholders/verify.svg" width={16} height={16} alt="Verifikasi" />
-            </div>
-          </div>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-3 rounded-[var(--radius-sm)] bg-gray-50 outline-none text-[var(--color-primary-700)] font-semibold"
+            placeholder="email@contoh.com"
+          />
         </Field>
 
-        <Field label="Nomor Handpone" meta="Verifikasi Nomor">
-          <div className="flex items-center gap-3">
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="flex-1 px-4 py-3 rounded-[var(--radius-sm)] bg-gray-50 outline-none"
-              placeholder="08xxxxxxxxxx"
-            />
-            <div className="w-9 h-9 rounded-md bg-gray-100 flex items-center justify-center">
-              <Image src="/placeholders/lock.svg" width={16} height={16} alt="Kunci" />
-            </div>
-          </div>
+        <Field label="Nomor Handphone">
+          <input
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="w-full px-4 py-3 rounded-[var(--radius-sm)] bg-gray-50 outline-none text-[var(--color-primary-700)] font-semibold"
+            placeholder="08xxxxxxxxxx"
+          />
         </Field>
 
         <Field label="Tanggal lahir">
@@ -114,7 +104,7 @@ export default function EditProfilePage() {
             type="date"
             value={birthdate}
             onChange={(e) => setBirthdate(e.target.value)}
-            className="w-full px-4 py-3 rounded-[var(--radius-sm)] bg-gray-50 outline-none"
+            className="w-full px-4 py-3 rounded-[var(--radius-sm)] bg-gray-50 outline-none text-[var(--color-primary-700)] font-semibold"
           />
         </Field>
 
@@ -123,7 +113,7 @@ export default function EditProfilePage() {
             type="text"
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            className="w-full px-4 py-3 rounded-[var(--radius-sm)] bg-gray-50 outline-none"
+            className="w-full px-4 py-3 rounded-[var(--radius-sm)] bg-gray-50 outline-none text-[var(--color-primary-700)] font-semibold"
             placeholder="Nama Kota"
           />
         </Field>
@@ -172,6 +162,22 @@ export default function EditProfilePage() {
                   Terhubung
                 </button>
               </div>
+
+              {/* Apple row */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center">
+                    <span className="text-xl text-[var(--color-primary-700)]" aria-hidden></span>
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-[var(--color-primary-700)]">Apple</div>
+                    <div className="text-xs text-gray-600">Tidak terhubung</div>
+                  </div>
+                </div>
+                <button type="button" className="px-3 py-1 rounded-[var(--radius-pill)] bg-[var(--color-primary-700)] text-white text-xs">
+                  Hubungkan
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -184,7 +190,7 @@ export default function EditProfilePage() {
               disabled={!canSubmit}
               aria-busy={saving}
               aria-disabled={!canSubmit}
-              className={`w-full py-4 rounded-[var(--radius-lg)] font-semibold text-[17px] [box-shadow:var(--shadow-card)] ${
+              className={`w-full py-4 rounded-[var(--radius-lg)] font-semibold text-base [box-shadow:var(--shadow-card)] ${
                 canSubmit
                   ? "bg-[var(--color-primary-700)] text-[var(--color-accent-amber)]"
                   : "bg-gray-300 text-gray-600"

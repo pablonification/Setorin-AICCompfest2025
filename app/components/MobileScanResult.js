@@ -1,6 +1,28 @@
 import React from 'react';
+import { TextSkeleton } from './Skeleton';
+
+export function MobileScanResultSkeleton() {
+  return (
+    <div className="mt-6 rounded-lg bg-white overflow-hidden [box-shadow:var(--shadow-card)] p-4">
+      <div className="flex justify-between items-center mb-4">
+        <TextSkeleton width="w-1/3" height="h-6" />
+        <TextSkeleton width="w-1/4" height="h-6" />
+      </div>
+      <div className="h-[180px] bg-gray-100 rounded-md mb-4" />
+      <div className="space-y-3">
+        <TextSkeleton width="w-full" height="h-4" />
+        <TextSkeleton width="w-3/4" height="h-4" />
+        <TextSkeleton width="w-2/3" height="h-4" />
+      </div>
+    </div>
+  );
+}
 
 export default function MobileScanResult({ result }) {
+  if (loading) {
+    return <MobileScanResultSkeleton />;
+  }
+
   if (!result) {
     return (
       <div className="mt-6 text-center text-sm text-gray-500">

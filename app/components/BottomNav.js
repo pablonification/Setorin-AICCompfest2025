@@ -6,9 +6,12 @@ import { usePathname } from "next/navigation";
 export default function BottomNav() {
   const pathname = usePathname();
 
+
   if (pathname === "/login") return null;
   if (pathname.startsWith("/scan")) return null;
   if (pathname.startsWith("/temuin")) return null;
+  if (pathname.startsWith("/profile/edit")) return null;
+  if (pathname.startsWith("/tentang-kami")) return null;
   const isActive = (href) => pathname === href;
 
   return (
