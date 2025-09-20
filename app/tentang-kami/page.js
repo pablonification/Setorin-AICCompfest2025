@@ -6,7 +6,7 @@ export default function TentangKamiPage() {
   const profiles = [
     { name: "Arqila S. P.", role1: "AI Engineer &", role2: "Backend" },
     { name: "Athian N. M.", role1: "AI Engineer &", role2: "Backend" },
-    { name: "Andhika M. A.", role1: "UI/UX Designer" },
+    { name: "Andhika M. A.", role1: "UI/UX Designer &", role2: "Frontend" },
   ];
 
   return (

@@ -4,6 +4,32 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 
+export function HistoryListSkeleton() {
+  return (
+    <div className="space-y-3">
+      <div className="flex justify-between items-center">
+        <TextSkeleton width="w-40" height="h-6" />
+        <TextSkeleton width="w-20" height="h-5" />
+      </div>
+      
+      {Array(3).fill().map((_, i) => (
+        <div key={i} className="rounded-lg bg-white [box-shadow:var(--shadow-card)] p-4">
+          <div className="flex justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse"></div>
+              <div className="space-y-2">
+                <div className="h-4 w-20 bg-gray-200 animate-pulse rounded"></div>
+                <div className="h-3 w-28 bg-gray-200 animate-pulse rounded"></div>
+              </div>
+            </div>
+            <div className="h-5 w-16 bg-gray-200 animate-pulse rounded"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function HistoryList({ items = [] }) {
   const authContext = useAuth();
   const token = authContext?.token ?? null;
@@ -26,9 +52,13 @@ export default function HistoryList({ items = [] }) {
     }
   };
 
+  const [loading, setLoading] = useState(true);
+  const [fetchedItems, setFetchedItems] = useState([]);
+
   useEffect(() => {
     const load = async () => {
       if (!token) return;
+      setLoading(true);
       try {
         const base = process.env.NEXT_PUBLIC_BROWSER_API_URL || "http://localhost:8000";
         // Use scan history endpoint and filter client-side; newest first
@@ -65,6 +95,7 @@ export default function HistoryList({ items = [] }) {
                 icon: "/tukar.svg",
               }));
               setFetchedItems(positives);
+              setLoading(false);
               return;
             }
           } catch {}
