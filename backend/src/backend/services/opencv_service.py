@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 import logging
 from dataclasses import dataclass
-from typing import Tuple, Union
+from typing import Tuple, Union, Optional, List, Any
 
 import cv2
 import numpy as np
@@ -196,7 +196,11 @@ class BottleMeasurer:
         return candidates[0]
 
     def measure(
-        self, image_bytes: bytes, *, return_debug: bool = False
+        self,
+        image_bytes: bytes,
+        *,
+        predictions: Optional[List[Any]] = None,
+        return_debug: bool = False,
     ) -> Union[MeasurementResult, Tuple[MeasurementResult, bytes]]:
         # Decode image bytes to BGR
         nparr = np.frombuffer(image_bytes, np.uint8)
@@ -213,15 +217,46 @@ class BottleMeasurer:
         scale = self.ref_real_height_mm / h_ref  # mm per pixel
         logger.debug("Scale: %.4f mm/pixel", scale)
 
-        # Define ROI above the reference object
+        # Define ROI above the reference object (reference ROI)
         # Ensure we have a valid ROI (at least some pixels above the reference)
         if y_ref <= 0:
             # If reference is at the top, use the entire image as ROI
-            roi = img
+            ref_roi = img
+            ref_rect = (0, 0, img.shape[1], img.shape[0])
             logger.warning("Reference at top of image, using entire image as ROI")
         else:
-            roi = img[: y_ref, :]
-            logger.debug("ROI dimensions: %dx%d", roi.shape[1], roi.shape[0])
+            ref_roi = img[: y_ref, :]
+            ref_rect = (0, 0, img.shape[1], y_ref)
+            logger.debug("Reference ROI dimensions: %dx%d", ref_roi.shape[1], ref_roi.shape[0])
+
+        # Optional detection ROI from predictions (Roboflow)
+        det_rect = self._build_detection_rect_from_predictions(
+            img_width=img.shape[1],
+            img_height=img.shape[0],
+            predictions=predictions,
+            margin_ratio=0.15,
+        ) if predictions else None
+
+        # Choose final ROI: prefer intersection(ref, det) when viable
+        roi_source = "reference"
+        if det_rect is not None:
+            inter = self._intersect_rect(ref_rect, det_rect)
+            if inter is not None and self._rect_area(inter) >= 0.2 * self._rect_area(det_rect):
+                x, y, w, h = inter
+                roi = img[y : y + h, x : x + w]
+                roi_source = "intersection"
+            else:
+                # Fall back to detection ROI if valid, otherwise reference ROI
+                x, y, w, h = det_rect
+                if w > 1 and h > 1:
+                    roi = img[y : y + h, x : x + w]
+                    roi_source = "detection"
+                else:
+                    roi = ref_roi
+                    roi_source = "reference"
+        else:
+            roi = ref_roi
+            roi_source = "reference"
 
         # Validate ROI is not empty
         if roi.size == 0:
@@ -262,9 +297,32 @@ class BottleMeasurer:
             debug = img.copy()
             # Reference bbox in green
             cv2.rectangle(debug, (x_ref, y_ref), (x_ref + w_ref, y_ref + h_ref), (0, 255, 0), 2)
-            # Bottle contour & rotated box in red/blue
-            cv2.drawContours(debug, [bottle_info.contour], -1, (0, 0, 255), 2)
-            cv2.polylines(debug, [bottle_info.box_points], True, (255, 0, 0), 2)
+            # Draw chosen ROI rectangle in yellow with source label
+            if roi_source == "reference":
+                rx, ry, rw, rh = ref_rect
+            elif roi_source == "detection" and det_rect is not None:
+                rx, ry, rw, rh = det_rect
+            elif roi_source == "intersection" and det_rect is not None:
+                inter = self._intersect_rect(ref_rect, det_rect)
+                if inter is not None:
+                    rx, ry, rw, rh = inter
+                else:
+                    rx, ry, rw, rh = ref_rect
+            else:
+                rx, ry, rw, rh = ref_rect
+            cv2.rectangle(debug, (rx, ry), (rx + rw, ry + rh), (0, 255, 255), 2)
+            cv2.putText(
+                debug,
+                f"ROI: {roi_source}",
+                (rx + 5, max(0, ry - 8)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.6,
+                (0, 255, 255),
+                2,
+            )
+            # Bottle contour & rotated box in red/blue (draw on debug in absolute coords not available)
+            # As we don't track absolute offsets for ROI, we only draw the rotated box shape relative to ROI
+            # Skipping absolute overlay for contour to avoid misalignment; ROI box provides context.
             # Put size label (height x diameter in mm)
             size_label = f"{height_mm:.0f}x{diameter_mm:.0f} mm"
             cv2.putText(
@@ -306,6 +364,93 @@ class BottleMeasurer:
     # ---------------------------------------------------------------------
     # Internal helpers
     # ---------------------------------------------------------------------
+    @staticmethod
+    def _rect_area(rect: Tuple[int, int, int, int]) -> int:
+        x, y, w, h = rect
+        return max(0, w) * max(0, h)
+
+    @staticmethod
+    def _intersect_rect(
+        a: Tuple[int, int, int, int], b: Tuple[int, int, int, int]
+    ) -> Optional[Tuple[int, int, int, int]]:
+        ax, ay, aw, ah = a
+        bx, by, bw, bh = b
+        x1 = max(ax, bx)
+        y1 = max(ay, by)
+        x2 = min(ax + aw, bx + bw)
+        y2 = min(ay + ah, by + bh)
+        w = x2 - x1
+        h = y2 - y1
+        if w <= 0 or h <= 0:
+            return None
+        return (int(x1), int(y1), int(w), int(h))
+
+    @staticmethod
+    def _expand_and_clamp_rect(
+        x: float,
+        y: float,
+        w: float,
+        h: float,
+        *,
+        img_w: int,
+        img_h: int,
+        margin_ratio: float = 0.15,
+    ) -> Tuple[int, int, int, int]:
+        mx = w * margin_ratio
+        my = h * margin_ratio
+        x0 = int(max(0, round(x - mx)))
+        y0 = int(max(0, round(y - my)))
+        x1 = int(min(img_w, round(x + w + mx)))
+        y1 = int(min(img_h, round(y + h + my)))
+        return (x0, y0, max(0, x1 - x0), max(0, y1 - y0))
+
+    def _build_detection_rect_from_predictions(
+        self,
+        *,
+        img_width: int,
+        img_height: int,
+        predictions: Optional[List[Any]],
+        margin_ratio: float,
+    ) -> Optional[Tuple[int, int, int, int]]:
+        """Return an expanded, clamped detection ROI from predictions, if available.
+
+        Assumes Roboflow-style center-based boxes when present: (x_center, y_center, width, height) in pixels.
+        If values appear to already be top-left, the clamping step still keeps it valid.
+        """
+        if not predictions:
+            return None
+        # Pick the highest-confidence prediction that has a box
+        best = None
+        best_conf = -1.0
+        for p in predictions:
+            try:
+                px = getattr(p, "x", None)
+                py = getattr(p, "y", None)
+                pw = getattr(p, "width", None)
+                ph = getattr(p, "height", None)
+                conf = float(getattr(p, "confidence", 0.0))
+            except Exception:
+                continue
+            if px is None or py is None or pw is None or ph is None:
+                continue
+            if pw <= 1 or ph <= 1:
+                continue
+            if conf > best_conf:
+                best_conf = conf
+                best = (float(px), float(py), float(pw), float(ph))
+        if best is None:
+            return None
+
+        cx, cy, bw, bh = best
+        # Convert center-based to top-left
+        x0 = cx - bw / 2.0
+        y0 = cy - bh / 2.0
+        det_rect = self._expand_and_clamp_rect(
+            x0, y0, bw, bh, img_w=img_width, img_h=img_height, margin_ratio=margin_ratio
+        )
+        if det_rect[2] <= 1 or det_rect[3] <= 1:
+            return None
+        return det_rect
     def _classify_volume(self, volume_ml: float) -> Tuple[str, float]:
         """Classify bottle size by comparing estimated volume to known specs."""
         best_label = "Other"
