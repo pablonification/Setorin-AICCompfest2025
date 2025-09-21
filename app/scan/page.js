@@ -16,6 +16,8 @@ export default function ScanPage() {
   const [isScanning, setIsScanning] = useState(false);
   const [cameraStream, setCameraStream] = useState(null);
   const [capturedImage, setCapturedImage] = useState(null);
+  // Add state for the instruction popup
+  const [showInstructions, setShowInstructions] = useState(true);
   
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -63,13 +65,13 @@ export default function ScanPage() {
     };
   }, [cameraStream]);
 
-  // Auto-start camera on mount
+  // Auto-start camera on mount - but only after instructions are dismissed
   useEffect(() => {
-    if (!attemptedAutoStartRef.current) {
+    if (!attemptedAutoStartRef.current && !showInstructions) {
       attemptedAutoStartRef.current = true;
       startCamera().catch(() => {});
     }
-  }, []);
+  }, [showInstructions]);
 
   // Check camera permissions and available devices
   useEffect(() => {
@@ -492,6 +494,54 @@ export default function ScanPage() {
           </div>
         </div>
 
+        {/* Instructions Popup - Now with just 2 steps */}
+        {showInstructions && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+            <div className="bg-white rounded-lg max-w-xs w-full mx-4 p-5 relative">
+              <h3 className="text-lg font-bold mb-3 text-center">Panduan Scan Botol</h3>
+              <div className="space-y-4 text-sm">
+                {/* Step 1 */}
+                <div className="flex gap-3">
+                  <div className="shrink-0 w-8 h-8 rounded-full bg-[var(--color-primary-700)] text-white flex items-center justify-center font-bold">1</div>
+                  <div>
+                    <p>Posisikan botol di atas kotak referensi</p>
+                    <div className="mt-2 rounded bg-gray-50 p-1">
+                      <img 
+                        src="/scan-guide/step1.svg" 
+                        alt="Posisikan botol" 
+                        className="h-24 w-full object-contain" 
+                        onError={(e) => e.target.src = '/scan-placeholder.svg'}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Step 2 (combined) */}
+                <div className="flex gap-3">
+                  <div className="shrink-0 w-8 h-8 rounded-full bg-[var(--color-primary-700)] text-white flex items-center justify-center font-bold">2</div>
+                  <div>
+                    <p>Pastikan pencahayaan cukup terang dan jangan menutupi botol dengan tangan</p>
+                    <div className="mt-2 rounded bg-gray-50 p-1">
+                      <img 
+                        src="/scan-guide/step2.svg" 
+                        alt="Tips scan" 
+                        className="h-24 w-full object-contain" 
+                        onError={(e) => e.target.src = '/scan-placeholder.svg'}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowInstructions(false)}
+                className="mt-5 w-full py-3 rounded-full bg-[var(--color-primary-700)] text-white font-medium"
+              >
+                Saya Mengerti
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Camera preview */}
         <div className="flex flex-col items-center mt-6 px-4">
           <div className="w-full max-w-[320px] h-[420px] bg-black rounded-[var(--radius-md)] flex items-center justify-center overflow-hidden relative">
@@ -502,17 +552,23 @@ export default function ScanPage() {
                 {/* Bottle placement guide overlay */}
                 <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
                   <div className="relative w-full h-full">
-                    {/* Center bottle silhouette guide */}
-                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-64">
+                    {/* Center bottle silhouette guide - moved up slightly */}
+                    <div className="absolute top-[35%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-64">
                       <svg width="100%" height="100%" viewBox="0 0 100 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-40">
                         <path d="M30 40 L30 10 L70 10 L70 40 L85 70 L85 180 L15 180 L15 70 Z" stroke="white" strokeWidth="3" strokeDasharray="5,5" />
                         <rect x="38" y="170" width="24" height="4" fill="white" fillOpacity="0.6" />
+                        <text x="50" y="150" textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="bold">Botol</text>
                       </svg>
                     </div>
                     
-                    {/* Guide text */}
-                    <div className="absolute bottom-6 left-0 right-0 text-center text-white text-xs bg-black bg-opacity-40 py-1">
-                      Posisikan botol tegak dalam bingkai
+                    {/* Reference object guide - positioned at the bottom with clear separation */}
+                    <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-24 h-36">
+                      <svg width="100%" height="100%" viewBox="0 0 40 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-50">
+                        {/* 10cm width × 15cm height (2:3 ratio rectangle) */}
+                        <rect x="2" y="2" width="36" height="56" stroke="#00ff00" strokeWidth="2" strokeDasharray="4,2" />
+                        <text x="20" y="45" textAnchor="middle" fill="#00ff00" fontSize="5" fontWeight="bold">Referensi</text>
+                        <text x="20" y="50" textAnchor="middle" fill="#00ff00" fontSize="5" fontWeight="">10×15 cm</text>
+                      </svg>
                     </div>
                   </div>
                 </div>
@@ -523,8 +579,23 @@ export default function ScanPage() {
             <div className="absolute inset-0 border-4 border-white/60 rounded-[var(--radius-md)] pointer-events-none" />
           </div>
 
+          {/* Help button to reopen instructions */}
+          <div className="mt-2 w-full max-w-[320px] flex justify-end">
+            <button 
+              onClick={() => setShowInstructions(true)} 
+              className="text-xs text-blue-600 flex items-center gap-1 px-2 py-1 rounded hover:bg-blue-50"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              Panduan Scan
+            </button>
+          </div>
+
           {/* Shutter control */}
-          <div className="mt-6 w-full max-w-[320px] flex items-center justify-center">
+          <div className="mt-4 w-full max-w-[320px] flex items-center justify-center">
             {!cameraStream ? (
               <button
                 onClick={startCamera}
@@ -561,6 +632,11 @@ export default function ScanPage() {
           ) : (
             <MobileScanResult result={result} />
           )}
+        </div>
+
+        {/* Status indicator */}
+        <div className="mt-6 px-4 text-center text-sm text-gray-500">
+          Status: {status}
         </div>
 
         {/* Hidden canvas for image capture */}
