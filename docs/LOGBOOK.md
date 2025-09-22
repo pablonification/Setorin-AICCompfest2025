@@ -138,3 +138,45 @@ median_error_ml: 464.36
 ```
 
 Artifacts: `eval_out/fusion_all/fusion.csv`, `eval_out/fusion_all/summary_fusion.json`, and `eval_out/fusion_all/debug/`.
+
+## Session 7: Silhouette Scoring (Multi-path) & Weighted Evaluation
+
+### Actions Taken
+
+1. Implemented multi-path silhouette extraction and weighted contour scoring in `backend/src/backend/services/opencv_service.py` (`BottleDetector`).
+   - Pipelines: Adaptive threshold, MAD-tuned Canny, CLAHE+Otsu.
+   - Scoring features: area, aspect ratio, vertical alignment, solidity, border distance.
+2. Exposed detector weights via `BottleMeasurer` parameters for easy tuning.
+3. Added evaluator `src/backend/tools/eval_silhouette.py` that saves per-run artifacts:
+   - `silhouette_experiments/<timestamp>/measurements.csv`
+   - `silhouette_experiments/<timestamp>/summary.json`
+   - `silhouette_experiments/<timestamp>/run_config.json` (captures weights & options)
+   - `silhouette_experiments/<timestamp>/debug/*.jpg` (when `--save-debug`)
+
+### How to run (Docker compose)
+
+Inside the backend container:
+
+```bash
+# Example: fusion ON, default weights
+python -m src.backend.tools.eval_silhouette \
+  --subset both --fusion --save-debug --out eval_out \
+  --w-area 1.0 --w-aspect 1.0 --w-vertical 1.0 --w-solidity 1.0 --w-border 0.5
+
+  "python -m src.backend.tools.eval_silhouette --subset both --fusion --save-debug --out eval_out --limit-per-folder 15 --w-area 1.0 --w-aspect 1.0 --w-vertical 1.0 --w-solidity 1.0 --w-border 0.5"
+
+# Example: emphasize vertical alignment and aspect
+python -m src.backend.tools.eval_silhouette \
+  --subset both --fusion --save-debug --out eval_out \
+  --w-area 1.0 --w-aspect 1.3 --w-vertical 1.5 --w-solidity 1.1 --w-border 0.6
+```
+
+Outputs are saved under `eval_out/silhouette_experiments/<timestamp>/` for side-by-side comparison.
+
+### Notes
+
+- Increase `--w-vertical` if bottles are tilted or height estimates fluctuate.
+- Increase `--w-aspect` to prefer tall slender shapes (reduces diameter inflation).
+- Increase `--w-solidity` to avoid fragmented/porous contours.
+- Increase `--w-border` to penalize contours touching ROI borders.
+- Tune `--w-area` to guard against too-small (underestimates) or too-large (overestimates) silhouettes.
