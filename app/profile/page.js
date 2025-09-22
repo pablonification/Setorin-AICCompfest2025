@@ -167,6 +167,11 @@ export default function SayaPage() {
         ) : (
           <>
             <div className="rounded-[16px] bg-white [box-shadow:var(--shadow-card)] p-4">
+              <SectionHeader title="Statistik Saya" />
+              <StatisticsDashboard />
+            </div>
+
+            <div className="rounded-[16px] bg-white [box-shadow:var(--shadow-card)] p-4">
               <SectionHeader title="Akun Saya" />
               <div className="mt-3 space-y-2">
                 <SettingsRow href="/notifications" label="Notifikasi" badge={unreadCount} icon="/profile/notifikasi.svg" />
