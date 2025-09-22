@@ -81,10 +81,17 @@ class BottleDetector:
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (k, k))
         return cv2.morphologyEx(bin_img, cv2.MORPH_CLOSE, kernel, iterations=iters)
 
-    def _pipeline_masks(self, roi: np.ndarray) -> dict:
-        """Return binary masks for each silhouette pipeline for debugging and contour extraction."""
+    def _pipeline_candidates(self, roi: np.ndarray) -> List[np.ndarray]:
+        """Generate binary masks from multiple pipelines and return their contours.
+
+        Pipelines:
+        1) Adaptive threshold (Gaussian), then close/open
+        2) Canny (hysteresis thresholds via MAD of gradients), then close
+        3) CLAHE + Otsu threshold, then close
+        """
         gray = self._to_gray(roi)
-        masks: dict[str, np.ndarray] = {}
+        h, w = gray.shape[:2]
+        candidates: List[np.ndarray] = []
 
         # 1) Adaptive threshold
         try:
@@ -92,7 +99,8 @@ class BottleDetector:
                 gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 3
             )
             adp = self._morph_close(adp, 5, 1)
-            masks["adaptive"] = adp
+            contours, _ = cv2.findContours(adp, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            candidates.extend(contours)
         except Exception:
             pass
 
@@ -107,7 +115,8 @@ class BottleDetector:
             high = max(low + 10.0, 3.0 * mad)
             edges = cv2.Canny(gray, low, high)
             edges = self._morph_close(edges, 5, 1)
-            masks["canny_mad"] = edges
+            contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            candidates.extend(contours)
         except Exception:
             pass
 
@@ -117,11 +126,12 @@ class BottleDetector:
             eq = clahe.apply(gray)
             _, otsu = cv2.threshold(eq, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
             otsu = self._morph_close(otsu, 5, 1)
-            masks["clahe_otsu"] = otsu
+            contours, _ = cv2.findContours(otsu, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            candidates.extend(contours)
         except Exception:
             pass
 
-        return masks
+        return candidates
 
     def _score_contour(self, cnt: np.ndarray, roi_shape: Tuple[int, int], *, min_area_px: int) -> float:
         h, w = roi_shape
@@ -202,25 +212,16 @@ class BottleDetector:
 
         return float(score)
 
-    def detect(self, roi: np.ndarray, min_area_px: int, debug: Optional[dict] = None) -> PixelBottleInfo:
-        masks = self._pipeline_masks(roi)
-        contours: List[np.ndarray] = []
-        for m in masks.values():
-            try:
-                cs, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-                contours.extend(cs)
-            except Exception:
-                continue
+    def detect(self, roi: np.ndarray, min_area_px: int) -> PixelBottleInfo:
+        contours = self._pipeline_candidates(roi)
         if not contours:
             raise MeasurementError("Bottle not found in ROI.")
 
         h, w = roi.shape[:2]
         best_cnt: Optional[np.ndarray] = None
         best_score = -1e9
-        scored: List[float] = []
         for cnt in contours:
             sc = self._score_contour(cnt, (h, w), min_area_px=min_area_px)
-            scored.append(sc)
             if sc > best_score:
                 best_score = sc
                 best_cnt = cnt
@@ -233,12 +234,6 @@ class BottleDetector:
         visual_h = max(w_raw, h_raw)
         visual_w = min(w_raw, h_raw)
         box = np.intp(cv2.boxPoints(rect))
-        if debug is not None:
-            debug["masks"] = masks
-            debug["best_contour"] = best_cnt
-            debug["best_box_points"] = box
-            debug["roi_shape"] = (h, w)
-            debug["best_score"] = float(best_score)
         return PixelBottleInfo(
             pixel_width=float(visual_w),
             pixel_height=float(visual_h),
@@ -395,30 +390,30 @@ class BottleMeasurer:
 
         # Choose final ROI: prefer intersection(ref, det) when viable
         roi_source = "reference"
-        roi_offset_x = 0
-        roi_offset_y = 0
+        roi_offset_x, roi_offset_y = 0, 0  # Track ROI offset for coordinate translation
+        
         if det_rect is not None:
             inter = self._intersect_rect(ref_rect, det_rect)
             if inter is not None and self._rect_area(inter) >= 0.2 * self._rect_area(det_rect):
                 x, y, w, h = inter
                 roi = img[y : y + h, x : x + w]
-                roi_source = "intersection"
                 roi_offset_x, roi_offset_y = x, y
+                roi_source = "intersection"
             else:
                 # Fall back to detection ROI if valid, otherwise reference ROI
                 x, y, w, h = det_rect
                 if w > 1 and h > 1:
                     roi = img[y : y + h, x : x + w]
-                    roi_source = "detection"
                     roi_offset_x, roi_offset_y = x, y
+                    roi_source = "detection"
                 else:
                     roi = ref_roi
-                    roi_source = "reference"
                     roi_offset_x, roi_offset_y = 0, 0
+                    roi_source = "reference"
         else:
             roi = ref_roi
-            roi_source = "reference"
             roi_offset_x, roi_offset_y = 0, 0
+            roi_source = "reference"
 
         # Validate ROI is not empty
         if roi.size == 0:
@@ -430,8 +425,7 @@ class BottleMeasurer:
         min_area_px = int((pixel_per_cm ** 2) * 0.5)
 
         # Detect bottle using the advanced detector
-        debug_ctx: dict | None = {} if return_debug else None
-        bottle_info = self.detector.detect(roi, min_area_px, debug=debug_ctx)
+        bottle_info = self.detector.detect(roi, min_area_px)
 
         height_mm = bottle_info.pixel_height * scale
         diameter_mm = bottle_info.pixel_width * scale
@@ -483,56 +477,38 @@ class BottleMeasurer:
                 (0, 255, 255),
                 2,
             )
-            # Bottle contour & rotated box (absolute coordinates)
-            try:
-                abs_box = np.array(bottle_info.box_points, dtype=np.int32).copy()
-                abs_box[:, 0] = abs_box[:, 0] + int(roi_offset_x)
-                abs_box[:, 1] = abs_box[:, 1] + int(roi_offset_y)
-                cv2.polylines(debug, [abs_box], isClosed=True, color=(255, 0, 0), thickness=2)
-
-                if bottle_info.contour is not None and len(bottle_info.contour) > 0:
-                    cnt_abs = bottle_info.contour.copy()
-                    cnt_abs[:, 0, 0] = cnt_abs[:, 0, 0] + int(roi_offset_x)
-                    cnt_abs[:, 0, 1] = cnt_abs[:, 0, 1] + int(roi_offset_y)
-                    cv2.drawContours(debug, [cnt_abs], -1, (0, 0, 255), 1)
-                # Paste pipeline masks as thumbnails on top-left
-                if debug_ctx is not None and "masks" in debug_ctx:
-                    masks = debug_ctx.get("masks", {})
-                    thumb_w = 200
-                    x0, y0 = 10, 10
-                    for name, m in masks.items():
-                        try:
-                            rgb = cv2.cvtColor(m, cv2.COLOR_GRAY2BGR)
-                            h_m, w_m = rgb.shape[:2]
-                            scale = thumb_w / max(1, w_m)
-                            thumb = cv2.resize(rgb, (thumb_w, int(h_m * scale)))
-                            h_t, w_t = thumb.shape[:2]
-                            x1, y1 = x0 + w_t, y0 + h_t
-                            # bounds check
-                            if y1 + 5 < debug.shape[0] and x1 + 5 < debug.shape[1]:
-                                debug[y0:y1, x0:x1] = thumb
-                                cv2.putText(debug, name, (x0 + 4, y0 + h_t + 16), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
-                                y0 = y1 + 30
-                        except Exception:
-                            continue
-            except Exception:
-                pass
-            # Put size label (height x diameter in mm)
+            # Draw bottle contour and box in absolute image coordinates
+            # Translate ROI-relative coordinates to absolute image coordinates
+            abs_contour = bottle_info.contour.copy()
+            abs_contour[:, :, 0] += roi_offset_x
+            abs_contour[:, :, 1] += roi_offset_y
+            cv2.drawContours(debug, [abs_contour], -1, (0, 0, 255), 2)
+            
+            # Translate box points to absolute coordinates
+            abs_box_points = bottle_info.box_points.copy()
+            abs_box_points[:, 0] += roi_offset_x
+            abs_box_points[:, 1] += roi_offset_y
+            cv2.drawContours(debug, [abs_box_points], -1, (255, 0, 0), 2)
+            
+            # Put size label (height x diameter in mm) at translated coordinates
             size_label = f"{height_mm:.0f}x{diameter_mm:.0f} mm"
+            label_x = abs_box_points[0][0]
+            label_y = abs_box_points[0][1] - 10
             cv2.putText(
                 debug,
                 size_label,
-                (int(bottle_info.box_points[0][0]) + int(roi_offset_x), int(bottle_info.box_points[0][1]) + int(roi_offset_y) - 10),
+                (label_x, label_y),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.6,
-                (0, 255, 255),
+                (255, 255, 0),  # Changed to yellow for better visibility
                 2,
             )
             if classification:
+                class_y = max(abs_box_points[:, 1]) + 20
                 cv2.putText(
                     debug,
                     classification,
-                    (int(bottle_info.box_points[0][0]) + int(roi_offset_x), int(max(bottle_info.box_points[:, 1])) + int(roi_offset_y) + 20),
+                    (label_x, class_y),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.6,
                     (255, 0, 255),
