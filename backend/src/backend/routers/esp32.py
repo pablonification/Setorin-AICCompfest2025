@@ -146,10 +146,17 @@ async def update_esp32_status(status_update: ESP32Status, background_tasks: Back
 
 @router.post("/control", status_code=status.HTTP_200_OK)
 async def control_lid(request: LidControlRequest, background_tasks: BackgroundTasks):
-    """Control ESP32 lid operations."""
+    """Control ESP32 lid operations with hybrid HTTP/WebSocket support."""
     try:
         device_id = request.device_id
         action = request.action
+
+        # Check if device is connected via WebSocket (import here to avoid circular imports)
+        try:
+            from .esp32_device_ws import clients as websocket_clients
+            is_websocket_connected = device_id in websocket_clients
+        except ImportError:
+            is_websocket_connected = False
 
         # Log the action
         db = await ensure_connection()
@@ -158,12 +165,15 @@ async def control_lid(request: LidControlRequest, background_tasks: BackgroundTa
             "action": action,
             "timestamp": datetime.now(timezone.utc),
             "status": "pending",
-            "details": {"duration_seconds": request.duration_seconds}
+            "details": {
+                "duration_seconds": request.duration_seconds,
+                "communication_method": "websocket" if is_websocket_connected else "http_polling"
+            }
         }
 
         log_result = await db["esp32_logs"].insert_one(action_log)
         action_id = str(log_result.inserted_id)
-        logger.info("Created action log with ID: %s", action_id)
+        logger.info("Created action log with ID: %s (WebSocket: %s)", action_id, is_websocket_connected)
 
         logger.info("ESP32 lid control: %s - %s", device_id, action)
 
@@ -431,27 +441,40 @@ async def handle_lid_open_sequence(device_id: str, action: str, duration_seconds
             logger.error("ESP32 device %s not registered", device_id)
             raise HTTPException(status_code=404, detail=f"ESP32 device {device_id} not found or not registered")
 
-        device_ip = device_info.get("ip_address")
-
-        # Try direct IP communication first (if IP is available)
-        if device_ip:
-            logger.info("ESP32 %s found at IP: %s - attempting direct communication", device_id, device_ip)
-            iot_client = SmartBinClient(esp32_ip=device_ip)
-            events = await iot_client.open_bin(device_id=device_id, duration_seconds=duration_seconds)
-
-            # Check if direct communication succeeded
-            if any(event.get("event") == "lid_opened" and event.get("status") == "success" for event in events):
-                logger.info("Direct IP communication successful for %s", device_id)
+        # Try WebSocket communication first if available
+        try:
+            from .esp32_device_ws import clients as websocket_clients
+            if device_id in websocket_clients:
+                logger.info("ESP32 %s: Using WebSocket communication", device_id)
+                import json
+                message = json.dumps({"action": action, "duration_seconds": duration_seconds})
+                await websocket_clients[device_id].send_text(message)
+                events = [{"event": "websocket_command_sent", "status": "success"}]
+                logger.info("WebSocket command sent successfully for %s", device_id)
             else:
-                logger.warning("Direct IP communication failed for %s, falling back to command queuing", device_id)
-                # Fall back to command queuing
+                # Fall back to HTTP/IP communication
+                device_ip = device_info.get("ip_address")
+                if device_ip:
+                    logger.info("ESP32 %s found at IP: %s - attempting direct communication", device_id, device_ip)
+                    iot_client = SmartBinClient(esp32_ip=device_ip)
+                    events = await iot_client.open_bin(device_id=device_id, duration_seconds=duration_seconds)
+                else:
+                    # No IP available, use command queuing
+                    logger.info("No IP address available for %s, using command queuing", device_id)
+                    await queue_command_for_esp32(device_id, action, duration_seconds)
+                    events = [{"event": "command_queued", "status": "success"}]
+        except ImportError:
+            # WebSocket router not available, fall back to HTTP
+            device_ip = device_info.get("ip_address")
+            if device_ip:
+                logger.info("ESP32 %s found at IP: %s - attempting direct communication", device_id, device_ip)
+                iot_client = SmartBinClient(esp32_ip=device_ip)
+                events = await iot_client.open_bin(device_id=device_id, duration_seconds=duration_seconds)
+            else:
+                # No IP available, use command queuing
+                logger.info("No IP address available for %s, using command queuing", device_id)
                 await queue_command_for_esp32(device_id, action, duration_seconds)
                 events = [{"event": "command_queued", "status": "success"}]
-        else:
-            # No IP available, use command queuing
-            logger.info("No IP address available for %s, using command queuing", device_id)
-            await queue_command_for_esp32(device_id, action, duration_seconds)
-            events = [{"event": "command_queued", "status": "success"}]
 
         # Update as lid opened
         await db["esp32_logs"].update_one(
