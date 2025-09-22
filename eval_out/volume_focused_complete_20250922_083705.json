@@ -1,0 +1,2709 @@
+{
+  "timestamp": "20250922_083705",
+  "all_results": [
+    {
+      "config_name": "current",
+      "description": "Your current configuration",
+      "parameters": {
+        "w_area": 1.0,
+        "w_aspect": 1.0,
+        "w_vertical": 1.0,
+        "w_solidity": 1.0,
+        "w_border": 0.5
+      },
+      "total_images": 32,
+      "successful_measurements": 30,
+      "success_rate": 93.75,
+      "avg_volume_error": 2.5296112944734217,
+      "volume_accuracy_score": 97.47038870552657,
+      "type_stats": {
+        "330ml": {
+          "count": 7,
+          "avg_error": 1.383764253527048,
+          "min_error": 0.527787460243837,
+          "max_error": 3.3283505349974845
+        },
+        "500ml": {
+          "count": 2,
+          "avg_error": 0.6591748014123255,
+          "min_error": 0.43878325924445105,
+          "max_error": 0.8795663435801999
+        },
+        "600ml": {
+          "count": 10,
+          "avg_error": 2.761295664345467,
+          "min_error": 0.4184216139938713,
+          "max_error": 7.133618766985856
+        },
+        "1000ml": {
+          "count": 1,
+          "avg_error": 0.48086703169594786,
+          "min_error": 0.48086703169594786,
+          "max_error": 0.48086703169594786
+        },
+        "1500ml": {
+          "count": 10,
+          "avg_error": 3.6789815781538047,
+          "min_error": 0.18840097766504488,
+          "max_error": 6.61643904565417
+        }
+      },
+      "detailed_results": [
+        {
+          "filename": "test2.1.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 327.5015987195022,
+          "volume_error_percent": 0.7570912971205375,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.2.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 327.0020016073506,
+          "volume_error_percent": 0.9084843614089027,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test3.1.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 328.25830138119534,
+          "volume_error_percent": 0.527787460243837,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test3.2.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 340.9835567654917,
+          "volume_error_percent": 3.3283505349974845,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "BISMILLAH.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 328.0036956592638,
+          "volume_error_percent": 0.6049407093139921,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.3.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 560.9455228903818,
+          "volume_error_percent": 6.509079518269706,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.4.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 608.6676392074153,
+          "volume_error_percent": 1.444606534569213,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.5.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 593.0272136594378,
+          "volume_error_percent": 1.1621310567603587,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test3.3.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 595.0710783739185,
+          "volume_error_percent": 0.8214869376802577,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test4.1.jpg",
+          "expected_ml": 500,
+          "predicted_ml": 502.19391629622226,
+          "volume_error_percent": 0.43878325924445105,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "500ml"
+        },
+        {
+          "filename": "test4.2.jpg",
+          "expected_ml": 500,
+          "predicted_ml": 504.397831717901,
+          "volume_error_percent": 0.8795663435801999,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "500ml"
+        },
+        {
+          "filename": "test4.3.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 626.434017131831,
+          "volume_error_percent": 4.405669521971825,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test4.4.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 614.917632320579,
+          "volume_error_percent": 2.486272053429824,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "biru.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 602.5105296839632,
+          "volume_error_percent": 0.4184216139938713,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.6.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1444.110312156476,
+          "volume_error_percent": 3.7259791895682612,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.7.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1423.1917868780245,
+          "volume_error_percent": 5.1205475414650365,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.8.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1518.6476846259368,
+          "volume_error_percent": 1.2431789750624527,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.9.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1599.2465856848125,
+          "volume_error_percent": 6.61643904565417,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "TAI.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1502.8260146649757,
+          "volume_error_percent": 0.18840097766504488,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test_akhir.png",
+          "expected_ml": 1000,
+          "predicted_ml": 995.1913296830405,
+          "volume_error_percent": 0.48086703169594786,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1000ml"
+        },
+        {
+          "filename": "pls.png",
+          "expected_ml": 1500,
+          "predicted_ml": 0,
+          "volume_error_percent": 100.0,
+          "measurement_success": false,
+          "error_message": "Measurement failed - no bottle detected",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "pls2.png",
+          "expected_ml": 1500,
+          "predicted_ml": 0,
+          "volume_error_percent": 100.0,
+          "measurement_success": false,
+          "error_message": "Measurement failed - no bottle detected",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "processed_roi.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 612.081025119122,
+          "volume_error_percent": 2.0135041865203407,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "roi_debug.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 557.1982873980849,
+          "volume_error_percent": 7.133618766985856,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "tai_final_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1473.9072686606737,
+          "volume_error_percent": 1.7395154226217526,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "TAI_fixed_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1540.972869687847,
+          "volume_error_percent": 2.7315246458564615,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "TAI_fixed_final_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1572.9784224697485,
+          "volume_error_percent": 4.865228164649897,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.1_debug_hsv_1.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 325.4203819099801,
+          "volume_error_percent": 1.3877630575817854,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.1_debug.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 337.16737676827523,
+          "volume_error_percent": 2.1719323540227977,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.4_debug.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 607.3089987196405,
+          "volume_error_percent": 1.2181664532734167,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.8_debug_hsv_1.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1565.3683188574564,
+          "volume_error_percent": 4.357887923830428,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.8_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1406.983291572532,
+          "volume_error_percent": 6.201113895164538,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        }
+      ]
+    },
+    {
+      "config_name": "aspect_focused",
+      "description": "Best from previous test - emphasizes aspect ratio",
+      "parameters": {
+        "w_area": 1.0,
+        "w_aspect": 2.0,
+        "w_vertical": 1.5,
+        "w_solidity": 1.5,
+        "w_border": 0.5
+      },
+      "total_images": 32,
+      "successful_measurements": 32,
+      "success_rate": 100.0,
+      "avg_volume_error": 2.9742288764293785,
+      "volume_accuracy_score": 97.02577112357062,
+      "type_stats": {
+        "330ml": {
+          "count": 7,
+          "avg_error": 4.817660774378239,
+          "min_error": 2.2611610612598168,
+          "max_error": 9.76142540342077
+        },
+        "500ml": {
+          "count": 2,
+          "avg_error": 1.2453190469757829,
+          "min_error": 0.19734748137900626,
+          "max_error": 2.2932906125725596
+        },
+        "600ml": {
+          "count": 10,
+          "avg_error": 2.467575424583866,
+          "min_error": 0.2618212388349548,
+          "max_error": 8.313941973352826
+        },
+        "1000ml": {
+          "count": 1,
+          "avg_error": 2.1800235005685296,
+          "min_error": 2.1800235005685296,
+          "max_error": 2.1800235005685296
+        },
+        "1500ml": {
+          "count": 12,
+          "avg_error": 2.67544023206114,
+          "min_error": 0.39820783010835237,
+          "max_error": 6.040593266107847
+        }
+      },
+      "detailed_results": [
+        {
+          "filename": "test2.1.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 338.0438283911083,
+          "volume_error_percent": 2.437523754881309,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.2.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 308.56132444355273,
+          "volume_error_percent": 6.496568350438565,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test3.1.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 297.78729616871146,
+          "volume_error_percent": 9.76142540342077,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test3.2.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 322.5381684978426,
+          "volume_error_percent": 2.2611610612598168,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "BISMILLAH.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 318.73994948960507,
+          "volume_error_percent": 3.4121365183014953,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.3.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 615.3679046802447,
+          "volume_error_percent": 2.5613174467074487,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.4.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 611.6532332835565,
+          "volume_error_percent": 1.94220554725941,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.5.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 578.6137413365811,
+          "volume_error_percent": 3.564376443903143,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test3.3.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 611.6338486618564,
+          "volume_error_percent": 1.9389747769760675,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test4.1.jpg",
+          "expected_ml": 500,
+          "predicted_ml": 488.5335469371372,
+          "volume_error_percent": 2.2932906125725596,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "500ml"
+        },
+        {
+          "filename": "test4.2.jpg",
+          "expected_ml": 500,
+          "predicted_ml": 499.01326259310497,
+          "volume_error_percent": 0.19734748137900626,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "500ml"
+        },
+        {
+          "filename": "test4.3.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 595.9649029985458,
+          "volume_error_percent": 0.6725161669090387,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test4.4.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 601.5709274330097,
+          "volume_error_percent": 0.2618212388349548,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "biru.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 611.2394672393401,
+          "volume_error_percent": 1.873244539890019,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.6.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1534.8282902861013,
+          "volume_error_percent": 2.3218860190734176,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.7.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1519.0877767216728,
+          "volume_error_percent": 1.2725184481115168,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.8.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1535.457537646859,
+          "volume_error_percent": 2.363835843123934,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.9.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1526.1038527475737,
+          "volume_error_percent": 1.7402568498382454,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "TAI.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1471.419749266275,
+          "volume_error_percent": 1.9053500489150035,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test_akhir.png",
+          "expected_ml": 1000,
+          "predicted_ml": 978.1997649943147,
+          "volume_error_percent": 2.1800235005685296,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1000ml"
+        },
+        {
+          "filename": "pls.png",
+          "expected_ml": 1500,
+          "predicted_ml": 1465.9291542968456,
+          "volume_error_percent": 2.271389713543628,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "pls2.png",
+          "expected_ml": 1500,
+          "predicted_ml": 1536.1991940358773,
+          "volume_error_percent": 2.4132796023918215,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "processed_roi.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 596.5660382679914,
+          "volume_error_percent": 0.5723269553347639,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "roi_debug.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 649.883651840117,
+          "volume_error_percent": 8.313941973352826,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "tai_final_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1447.9542492359133,
+          "volume_error_percent": 3.4697167176057824,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "TAI_fixed_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1430.193733492481,
+          "volume_error_percent": 4.6537511005012675,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "TAI_fixed_final_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1548.817460181193,
+          "volume_error_percent": 3.254497345412862,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.1_debug_hsv_1.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 352.7718703154845,
+          "volume_error_percent": 6.900566762268023,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.1_debug.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 338.0990037812564,
+          "volume_error_percent": 2.4542435700776926,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.4_debug.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 617.8501749400259,
+          "volume_error_percent": 2.9750291566709848,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.8_debug_hsv_1.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1590.6088989916177,
+          "volume_error_percent": 6.040593266107847,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.8_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1494.0268825483747,
+          "volume_error_percent": 0.39820783010835237,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        }
+      ]
+    },
+    {
+      "config_name": "volume_optimized_1",
+      "description": "Optimized for volume accuracy - higher area weight",
+      "parameters": {
+        "w_area": 1.2,
+        "w_aspect": 2.2,
+        "w_vertical": 1.4,
+        "w_solidity": 1.3,
+        "w_border": 0.4
+      },
+      "total_images": 32,
+      "successful_measurements": 32,
+      "success_rate": 100.0,
+      "avg_volume_error": 2.8142350929980866,
+      "volume_accuracy_score": 97.18576490700191,
+      "type_stats": {
+        "330ml": {
+          "count": 7,
+          "avg_error": 3.6440433690117513,
+          "min_error": 0.13724411512376292,
+          "max_error": 6.6001984651625145
+        },
+        "500ml": {
+          "count": 2,
+          "avg_error": 3.9653429037759564,
+          "min_error": 1.671588093858327,
+          "max_error": 6.259097713693586
+        },
+        "600ml": {
+          "count": 10,
+          "avg_error": 1.7917001919418947,
+          "min_error": 0.8385796881262876,
+          "max_error": 3.5078708572453934
+        },
+        "1000ml": {
+          "count": 1,
+          "avg_error": 0.9386391380963118,
+          "min_error": 0.9386391380963118,
+          "max_error": 0.9386391380963118
+        },
+        "1500ml": {
+          "count": 12,
+          "avg_error": 3.146741043982445,
+          "min_error": 0.08082428980328586,
+          "max_error": 9.145509494912282
+        }
+      },
+      "detailed_results": [
+        {
+          "filename": "test2.1.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 308.2193450649637,
+          "volume_error_percent": 6.6001984651625145,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.2.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 321.8557201981997,
+          "volume_error_percent": 2.4679635763031156,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test3.1.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 342.8707070114492,
+          "volume_error_percent": 3.900214245893701,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test3.2.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 310.5003205852069,
+          "volume_error_percent": 5.908993762058513,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "BISMILLAH.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 330.4529055799084,
+          "volume_error_percent": 0.13724411512376292,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.3.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 605.0314781287577,
+          "volume_error_percent": 0.8385796881262876,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.4.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 593.729617624379,
+          "volume_error_percent": 1.0450637292701686,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.5.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 614.3775725751528,
+          "volume_error_percent": 2.396262095858807,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test3.3.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 609.395564268546,
+          "volume_error_percent": 1.5659273780909946,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test4.1.jpg",
+          "expected_ml": 500,
+          "predicted_ml": 531.2954885684679,
+          "volume_error_percent": 6.259097713693586,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "500ml"
+        },
+        {
+          "filename": "test4.2.jpg",
+          "expected_ml": 500,
+          "predicted_ml": 508.35794046929163,
+          "volume_error_percent": 1.671588093858327,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "500ml"
+        },
+        {
+          "filename": "test4.3.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 590.1413755478019,
+          "volume_error_percent": 1.6431040753663524,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test4.4.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 590.9115194500162,
+          "volume_error_percent": 1.5147467583306402,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "biru.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 586.5470967346574,
+          "volume_error_percent": 2.2421505442237617,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.6.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1554.0874761825912,
+          "volume_error_percent": 3.6058317455060815,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.7.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1467.8048842830137,
+          "volume_error_percent": 2.1463410477990843,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.8.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1496.0093106808126,
+          "volume_error_percent": 0.2660459546124912,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.9.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1542.559081008426,
+          "volume_error_percent": 2.8372720672283926,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "TAI.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1465.3131825735045,
+          "volume_error_percent": 2.3124544950997006,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test_akhir.png",
+          "expected_ml": 1000,
+          "predicted_ml": 990.6136086190369,
+          "volume_error_percent": 0.9386391380963118,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1000ml"
+        },
+        {
+          "filename": "pls.png",
+          "expected_ml": 1500,
+          "predicted_ml": 1362.8173575763158,
+          "volume_error_percent": 9.145509494912282,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "pls2.png",
+          "expected_ml": 1500,
+          "predicted_ml": 1419.3513360193526,
+          "volume_error_percent": 5.376577598709824,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "processed_roi.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 590.8154441917663,
+          "volume_error_percent": 1.5307593013722758,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "roi_debug.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 609.7952249492056,
+          "volume_error_percent": 1.632537491534265,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "tai_final_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1578.3540007215095,
+          "volume_error_percent": 5.223600048100631,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "TAI_fixed_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1498.7876356529507,
+          "volume_error_percent": 0.08082428980328586,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "TAI_fixed_final_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1517.1588205764028,
+          "volume_error_percent": 1.1439213717601888,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.1_debug_hsv_1.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 332.8733255277991,
+          "volume_error_percent": 0.8707047053936742,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.1_debug.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 348.55584955338503,
+          "volume_error_percent": 5.6229847131469795,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.4_debug.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 621.0472251434724,
+          "volume_error_percent": 3.5078708572453934,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.8_debug_hsv_1.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1517.9682338627792,
+          "volume_error_percent": 1.1978822575186163,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.8_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1433.6305176489186,
+          "volume_error_percent": 4.42463215673876,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        }
+      ]
+    },
+    {
+      "config_name": "volume_optimized_2",
+      "description": "Strong aspect focus for better volume estimation",
+      "parameters": {
+        "w_area": 0.8,
+        "w_aspect": 2.5,
+        "w_vertical": 1.6,
+        "w_solidity": 1.4,
+        "w_border": 0.3
+      },
+      "total_images": 32,
+      "successful_measurements": 32,
+      "success_rate": 100.0,
+      "avg_volume_error": 3.1394065013631103,
+      "volume_accuracy_score": 96.86059349863689,
+      "type_stats": {
+        "330ml": {
+          "count": 7,
+          "avg_error": 3.9372368228737753,
+          "min_error": 0.12704096271534127,
+          "max_error": 8.296626244638047
+        },
+        "500ml": {
+          "count": 2,
+          "avg_error": 1.835011962695552,
+          "min_error": 0.4332122582702141,
+          "max_error": 3.2368116671208895
+        },
+        "600ml": {
+          "count": 10,
+          "avg_error": 2.8786425611726107,
+          "min_error": 0.400033393355083,
+          "max_error": 5.558175525484046
+        },
+        "1000ml": {
+          "count": 1,
+          "avg_error": 0.007622931429841629,
+          "min_error": 0.007622931429841629,
+          "max_error": 0.007622931429841629
+        },
+        "1500ml": {
+          "count": 12,
+          "avg_error": 3.369689817913004,
+          "min_error": 0.01421634537838751,
+          "max_error": 9.2287414181718
+        }
+      },
+      "detailed_results": [
+        {
+          "filename": "test2.1.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 344.2664821006087,
+          "volume_error_percent": 4.323176394123848,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.2.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 336.0175895535927,
+          "volume_error_percent": 1.8235119859371818,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test3.1.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 347.1994537524803,
+          "volume_error_percent": 5.211955682569782,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test3.2.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 329.5807648230394,
+          "volume_error_percent": 0.12704096271534127,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "BISMILLAH.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 357.37886660730555,
+          "volume_error_percent": 8.296626244638047,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.3.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 592.5175225093293,
+          "volume_error_percent": 1.2470795817784506,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.4.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 633.2148914590257,
+          "volume_error_percent": 5.535815243170949,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.5.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 602.4002003601305,
+          "volume_error_percent": 0.400033393355083,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test3.3.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 591.1148812836326,
+          "volume_error_percent": 1.4808531193945669,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test4.1.jpg",
+          "expected_ml": 500,
+          "predicted_ml": 483.81594166439555,
+          "volume_error_percent": 3.2368116671208895,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "500ml"
+        },
+        {
+          "filename": "test4.2.jpg",
+          "expected_ml": 500,
+          "predicted_ml": 497.83393870864893,
+          "volume_error_percent": 0.4332122582702141,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "500ml"
+        },
+        {
+          "filename": "test4.3.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 624.4957106905938,
+          "volume_error_percent": 4.082618448432299,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test4.4.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 614.0500091803636,
+          "volume_error_percent": 2.3416681967272743,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "biru.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 611.8558635249839,
+          "volume_error_percent": 1.975977254163979,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.6.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1361.568878727423,
+          "volume_error_percent": 9.2287414181718,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.7.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1541.4246004343763,
+          "volume_error_percent": 2.761640028958421,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.8.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1532.3869526409762,
+          "volume_error_percent": 2.159130176065082,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.9.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1467.9583353797277,
+          "volume_error_percent": 2.136110974684819,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "TAI.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1468.950826140778,
+          "volume_error_percent": 2.069944923948136,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test_akhir.png",
+          "expected_ml": 1000,
+          "predicted_ml": 999.9237706857016,
+          "volume_error_percent": 0.007622931429841629,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1000ml"
+        },
+        {
+          "filename": "pls.png",
+          "expected_ml": 1500,
+          "predicted_ml": 1630.773897936913,
+          "volume_error_percent": 8.71825986246087,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "pls2.png",
+          "expected_ml": 1500,
+          "predicted_ml": 1420.0060699266967,
+          "volume_error_percent": 5.332928671553554,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "processed_roi.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 592.6373684009299,
+          "volume_error_percent": 1.2271052665116902,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "roi_debug.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 633.3490531529043,
+          "volume_error_percent": 5.558175525484046,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "tai_final_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1470.089654447529,
+          "volume_error_percent": 1.994023036831398,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "TAI_fixed_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1475.5802577850977,
+          "volume_error_percent": 1.6279828143268182,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "TAI_fixed_final_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1506.555013098741,
+          "volume_error_percent": 0.43700087324940196,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.1_debug_hsv_1.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 308.1950921851751,
+          "volume_error_percent": 6.607547822674212,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.1_debug.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 333.86363560261145,
+          "volume_error_percent": 1.170798667458016,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.4_debug.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 570.3774025037534,
+          "volume_error_percent": 4.937099582707768,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.8_debug_hsv_1.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1559.3444803399104,
+          "volume_error_percent": 3.956298689327362,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.8_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1500.2132451806758,
+          "volume_error_percent": 0.01421634537838751,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        }
+      ]
+    },
+    {
+      "config_name": "precision_focused",
+      "description": "High precision requirements for accurate measurements",
+      "parameters": {
+        "w_area": 1.1,
+        "w_aspect": 2.1,
+        "w_vertical": 1.7,
+        "w_solidity": 1.6,
+        "w_border": 0.6
+      },
+      "total_images": 32,
+      "successful_measurements": 32,
+      "success_rate": 100.0,
+      "avg_volume_error": 3.108594286759469,
+      "volume_accuracy_score": 96.89140571324053,
+      "type_stats": {
+        "330ml": {
+          "count": 7,
+          "avg_error": 3.862905792789081,
+          "min_error": 0.4732884294054429,
+          "max_error": 10.118428571720433
+        },
+        "500ml": {
+          "count": 2,
+          "avg_error": 2.6072525571228082,
+          "min_error": 1.4511827499042511,
+          "max_error": 3.7633223643413656
+        },
+        "600ml": {
+          "count": 10,
+          "avg_error": 2.266124966572507,
+          "min_error": 0.12778268824509573,
+          "max_error": 5.379089865776716
+        },
+        "1000ml": {
+          "count": 1,
+          "avg_error": 0.9775215270678927,
+          "min_error": 0.9775215270678927,
+          "max_error": 0.9775215270678927
+        },
+        "1500ml": {
+          "count": 12,
+          "avg_error": 3.6317833599784066,
+          "min_error": 0.18744948687691854,
+          "max_error": 7.5992480319465665
+        }
+      },
+      "detailed_results": [
+        {
+          "filename": "test2.1.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 363.3908142866774,
+          "volume_error_percent": 10.118428571720433,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.2.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 334.1067549289909,
+          "volume_error_percent": 1.2444711906032973,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test3.1.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 347.46369802421725,
+          "volume_error_percent": 5.292029704308257,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test3.2.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 313.3345657213031,
+          "volume_error_percent": 5.050131599605128,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "BISMILLAH.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 328.43814818296204,
+          "volume_error_percent": 0.4732884294054429,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.3.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 605.974252222282,
+          "volume_error_percent": 0.9957087037136603,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.4.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 632.2745391946603,
+          "volume_error_percent": 5.379089865776716,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.5.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 568.923562321056,
+          "volume_error_percent": 5.179406279823998,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test3.3.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 614.5858841655051,
+          "volume_error_percent": 2.430980694250858,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test4.1.jpg",
+          "expected_ml": 500,
+          "predicted_ml": 507.25591374952126,
+          "volume_error_percent": 1.4511827499042511,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "500ml"
+        },
+        {
+          "filename": "test4.2.jpg",
+          "expected_ml": 500,
+          "predicted_ml": 518.8166118217068,
+          "volume_error_percent": 3.7633223643413656,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "500ml"
+        },
+        {
+          "filename": "test4.3.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 610.489164368191,
+          "volume_error_percent": 1.7481940613651734,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test4.4.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 600.7666961294706,
+          "volume_error_percent": 0.12778268824509573,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "biru.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 592.319230547243,
+          "volume_error_percent": 1.2801282421261626,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.6.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1431.6908471285326,
+          "volume_error_percent": 4.5539435247644935,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.7.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1510.6949050136736,
+          "volume_error_percent": 0.7129936675782422,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.8.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1489.5090076284052,
+          "volume_error_percent": 0.6993994914396504,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.9.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1610.5632053344293,
+          "volume_error_percent": 7.370880355628621,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "TAI.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1472.0362768965406,
+          "volume_error_percent": 1.8642482068972943,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test_akhir.png",
+          "expected_ml": 1000,
+          "predicted_ml": 1009.7752152706789,
+          "volume_error_percent": 0.9775215270678927,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1000ml"
+        },
+        {
+          "filename": "pls.png",
+          "expected_ml": 1500,
+          "predicted_ml": 1386.0112795208015,
+          "volume_error_percent": 7.5992480319465665,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "pls2.png",
+          "expected_ml": 1500,
+          "predicted_ml": 1471.269450278686,
+          "volume_error_percent": 1.9153699814209328,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "processed_roi.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 603.8451413864614,
+          "volume_error_percent": 0.6408568977435607,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "roi_debug.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 618.334428614579,
+          "volume_error_percent": 3.055738102429833,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "tai_final_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1592.227790832291,
+          "volume_error_percent": 6.148519388819401,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "TAI_fixed_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1497.1882576968462,
+          "volume_error_percent": 0.18744948687691854,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "TAI_fixed_final_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1428.8440667173206,
+          "volume_error_percent": 4.743728885511958,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.1_debug_hsv_1.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 337.5356282649353,
+          "volume_error_percent": 2.2835237166470685,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.1_debug.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 338.508942212872,
+          "volume_error_percent": 2.5784673372339397,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.4_debug.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 610.9401847815001,
+          "volume_error_percent": 1.8233641302500132,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.8_debug_hsv_1.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1455.3995496107862,
+          "volume_error_percent": 2.973363359280923,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.8_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1572.1838390936382,
+          "volume_error_percent": 4.81225593957588,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        }
+      ]
+    },
+    {
+      "config_name": "balanced_volume",
+      "description": "Balanced approach optimized for volume accuracy",
+      "parameters": {
+        "w_area": 1.0,
+        "w_aspect": 1.9,
+        "w_vertical": 1.3,
+        "w_solidity": 1.2,
+        "w_border": 0.4
+      },
+      "total_images": 32,
+      "successful_measurements": 32,
+      "success_rate": 100.0,
+      "avg_volume_error": 2.5960813657484345,
+      "volume_accuracy_score": 97.40391863425157,
+      "type_stats": {
+        "330ml": {
+          "count": 7,
+          "avg_error": 2.4547016637497885,
+          "min_error": 0.3947576755747963,
+          "max_error": 5.017427826815933
+        },
+        "500ml": {
+          "count": 2,
+          "avg_error": 2.194729830799247,
+          "min_error": 0.32537608749585156,
+          "max_error": 4.064083574102642
+        },
+        "600ml": {
+          "count": 10,
+          "avg_error": 2.415484610643783,
+          "min_error": 0.3068876541353802,
+          "max_error": 7.220111934331233
+        },
+        "1000ml": {
+          "count": 1,
+          "avg_error": 2.144386273290411,
+          "min_error": 2.144386273290411,
+          "max_error": 2.144386273290411
+        },
+        "1500ml": {
+          "count": 12,
+          "avg_error": 2.9335833346978877,
+          "min_error": 0.21144693640385415,
+          "max_error": 7.08409741844392
+        }
+      },
+      "detailed_results": [
+        {
+          "filename": "test2.1.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 331.3027003293968,
+          "volume_error_percent": 0.3947576755747963,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.2.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 340.3720611783615,
+          "volume_error_percent": 3.1430488419277243,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test3.1.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 346.5575118284926,
+          "volume_error_percent": 5.017427826815933,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test3.2.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 337.91793857454724,
+          "volume_error_percent": 2.3993753256203747,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "BISMILLAH.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 333.72348494032354,
+          "volume_error_percent": 1.1283287697950135,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.3.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 643.3206716059874,
+          "volume_error_percent": 7.220111934331233,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.4.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 604.9040332471947,
+          "volume_error_percent": 0.8173388745324436,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.5.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 594.0443154434803,
+          "volume_error_percent": 0.9926140927532856,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test3.3.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 601.8413259248123,
+          "volume_error_percent": 0.3068876541353802,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test4.1.jpg",
+          "expected_ml": 500,
+          "predicted_ml": 520.3204178705132,
+          "volume_error_percent": 4.064083574102642,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "500ml"
+        },
+        {
+          "filename": "test4.2.jpg",
+          "expected_ml": 500,
+          "predicted_ml": 501.62688043747926,
+          "volume_error_percent": 0.32537608749585156,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "500ml"
+        },
+        {
+          "filename": "test4.3.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 608.5412953831782,
+          "volume_error_percent": 1.4235492305296966,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test4.4.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 619.6641024691226,
+          "volume_error_percent": 3.277350411520426,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "biru.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 591.5659119401672,
+          "volume_error_percent": 1.4056813433054647,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.6.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1393.7385387233412,
+          "volume_error_percent": 7.08409741844392,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.7.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1518.427950182596,
+          "volume_error_percent": 1.2285300121730718,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.8.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1514.1389913149949,
+          "volume_error_percent": 0.9425994209996588,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.9.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1462.5801104620969,
+          "volume_error_percent": 2.4946593025268764,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "TAI.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1546.1170007422488,
+          "volume_error_percent": 3.0744667161499213,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test_akhir.png",
+          "expected_ml": 1000,
+          "predicted_ml": 1021.4438627329041,
+          "volume_error_percent": 2.144386273290411,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1000ml"
+        },
+        {
+          "filename": "pls.png",
+          "expected_ml": 1500,
+          "predicted_ml": 1421.6437031633232,
+          "volume_error_percent": 5.223753122445123,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "pls2.png",
+          "expected_ml": 1500,
+          "predicted_ml": 1540.8100376892257,
+          "volume_error_percent": 2.7206691792817157,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "processed_roi.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 596.7750049246074,
+          "volume_error_percent": 0.5374991792320998,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "roi_debug.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 564.7029233757459,
+          "volume_error_percent": 5.882846104042358,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "tai_final_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1531.7734368806143,
+          "volume_error_percent": 2.118229125374288,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "TAI_fixed_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1496.8282959539422,
+          "volume_error_percent": 0.21144693640385415,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "TAI_fixed_final_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1447.720086166372,
+          "volume_error_percent": 3.4853275889085276,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.1_debug_hsv_1.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 338.7050343419404,
+          "volume_error_percent": 2.637889194527395,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.1_debug.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 338.12487723955803,
+          "volume_error_percent": 2.4620840119872827,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.4_debug.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 586.2541963076674,
+          "volume_error_percent": 2.290967282055438,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.8_debug_hsv_1.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1528.0838028713777,
+          "volume_error_percent": 1.8722535247585104,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.8_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1571.2045150336378,
+          "volume_error_percent": 4.746967668909186,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        }
+      ]
+    },
+    {
+      "config_name": "experimental_1",
+      "description": "Experimental - very high solidity, low border penalty",
+      "parameters": {
+        "w_area": 0.9,
+        "w_aspect": 2.3,
+        "w_vertical": 1.5,
+        "w_solidity": 1.7,
+        "w_border": 0.2
+      },
+      "total_images": 32,
+      "successful_measurements": 32,
+      "success_rate": 100.0,
+      "avg_volume_error": 3.2992857797930557,
+      "volume_accuracy_score": 96.70071422020695,
+      "type_stats": {
+        "330ml": {
+          "count": 7,
+          "avg_error": 3.774976240694856,
+          "min_error": 0.010899854325585196,
+          "max_error": 8.962778906846317
+        },
+        "500ml": {
+          "count": 2,
+          "avg_error": 2.860541870785613,
+          "min_error": 0.02180366694400391,
+          "max_error": 5.699280074627222
+        },
+        "600ml": {
+          "count": 10,
+          "avg_error": 1.7885406306174105,
+          "min_error": 0.31723420688077414,
+          "max_error": 4.836216164186737
+        },
+        "1000ml": {
+          "count": 1,
+          "avg_error": 5.988292014825629,
+          "min_error": 5.988292014825629,
+          "max_error": 5.988292014825629
+        },
+        "1500ml": {
+          "count": 12,
+          "avg_error": 4.129794100495233,
+          "min_error": 0.22437274805433846,
+          "max_error": 13.265571951640048
+        }
+      },
+      "detailed_results": [
+        {
+          "filename": "test2.1.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 319.3991517202139,
+          "volume_error_percent": 3.2123782666018417,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.2.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 335.6657028540179,
+          "volume_error_percent": 1.716879652732704,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test3.1.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 330.03596951927443,
+          "volume_error_percent": 0.010899854325585196,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test3.2.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 359.57717039259285,
+          "volume_error_percent": 8.962778906846317,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "BISMILLAH.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 305.6922322769499,
+          "volume_error_percent": 7.365990219106097,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.3.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 613.2079785850611,
+          "volume_error_percent": 2.201329764176857,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.4.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 594.1824088256006,
+          "volume_error_percent": 0.969598529066559,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.5.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 598.0965947587154,
+          "volume_error_percent": 0.31723420688077414,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test3.3.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 629.0172969851204,
+          "volume_error_percent": 4.836216164186737,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test4.1.jpg",
+          "expected_ml": 500,
+          "predicted_ml": 499.89098166528,
+          "volume_error_percent": 0.02180366694400391,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "500ml"
+        },
+        {
+          "filename": "test4.2.jpg",
+          "expected_ml": 500,
+          "predicted_ml": 528.4964003731361,
+          "volume_error_percent": 5.699280074627222,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "500ml"
+        },
+        {
+          "filename": "test4.3.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 593.253043121772,
+          "volume_error_percent": 1.1244928130380079,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test4.4.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 605.3486384949514,
+          "volume_error_percent": 0.8914397491585646,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "biru.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 592.509912548192,
+          "volume_error_percent": 1.2483479086346658,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.6.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1462.7967798091504,
+          "volume_error_percent": 2.4802146793899738,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.7.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1503.365591220815,
+          "volume_error_percent": 0.22437274805433846,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.8.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1484.779566917078,
+          "volume_error_percent": 1.0146955388614667,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.9.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1510.9070069962381,
+          "volume_error_percent": 0.7271337997492083,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "TAI.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1405.5750938481015,
+          "volume_error_percent": 6.294993743459902,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test_akhir.png",
+          "expected_ml": 1000,
+          "predicted_ml": 1059.8829201482563,
+          "volume_error_percent": 5.988292014825629,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1000ml"
+        },
+        {
+          "filename": "pls.png",
+          "expected_ml": 1500,
+          "predicted_ml": 1487.9965432212873,
+          "volume_error_percent": 0.8002304519141792,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "pls2.png",
+          "expected_ml": 1500,
+          "predicted_ml": 1625.2771148049271,
+          "volume_error_percent": 8.351807653661808,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "processed_roi.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 584.6319725116782,
+          "volume_error_percent": 2.5613379147202977,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "roi_debug.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 606.6503750701344,
+          "volume_error_percent": 1.1083958450223954,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "tai_final_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1698.9835792746007,
+          "volume_error_percent": 13.265571951640048,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "TAI_fixed_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1445.319117915836,
+          "volume_error_percent": 3.6453921389442714,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "TAI_fixed_final_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1405.9887696515088,
+          "volume_error_percent": 6.267415356566077,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.1_debug_hsv_1.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 320.8747782905196,
+          "volume_error_percent": 2.765218699842545,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.1_debug.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 337.8892706818494,
+          "volume_error_percent": 2.390688085408904,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.4_debug.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 615.7620804677355,
+          "volume_error_percent": 2.627013411289245,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.8_debug_hsv_1.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1581.126849694786,
+          "volume_error_percent": 5.408456646319064,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.8_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1483.841332539263,
+          "volume_error_percent": 1.0772444973824653,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        }
+      ]
+    },
+    {
+      "config_name": "experimental_2",
+      "description": "Experimental - high area and vertical weights",
+      "parameters": {
+        "w_area": 1.3,
+        "w_aspect": 1.8,
+        "w_vertical": 1.8,
+        "w_solidity": 1.1,
+        "w_border": 0.7
+      },
+      "total_images": 32,
+      "successful_measurements": 32,
+      "success_rate": 100.0,
+      "avg_volume_error": 3.7599627768573574,
+      "volume_accuracy_score": 96.24003722314264,
+      "type_stats": {
+        "330ml": {
+          "count": 7,
+          "avg_error": 4.643756500157231,
+          "min_error": 1.9540543707195082,
+          "max_error": 8.211877763334314
+        },
+        "500ml": {
+          "count": 2,
+          "avg_error": 2.414908188053778,
+          "min_error": 0.9640953089960362,
+          "max_error": 3.8657210671115196
+        },
+        "600ml": {
+          "count": 10,
+          "avg_error": 3.383533231184805,
+          "min_error": 0.13008141760150238,
+          "max_error": 7.891939118443607
+        },
+        "1000ml": {
+          "count": 1,
+          "avg_error": 2.4618242790137628,
+          "min_error": 2.4618242790137628,
+          "max_error": 2.4618242790137628
+        },
+        "1500ml": {
+          "count": 12,
+          "avg_error": 3.890461699280451,
+          "min_error": 0.35247685077048724,
+          "max_error": 12.722831813341978
+        }
+      },
+      "detailed_results": [
+        {
+          "filename": "test2.1.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 304.9562417157827,
+          "volume_error_percent": 7.589017661884028,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.2.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 323.2003269743482,
+          "volume_error_percent": 2.0605069774702507,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test3.1.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 347.1742922716627,
+          "volume_error_percent": 5.204330991412937,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test3.2.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 336.4483794233744,
+          "volume_error_percent": 1.9540543707195082,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "BISMILLAH.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 302.90080338099676,
+          "volume_error_percent": 8.211877763334314,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.3.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 599.219511494391,
+          "volume_error_percent": 0.13008141760150238,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.4.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 631.1328690726607,
+          "volume_error_percent": 5.188811512110116,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.5.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 647.3516347106616,
+          "volume_error_percent": 7.891939118443607,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test3.3.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 610.504663518553,
+          "volume_error_percent": 1.7507772530921668,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test4.1.jpg",
+          "expected_ml": 500,
+          "predicted_ml": 504.8204765449802,
+          "volume_error_percent": 0.9640953089960362,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "500ml"
+        },
+        {
+          "filename": "test4.2.jpg",
+          "expected_ml": 500,
+          "predicted_ml": 480.6713946644424,
+          "volume_error_percent": 3.8657210671115196,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "500ml"
+        },
+        {
+          "filename": "test4.3.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 584.2296717710597,
+          "volume_error_percent": 2.6283880381567237,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test4.4.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 600.8774203670804,
+          "volume_error_percent": 0.14623672784673164,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "biru.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 609.4108041486946,
+          "volume_error_percent": 1.5684673581157729,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.6.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1538.160812884951,
+          "volume_error_percent": 2.544054192330062,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.7.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1468.54649355882,
+          "volume_error_percent": 2.0969004294120017,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.8.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1424.232592845556,
+          "volume_error_percent": 5.051160476962938,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.9.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1448.8424749281053,
+          "volume_error_percent": 3.410501671459648,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "TAI.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1433.5974431912011,
+          "volume_error_percent": 4.42683712058659,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test_akhir.png",
+          "expected_ml": 1000,
+          "predicted_ml": 1024.6182427901376,
+          "volume_error_percent": 2.4618242790137628,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1000ml"
+        },
+        {
+          "filename": "pls.png",
+          "expected_ml": 1500,
+          "predicted_ml": 1309.1575227998703,
+          "volume_error_percent": 12.722831813341978,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "pls2.png",
+          "expected_ml": 1500,
+          "predicted_ml": 1472.4931350961667,
+          "volume_error_percent": 1.8337909935888848,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "processed_roi.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 608.413624566957,
+          "volume_error_percent": 1.402270761159495,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "roi_debug.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 639.3163283009998,
+          "volume_error_percent": 6.552721383499962,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "tai_final_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1505.2871527615573,
+          "volume_error_percent": 0.35247685077048724,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "TAI_fixed_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1574.2491623155447,
+          "volume_error_percent": 4.949944154369647,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "TAI_fixed_final_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1470.4122707644608,
+          "volume_error_percent": 1.97251528236928,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.1_debug_hsv_1.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 317.03771283007086,
+          "volume_error_percent": 3.9279658090694363,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.1_debug.jpg",
+          "expected_ml": 330,
+          "predicted_ml": 318.25681164020654,
+          "volume_error_percent": 3.5585419272101406,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "330ml"
+        },
+        {
+          "filename": "test2.4_debug.jpg",
+          "expected_ml": 600,
+          "predicted_ml": 639.4538324509318,
+          "volume_error_percent": 6.575638741821971,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "600ml"
+        },
+        {
+          "filename": "test2.8_debug_hsv_1.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1573.7254281004775,
+          "volume_error_percent": 4.915028540031835,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        },
+        {
+          "filename": "test2.8_debug.jpg",
+          "expected_ml": 1500,
+          "predicted_ml": 1536.142482992131,
+          "volume_error_percent": 2.409498866142061,
+          "measurement_success": true,
+          "error_message": "",
+          "bottle_type": "1500ml"
+        }
+      ]
+    }
+  ]
+}
