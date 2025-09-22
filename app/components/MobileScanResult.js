@@ -18,7 +18,7 @@ export function MobileScanResultSkeleton() {
   );
 }
 
-export default function MobileScanResult({ result }) {
+export default function MobileScanResult({ result, loading=false }) {
   if (loading) {
     return <MobileScanResultSkeleton />;
   }

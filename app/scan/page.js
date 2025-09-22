@@ -18,6 +18,13 @@ export default function ScanPage() {
   const [capturedImage, setCapturedImage] = useState(null);
   // Add state for the instruction popup
   const [showInstructions, setShowInstructions] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  const [isScanningQR, setIsScanningQR] = useState(true);
+  const [qrValidated, setQrValidated] = useState(false);
+  const [isLoadingAfterQR, setIsLoadingAfterQR] = useState(false);
+  const [qrScanInterval, setQrScanInterval] = useState(null);
+  const [qrValidationInProgress, setQrValidationInProgress] = useState(false);
   
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -630,7 +637,7 @@ export default function ScanPage() {
           {isScanning ? (
             <MobileScanResultSkeleton />
           ) : (
-            <MobileScanResult result={result} />
+            <MobileScanResult result={result} loading={isScanning} />
           )}
         </div>
 
