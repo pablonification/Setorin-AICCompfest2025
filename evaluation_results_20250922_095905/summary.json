@@ -1,0 +1,37 @@
+{
+  "total_images": 10,
+  "successful_measurements": 7,
+  "failed_measurements": 3,
+  "success_rate_percent": 70.0,
+  "error_metrics": {
+    "mean_absolute_error_ml": null,
+    "mean_relative_error_percent": null,
+    "root_mean_square_error_ml": null
+  },
+  "category_breakdown": {
+    "pls": {
+      "total": 4,
+      "successful": 2,
+      "mean_error_ml": null,
+      "errors": []
+    },
+    "tai": {
+      "total": 5,
+      "successful": 4,
+      "mean_error_ml": null,
+      "errors": []
+    },
+    "test": {
+      "total": 1,
+      "successful": 1,
+      "mean_error_ml": null,
+      "errors": []
+    }
+  },
+  "processing_stats": {
+    "mean_processing_time_ms": 59.06329681396485,
+    "total_processing_time_ms": 590.6329681396485
+  },
+  "timestamp": "2025-09-22T09:59:05.151109",
+  "evaluation_version": "standalone_v1.0"
+}

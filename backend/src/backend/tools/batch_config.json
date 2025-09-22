@@ -1,0 +1,17 @@
+{
+  "output_dir": "/app/batch_results",
+  "limit_per_category": 10,
+  "test_categories": ["all"],
+  "run_silhouette_tests": true,
+  "run_edge_detection_tests": true,
+  "run_contour_analysis_tests": true,
+  "run_comparison_tests": true,
+  "save_debug_images": true,
+  "baseline_params": {
+    "w_area": 1.0,
+    "w_aspect": 1.0,
+    "w_vertical": 1.0,
+    "w_solidity": 1.0,
+    "w_border": 0.5
+  }
+}
