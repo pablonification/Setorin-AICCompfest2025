@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import SectionHeader from '../components/SectionHeader';
 import SettingsRow from '../components/SettingsRow';
 import { TextSkeleton, CircleSkeleton } from '../components/Skeleton';
+import StatisticsDashboard from '../app/components/StatisticsDashboard';
 
 // Create a Profile Skeleton component
 function ProfileSkeleton() {
