@@ -211,7 +211,7 @@ export default function DebugScanPage() {
             <div className="flex gap-3">
               <div className="shrink-0 w-8 h-8 rounded-full bg-[var(--color-primary-700)] text-white flex items-center justify-center font-bold">3</div>
               <div>
-                <p>Tekan tombol "Scan" untuk memulai pemindaian.</p>
+                <p>Tekan tombol Scan untuk memulai pemindaian.</p>
                 <div className="mt-2 rounded bg-gray-50 p-1">
 
                 </div>
