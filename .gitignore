@@ -50,6 +50,5 @@ backend/.venv
 
 .vscode/
 
-testing/*
 eval_out/*
 eval_out_from_docker/*
