@@ -1,0 +1,11 @@
+filename,category,expected_volume_ml,measured_volume_ml,measured_diameter_mm,measured_height_mm,classification,confidence_percent,absolute_error_ml,relative_error_percent,success,processing_time_ms
+pls.heic,pls,,,,,,,,,False,0.2231597900390625
+pls.png,pls,,3608.48,106.67,403.81,1000mL,100.0,,,True,188.9
+pls2.heic,pls,,,,,,,,,False,0.11372566223144531
+pls2.png,pls,,1024.52,90.44,159.47,1000mL,100.0,,,True,138.0
+TAI.heic,tai,,,,,,,,,False,0.09608268737792969
+TAI.jpg,tai,,0.81,8.36,14.72,200mL,0.1,,,True,62.2
+TAI_fixed_debug.jpg,tai,,1.52,9.12,23.27,200mL,0.2,,,True,54.9
+TAI_fixed_final_debug.jpg,tai,,1.52,9.12,23.27,200mL,0.2,,,True,65.1
+tai_final_debug.jpg,tai,,3.84,14.49,23.25,200mL,0.4,,,True,59.7
+test2.1.jpg,test,,1526.48,101.82,187.45,1000mL,100.0,,,True,21.4
