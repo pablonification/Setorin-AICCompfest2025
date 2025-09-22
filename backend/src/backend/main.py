@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 import os
 
 from .routers import health, scan, ws, auth, notification, statistics, educational, transactions, esp32, qr_code
+from .routers.esp32_device_ws import router as esp32_ws_router
 from .routers.payout import router as payout_router
 from .routers.rag import router as rag_router  # import rag separately after routers package initialized
 from .routers.admin import router as admin_router
@@ -100,6 +101,7 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(scan.router)
 app.include_router(ws.router)
+app.include_router(esp32_ws_router)
 app.include_router(auth.router)
 app.include_router(notification.router)
 app.include_router(statistics.router)
