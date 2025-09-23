@@ -49,3 +49,7 @@ backend/.venv
 **/.pytest_cache/
 
 .vscode/
+
+eval_out/*
+eval_out_from_docker/*
+testing/*

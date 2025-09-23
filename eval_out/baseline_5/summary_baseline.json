@@ -1,0 +1,8 @@
+{
+  "use_fusion": false,
+  "total": 5,
+  "success": 5,
+  "success_rate": 100.0,
+  "mae_ml": 727.322,
+  "median_error_ml": 474.45000000000005
+}

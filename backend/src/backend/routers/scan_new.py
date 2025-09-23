@@ -19,6 +19,10 @@ from ..routers.auth import verify_token
 import base64
 from pathlib import Path
 from uuid import uuid4
+import json
+
+# Import ESP32 WebSocket control
+from .esp32_device_ws import clients as esp32_clients
 
 # Create router with explicit prefix
 router = APIRouter(prefix="/scan", tags=["scan"])
@@ -73,10 +77,26 @@ async def scan_bottle(
     # Validation
     validation_result = validate_scan(measurement, predictions)
 
-    # IoT bin control
+    # IoT bin control via WebSocket
     iot_events = []
     if validation_result.is_valid:
-        iot_events = await smartbin_client.open_bin()
+        device_id = "ESP32-SPARTANS"  # Default device ID
+        
+        # Try WebSocket control first (preferred)
+        if device_id in esp32_clients:
+            try:
+                logger.info("Sending open command to ESP32 %s via WebSocket", device_id)
+                command = json.dumps({"action": "open", "duration_seconds": 3})
+                await esp32_clients[device_id].send_text(command)
+                iot_events = ["ws_command_sent", "lid_open_requested"]
+                logger.info("✅ WebSocket command sent successfully to %s", device_id)
+            except Exception as exc:
+                logger.error("❌ WebSocket command failed for %s: %s", device_id, exc)
+                iot_events = ["ws_command_failed"]
+        else:
+            logger.warning("ESP32 device %s not connected via WebSocket, falling back to IoT simulator", device_id)
+            # Fallback to old IoT simulator
+            iot_events = await smartbin_client.open_bin()
 
     # Add points
     user_total_points: Optional[int] = None
@@ -125,7 +145,7 @@ async def scan_bottle(
             logger.error("Failed to create transaction for scan %s: %s", scan_id, exc)
 
     # Broadcast to WebSocket clients
-    await manager.broadcast({
+    await manager.broadcast_notification({
         "type": "scan_result",
         "data": {
             "scan_id": scan_id,

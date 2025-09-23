@@ -3,12 +3,39 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { TextSkeleton } from "./Skeleton";
+
+export function HistoryListSkeleton() {
+  return (
+    <div className="space-y-3">
+      <div className="flex justify-between items-center">
+        <TextSkeleton width="w-40" height="h-6" />
+        <TextSkeleton width="w-20" height="h-5" />
+      </div>
+      
+      {Array(3).fill().map((_, i) => (
+        <div key={i} className="rounded-lg bg-white [box-shadow:var(--shadow-card)] p-4">
+          <div className="flex justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse"></div>
+              <div className="space-y-2">
+                <div className="h-4 w-20 bg-gray-200 animate-pulse rounded"></div>
+                <div className="h-3 w-28 bg-gray-200 animate-pulse rounded"></div>
+              </div>
+            </div>
+            <div className="h-5 w-16 bg-gray-200 animate-pulse rounded"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function HistoryList({ items = [] }) {
   const authContext = useAuth();
   const token = authContext?.token ?? null;
   const [fetchedItems, setFetchedItems] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const formatAmount = (n) =>
     new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(Math.abs(n));
@@ -46,6 +73,33 @@ export default function HistoryList({ items = [] }) {
         const list = Array.isArray(data) ? data : [];
         // Keep only valid scans with positive points, take latest 4
         let positives = list.filter((t) => !!t?.valid && (t?.points ?? 0) > 0).slice(0, 4);
+
+        // Fallback: use transactions API if scan history yields no positives
+        if (positives.length === 0) {
+          try {
+            const res2 = await fetch(`${base}/api/transactions?limit=20&offset=0`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            });
+            if (res2.ok) {
+              const data2 = await res2.json();
+              const list2 = Array.isArray(data2) ? data2 : [];
+              positives = list2.filter((t) => (t?.amount ?? 0) > 0).slice(0, 4).map((t) => ({
+                id: t.id || t._id,
+                title: "Tukar",
+                time: formatDate(t.created_at || t.timestamp),
+                amount: t.amount ?? 0,
+                points: t.points ?? Math.max(0, t.amount ?? 0),
+                icon: "/tukar.svg",
+              }));
+              setFetchedItems(positives);
+              setLoading(false);
+              return;
+            }
+          } catch {}
+        }
 
         const mapped = positives.map((t) => ({
           id: t.id || t._id,
