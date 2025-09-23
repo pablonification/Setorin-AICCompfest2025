@@ -2,13 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import TopBar from "../components/TopBar";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import TemuinPageSkeleton from '../components/skeletons/TemuinPageSkeleton';
 
 // Sunken Court ITB Bandung coordinates
 const SUNKEN_COURT_ITB = { lat: -6.8883703, lng: 107.6103749 };
 
 export default function TemuinPage() {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
   const mapsEmbed = `https://www.google.com/maps?q=${SUNKEN_COURT_ITB.lat},${SUNKEN_COURT_ITB.lng}&z=17&hl=id&output=embed`;
 
   const directionUrl = `https://www.google.com/maps/dir/?api=1&destination=${SUNKEN_COURT_ITB.lat},${SUNKEN_COURT_ITB.lng}`;
@@ -24,11 +26,21 @@ export default function TemuinPage() {
     window.addEventListener('resize', setVH);
     window.addEventListener('orientationchange', setVH);
 
+    // Simulate loading
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1500); // Adjust time as needed
+
     return () => {
       window.removeEventListener('resize', setVH);
       window.removeEventListener('orientationchange', setVH);
+      clearTimeout(timer);
     };
   }, []);
+
+  if (loading) {
+    return <TemuinPageSkeleton />;
+  }
 
   return (
     <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">

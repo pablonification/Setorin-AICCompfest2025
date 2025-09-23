@@ -1258,11 +1258,11 @@ export default function ScanPage() {
                           <div className="absolute inset-0 pointer-events-none">
                             {/* Bottle silhouette guide - positioned with pixel precision */}
                             <div className="absolute w-32 h-64" style={{ 
-                              top: '30%', 
-                              left: '50%', 
+                              top: '46%', 
+                              left: '54%', 
                               transform: 'translate(-50%, -50%)' 
                             }}>
-                              <svg width="100%" height="100%" viewBox="0 0 100 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-40">
+                              <svg width="80%" height="80%" viewBox="0 0 100 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-40">
                                 <path d="M30 40 L30 10 L70 10 L70 40 L85 70 L85 180 L15 180 L15 70 Z" stroke="white" strokeWidth="3" strokeDasharray="5,5" />
                                 <rect x="38" y="170" width="24" height="4" fill="white" fillOpacity="0.6" />
                                 <text x="50" y="150" textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="bold">Botol</text>
@@ -1271,7 +1271,7 @@ export default function ScanPage() {
                             
                             {/* Reference object guide - positioned separately */}
                             <div className="absolute w-24 h-36" style={{ 
-                              bottom: '15%', 
+                              bottom: '6%', 
                               left: '50%', 
                               transform: 'translateX(-50%)' 
                             }}>
@@ -1342,7 +1342,7 @@ export default function ScanPage() {
                       : 'border-[var(--color-primary-600)]'
                   }`}></div>
                   <p className="mt-2 text-sm text-[var(--color-muted)]">
-                    {qrValidationInProgress ? 'Memvalidasi Kode QR...' : qrValidated ? 'Taruh botol diatas kotak hitam' : 'Arahkan ke Kode QR'}
+                    {qrValidationInProgress ? 'Memvalidasi Kode QR...' : 'Arahkan ke Kode QR'}
                   </p>
                 </div>
               </div>
@@ -1354,15 +1354,22 @@ export default function ScanPage() {
                 </div>
               </div>
             ) : qrValidated ? (
-              <button
-                onClick={captureAndScan}
-                disabled={isScanning}
-                aria-label="Capture image"
-                className="flex items-center justify-center w-24 h-24 rounded-full [box-shadow:var(--shadow-fab)] active:scale-95 disabled:opacity-60"
-                style={{ background: 'var(--color-primary-700)' }}
-              >
-                <img src="/shutter.svg" alt="Shutter" className="w-12 h-12 select-none" draggable="false" />
-              </button>
+              <div className="flex flex-col items-center space-y-4 w-full">
+                <div className="text-center">
+                  <p className="mb-4 text-sm text-[var(--color-muted)]">
+                    Taruh botol diatas kotak hitam
+                  </p>
+                </div>
+                <button
+                  onClick={captureAndScan}
+                  disabled={isScanning}
+                  aria-label="Capture image"
+                  className="flex items-center justify-center w-24 h-24 rounded-full [box-shadow:var(--shadow-fab)] active:scale-95 disabled:opacity-60"
+                  style={{ background: 'var(--color-primary-700)' }}
+                >
+                  <img src="/shutter.svg" alt="Shutter" className="w-12 h-12 select-none" draggable="false" />
+                </button>
+              </div>
             ) : (
               // If realtime scanning hasn't validated yet, allow manual single-shot scan
               <button

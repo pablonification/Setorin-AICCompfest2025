@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import TopBar from "../components/TopBar";
+import InfoinPageSkeleton from '../components/skeletons/InfoinPageSkeleton';
 
 
 function InfoCard({ item }) {
@@ -81,31 +82,28 @@ export default function InfoinPage() {
   return (
     <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
       <TopBar title="Infoin" backHref="/" />
-      <div className="pt-4 pb-24 px-4">
-
-        {/* Search Bar */}
-        <div className="mt-4">
-          <div className="flex items-center bg-gray-100 rounded-xl px-3 py-2">
-            <img
-              src="/search.svg"
-              alt="Cari"
-              className="w-5 h-5 opacity-70"
-            />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="ml-2 flex-1 outline-none text-sm leading-5 text-black placeholder:text-[color:var(--color-muted)]"
-              placeholder="Cari Tutorial atau Artikel"
-            />
-          </div>
-        </div>
-
-        {/* Content */}
         {loading ? (
-          <div className="py-8 text-center text-[color:var(--color-muted)]">
-            Memuat...
-          </div>
+          <InfoinPageSkeleton />
         ) : (
+        <div className="pt-4 pb-24 px-4">
+          {/* Search Bar */}
+          <div className="mt-4">
+            <div className="flex items-center bg-gray-100 rounded-xl px-3 py-2">
+              <img
+                src="/search.svg"
+                alt="Cari"
+                className="w-5 h-5 opacity-70"
+              />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="ml-2 flex-1 outline-none text-sm leading-5 text-black placeholder:text-[color:var(--color-muted)]"
+                placeholder="Cari Tutorial atau Artikel"
+              />
+            </div>
+          </div>
+
+          {/* Content */}
           <>
             <div className="mt-6">
               <div className="text-xl leading-7 font-semibold mb-3">
@@ -125,8 +123,8 @@ export default function InfoinPage() {
               ))}
             </div>
           </>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
