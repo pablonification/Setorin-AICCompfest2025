@@ -1255,29 +1255,28 @@ export default function ScanPage() {
 
                       {/* Bottle placement guide overlay */}
                       {showBottleGuide && qrValidated && (
-                        <div className="mt-8 w-full px-4">
-                          <div className="relative w-full max-w-[280px] mx-auto">
-                            {/* Center bottle silhouette guide */}
-                            <div className="absolute top-[35%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-64">
-                              <svg width="100%" height="100%" viewBox="0 0 100 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-40">
-                                <path d="M30 40 L30 10 L70 10 L70 40 L85 70 L85 180 L15 180 L15 70 Z" stroke="white" strokeWidth="3" strokeDasharray="5,5" />
-                                <rect x="38" y="170" width="24" height="4" fill="white" fillOpacity="0.6" />
-                                <text x="50" y="150" textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="bold">Botol</text>
-                              </svg>
-                            </div>
-                            {/* Reference object guide */}
-                            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-24 h-36">
-                              <svg width="100%" height="100%" viewBox="0 0 40 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-50">
-                                <rect x="2" y="2" width="36" height="56" stroke="#00ff00" strokeWidth="2" strokeDasharray="4,2" />
-                                <text x="20" y="45" textAnchor="middle" fill="#00ff00" fontSize="5" fontWeight="bold">Referensi</text>
-                                <text x="20" y="50" textAnchor="middle" fill="#00ff00" fontSize="5">10×15 cm</text>
-                              </svg>
-                            </div>
-                            {/* Instructions */}
-                            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 text-center">
-                              <p className="text-white/80 text-xs mt-1">Posisikan botol di atas kotak hitam</p>
-                            </div>
+                        <div className="w-full max-w-[280px] mx-auto flex flex-col items-center space-y-4">
+
+                          {/* Reference object guide (now on top) */}
+                          <div className="w-24 h-36">
+                            <svg width="100%" height="100%" viewBox="0 0 40 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-50">
+                              <rect x="2" y="2" width="36" height="56" stroke="#00ff00" strokeWidth="2" strokeDasharray="4,2" />
+                              <text x="20" y="45" textAnchor="middle" fill="#00ff00" fontSize="5" fontWeight="bold">Referensi</text>
+                              <text x="20" y="50" textAnchor="middle" fill="#00ff00" fontSize="5">10×15 cm</text>
+                            </svg>
                           </div>
+
+                          {/* Bottle silhouette guide (now below) */}
+                          <div className="w-32 h-64">
+                            <svg width="100%" height="100%" viewBox="0 0 100 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-40">
+                              <path d="M30 40 L30 10 L70 10 L70 40 L85 70 L85 180 L15 180 L15 70 Z" stroke="white" strokeWidth="3" strokeDasharray="5,5" />
+                              <rect x="38" y="170" width="24" height="4" fill="white" fillOpacity="0.6" />
+                              <text x="50" y="150" textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="bold">Botol</text>
+                            </svg>
+                          </div>
+
+                          {/* Instructions */}
+                          <p className="text-white text-xs mt-1">Taruh botol diatas kotak hitam</p>
                         </div>
                       )}
                     </div>
