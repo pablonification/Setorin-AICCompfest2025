@@ -1229,32 +1229,45 @@ export default function ScanPage() {
                 />
                 <div className="absolute inset-0 border-4 border-white/60 rounded-[var(--radius-md)] pointer-events-none" />
                 
-                {/* Logo and bottle placement guide overlay */}
-                {showBottleGuide && qrValidated && !isScanning && (
-                  <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center select-none z-10">
-                    {/* Logo */}
-                    <div className="flex flex-col items-center">
-                      <img
-                        src="/logo-white.svg"
-                        alt="Setorin Logo"
-                        className="w-32 h-32 opacity-90 cursor-pointer"
-                        style={{ maxWidth: '80%', maxHeight: '80%' }}
-                        draggable={false}
-                        onClick={handleLogoTap}
-                      />
-                      {!showBottleGuide && (
-                        <div className="mt-4 text-center text-white font-semibold text-base drop-shadow">
-                          Tap Setorin logo to start
+                {/* Logo (always) & bottle guide (after QR validated) overlay */}
+                {(() => {
+                  const isInitial = (videoRef.current?.videoWidth === 0 && !userGestureBoundRef.current);
+                  const shouldShow = isInitial || (showBottleGuide && qrValidated);
+                  if (!shouldShow) return null;
+                  return (
+                    <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center select-none z-10">
+                      {/* Logo visible only in initial phase */}
+                      {isInitial && (
+                        <div className="flex flex-col items-center">
+                          <img
+                            src="/logo-white.svg"
+                            alt="Setorin Logo"
+                            className="w-32 h-32 opacity-90 cursor-pointer"
+                            style={{ maxWidth: '80%', maxHeight: '80%' }}
+                            draggable={false}
+                            onClick={handleLogoTap}
+                          />
+                          <div className="mt-4 text-center text-white font-semibold text-base drop-shadow">
+                            Tap Setorin logo to start
+                          </div>
                         </div>
                       )}
-                    </div>
 
-                    {/* Bottle placement guide overlay */}
-                    {showBottleGuide && (
-                      <div className="mt-8 w-full px-4">
-                        <div className="relative w-full max-w-[280px] mx-auto">
-                          {/* Center bottle silhouette guide - moved up slightly */}
-                          <div className="absolute top-[35%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-64">
+                      {/* Bottle placement guide overlay */}
+                      {showBottleGuide && qrValidated && (
+                        <div className="w-full max-w-[280px] mx-auto flex flex-col items-center space-y-4">
+
+                          {/* Reference object guide (now on top) */}
+                          <div className="w-24 h-36">
+                            <svg width="100%" height="100%" viewBox="0 0 40 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-50">
+                              <rect x="2" y="2" width="36" height="56" stroke="#00ff00" strokeWidth="2" strokeDasharray="4,2" />
+                              <text x="20" y="45" textAnchor="middle" fill="#00ff00" fontSize="5" fontWeight="bold">Referensi</text>
+                              <text x="20" y="50" textAnchor="middle" fill="#00ff00" fontSize="5">10×15 cm</text>
+                            </svg>
+                          </div>
+
+                          {/* Bottle silhouette guide (now below) */}
+                          <div className="w-32 h-64">
                             <svg width="100%" height="100%" viewBox="0 0 100 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-40">
                               <path d="M30 40 L30 10 L70 10 L70 40 L85 70 L85 180 L15 180 L15 70 Z" stroke="white" strokeWidth="3" strokeDasharray="5,5" />
                               <rect x="38" y="170" width="24" height="4" fill="white" fillOpacity="0.6" />
@@ -1262,34 +1275,13 @@ export default function ScanPage() {
                             </svg>
                           </div>
 
-                          {/* Reference object guide - positioned at the bottom with clear separation */}
-                          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-24 h-36">
-                            <svg width="100%" height="100%" viewBox="0 0 40 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-50">
-                              {/* 10cm width × 15cm height (2:3 ratio rectangle) */}
-                              <rect x="2" y="2" width="36" height="56" stroke="#00ff00" strokeWidth="2" strokeDasharray="4,2" />
-                              <text x="20" y="45" textAnchor="middle" fill="#00ff00" fontSize="5" fontWeight="bold">Referensi</text>
-                              <text x="20" y="50" textAnchor="middle" fill="#00ff00" fontSize="5" fontWeight="">10×15 cm</text>
-                            </svg>
-                          </div>
-
                           {/* Instructions */}
-                          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 text-center">
-                            <p className="text-white text-sm font-medium drop-shadow">Posisikan botol di atas referensi</p>
-                            <p className="text-white/80 text-xs mt-1">Place bottle above the reference object</p>
-                          </div>
-
-                          {/* Hide overlay button */}
-                          <button
-                            onClick={() => setShowBottleGuide(false)}
-                            className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center text-white text-sm"
-                          >
-                            ✕
-                          </button>
+                          <p className="text-white text-xs mt-1">Taruh botol diatas kotak hitam</p>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                )}
+                      )}
+                    </div>
+                  );
+                })()}
               </>
             ) : (
               <div className="flex flex-col items-center justify-center">
