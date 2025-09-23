@@ -30,7 +30,7 @@ class Settings:
     MIN_WITHDRAWAL_POINTS: int = int(os.getenv("MIN_WITHDRAWAL_POINTS", "20000"))
 
     # Feature flags
-    USE_DETECTION_ROI_FUSION: bool = os.getenv("USE_DETECTION_ROI_FUSION", "false").lower() in ("1", "true", "yes")
+    USE_DETECTION_ROI_FUSION: bool = os.getenv("USE_DETECTION_ROI_FUSION", "true").lower() in ("1", "true", "yes")
 
 
 @lru_cache

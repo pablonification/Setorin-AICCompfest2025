@@ -576,7 +576,7 @@ class BottleMeasurer:
             ref_rect = (0, 0, img.shape[1], y_ref)
             logger.debug("Reference ROI dimensions: %dx%d", ref_roi.shape[1], ref_roi.shape[0])
 
-        # Optional detection ROI from predictions (Roboflow) - REDUCED MARGIN
+        # Optional detection ROI from predictions (Roboflow) - SMALL MARGIN for precision
         det_rect = self._build_detection_rect_from_predictions(
             img_width=img.shape[1],
             img_height=img.shape[0],
@@ -589,12 +589,14 @@ class BottleMeasurer:
         roi_offset_x, roi_offset_y = 0, 0  # Track ROI offset for coordinate translation
         
         if det_rect is not None:
+            logger.debug("Detection rect: %s, Reference rect: %s", det_rect, ref_rect)
             inter = self._intersect_rect(ref_rect, det_rect)
             if inter is not None and self._rect_area(inter) >= 0.2 * self._rect_area(det_rect):
                 x, y, w, h = inter
                 roi = img[y : y + h, x : x + w]
                 roi_offset_x, roi_offset_y = x, y
                 roi_source = "intersection"
+                logger.debug("Using intersection ROI: %dx%d at (%d,%d)", w, h, x, y)
             else:
                 # Fall back to detection ROI if valid, otherwise reference ROI
                 x, y, w, h = det_rect
@@ -602,14 +604,17 @@ class BottleMeasurer:
                     roi = img[y : y + h, x : x + w]
                     roi_offset_x, roi_offset_y = x, y
                     roi_source = "detection"
+                    logger.debug("Using detection ROI: %dx%d at (%d,%d)", w, h, x, y)
                 else:
                     roi = ref_roi
                     roi_offset_x, roi_offset_y = 0, 0
                     roi_source = "reference"
+                    logger.debug("Detection ROI invalid, using reference ROI")
         else:
             roi = ref_roi
             roi_offset_x, roi_offset_y = 0, 0
             roi_source = "reference"
+            logger.debug("No detection rect, using reference ROI")
 
         # Validate ROI is not empty
         if roi.size == 0:
