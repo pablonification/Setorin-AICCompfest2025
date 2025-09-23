@@ -27,7 +27,7 @@ export default function ScanPage() {
   const [qrScanInterval, setQrScanInterval] = useState(null);
   const [qrValidationInProgress, setQrValidationInProgress] = useState(false);
 
-  // Overlay state
+  // Bottle guide shows only after a QR has been validated
   const [showBottleGuide, setShowBottleGuide] = useState(false);
 
   // Instructions popup state
@@ -960,8 +960,8 @@ export default function ScanPage() {
 
   // Handle logo tap – allow hiding manually if desired
   const handleLogoTap = () => {
-    console.log('🎯 Logo tapped');
-    setShowBottleGuide((prev) => !prev);
+    // allow hiding manually if needed
+    if (qrValidated) setShowBottleGuide(prev=>!prev);
   };
 
   // Show instructions popup
@@ -1120,16 +1120,11 @@ export default function ScanPage() {
     }
   }, [result, router]);
 
-  // Ensure guide shows when camera turns on
-  useEffect(() => {
-    if (cameraStream && !qrValidated) {
-      setShowBottleGuide(true);
-    }
-  }, [cameraStream, qrValidated]);
-
-  // Hide guide after a valid QR has been scanned
+  // Toggle guide visibility based on qrValidated
   useEffect(() => {
     if (qrValidated) {
+      setShowBottleGuide(true);
+    } else {
       setShowBottleGuide(false);
     }
   }, [qrValidated]);
@@ -1235,7 +1230,7 @@ export default function ScanPage() {
                 <div className="absolute inset-0 border-4 border-white/60 rounded-[var(--radius-md)] pointer-events-none" />
                 
                 {/* Logo and bottle placement guide overlay */}
-                {showBottleGuide && !isScanning && isScanningQR && !qrValidated && (
+                {showBottleGuide && qrValidated && !isScanning && (
                   <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center select-none z-10">
                     {/* Logo */}
                     <div className="flex flex-col items-center">
