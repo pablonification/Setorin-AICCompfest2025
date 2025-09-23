@@ -958,11 +958,10 @@ export default function ScanPage() {
     }
   };
 
-  // Handle logo tap to show bottle placement guide
+  // Handle logo tap – allow hiding manually if desired
   const handleLogoTap = () => {
-    console.log('🎯 Logo tapped, showing bottle placement guide...');
-    setShowBottleGuide(true);
-    setStatus('Bottle placement guide shown');
+    console.log('🎯 Logo tapped');
+    setShowBottleGuide((prev) => !prev);
   };
 
   // Show instructions popup
@@ -1121,6 +1120,20 @@ export default function ScanPage() {
     }
   }, [result, router]);
 
+  // Ensure guide shows when camera turns on
+  useEffect(() => {
+    if (cameraStream && !qrValidated) {
+      setShowBottleGuide(true);
+    }
+  }, [cameraStream, qrValidated]);
+
+  // Hide guide after a valid QR has been scanned
+  useEffect(() => {
+    if (qrValidated) {
+      setShowBottleGuide(false);
+    }
+  }, [qrValidated]);
+
   return (
     <ProtectedRoute userOnly={true}>
       <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
@@ -1222,7 +1235,7 @@ export default function ScanPage() {
                 <div className="absolute inset-0 border-4 border-white/60 rounded-[var(--radius-md)] pointer-events-none" />
                 
                 {/* Logo and bottle placement guide overlay */}
-                {((videoRef.current?.videoWidth === 0 && !userGestureBoundRef.current) || showBottleGuide) && (
+                {showBottleGuide && !isScanning && isScanningQR && !qrValidated && (
                   <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center select-none z-10">
                     {/* Logo */}
                     <div className="flex flex-col items-center">
