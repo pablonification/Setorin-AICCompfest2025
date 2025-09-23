@@ -1253,32 +1253,36 @@ export default function ScanPage() {
                         </div>
                       )}
 
-                      {/* Bottle placement guide overlay */}
-                      {showBottleGuide && qrValidated && (
-                        <div className="w-full max-w-[280px] mx-auto flex flex-col items-center space-y-4">
-
-                          {/* Reference object guide (now on top) */}
-                          <div className="w-24 h-36">
-                            <svg width="100%" height="100%" viewBox="0 0 40 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-50">
-                              <rect x="2" y="2" width="36" height="56" stroke="#00ff00" strokeWidth="2" strokeDasharray="4,2" />
-                              <text x="20" y="45" textAnchor="middle" fill="#00ff00" fontSize="5" fontWeight="bold">Referensi</text>
-                              <text x="20" y="50" textAnchor="middle" fill="#00ff00" fontSize="5">10×15 cm</text>
-                            </svg>
+                        {/* Bottle placement guide overlay */}
+                        {showBottleGuide && qrValidated && (
+                          <div className="absolute inset-0 pointer-events-none">
+                            {/* Bottle silhouette guide - positioned with pixel precision */}
+                            <div className="absolute w-32 h-64" style={{ 
+                              top: '30%', 
+                              left: '50%', 
+                              transform: 'translate(-50%, -50%)' 
+                            }}>
+                              <svg width="100%" height="100%" viewBox="0 0 100 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-40">
+                                <path d="M30 40 L30 10 L70 10 L70 40 L85 70 L85 180 L15 180 L15 70 Z" stroke="white" strokeWidth="3" strokeDasharray="5,5" />
+                                <rect x="38" y="170" width="24" height="4" fill="white" fillOpacity="0.6" />
+                                <text x="50" y="150" textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="bold">Botol</text>
+                              </svg>
+                            </div>
+                            
+                            {/* Reference object guide - positioned separately */}
+                            <div className="absolute w-24 h-36" style={{ 
+                              bottom: '15%', 
+                              left: '50%', 
+                              transform: 'translateX(-50%)' 
+                            }}>
+                              <svg width="100%" height="100%" viewBox="0 0 40 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-50">
+                                <rect x="2" y="2" width="36" height="56" stroke="#00ff00" strokeWidth="2" strokeDasharray="4,2" />
+                                <text x="20" y="45" textAnchor="middle" fill="#00ff00" fontSize="5" fontWeight="bold">Referensi</text>
+                                <text x="20" y="50" textAnchor="middle" fill="#00ff00" fontSize="5">10×15 cm</text>
+                              </svg>
+                            </div>
                           </div>
-
-                          {/* Bottle silhouette guide (now below) */}
-                          <div className="w-32 h-64">
-                            <svg width="100%" height="100%" viewBox="0 0 100 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-40">
-                              <path d="M30 40 L30 10 L70 10 L70 40 L85 70 L85 180 L15 180 L15 70 Z" stroke="white" strokeWidth="3" strokeDasharray="5,5" />
-                              <rect x="38" y="170" width="24" height="4" fill="white" fillOpacity="0.6" />
-                              <text x="50" y="150" textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="bold">Botol</text>
-                            </svg>
-                          </div>
-
-                          {/* Instructions */}
-                          <p className="text-white text-xs mt-1">Taruh botol diatas kotak hitam</p>
-                        </div>
-                      )}
+                        )}
                     </div>
                   );
                 })()}
@@ -1338,7 +1342,7 @@ export default function ScanPage() {
                       : 'border-[var(--color-primary-600)]'
                   }`}></div>
                   <p className="mt-2 text-sm text-[var(--color-muted)]">
-                    {qrValidationInProgress ? 'Memvalidasi Kode QR...' : 'Arahkan ke Kode QR'}
+                    {qrValidationInProgress ? 'Memvalidasi Kode QR...' : qrValidated ? 'Taruh botol diatas kotak hitam' : 'Arahkan ke Kode QR'}
                   </p>
                 </div>
               </div>
