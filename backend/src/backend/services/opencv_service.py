@@ -81,15 +81,132 @@ class BottleDetector:
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (k, k))
         return cv2.morphologyEx(bin_img, cv2.MORPH_CLOSE, kernel, iterations=iters)
 
+    def _mask_background_colors(self, roi: np.ndarray) -> np.ndarray:
+        """Mask out brown/wooden background colors that interfere with detection."""
+        if roi.ndim != 3:
+            return roi  # Skip if already grayscale
+            
+        hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+        
+        # Mask brown/wooden colors (cabinet background)
+        brown_lower = np.array([10, 50, 20])
+        brown_upper = np.array([20, 255, 200]) 
+        brown_mask = cv2.inRange(hsv, brown_lower, brown_upper)
+        
+        # Mask very bright/white areas (ceiling, lights)
+        gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+        _, bright_mask = cv2.threshold(gray, 240, 255, cv2.THRESH_BINARY)
+        
+        # Mask very dark areas that are likely shadows
+        _, dark_mask = cv2.threshold(gray, 15, 255, cv2.THRESH_BINARY_INV)
+        
+        # Combine all masks
+        background_mask = cv2.bitwise_or(brown_mask, bright_mask)
+        background_mask = cv2.bitwise_or(background_mask, dark_mask)
+        
+        # Clean up mask with morphology
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+        background_mask = cv2.morphologyEx(background_mask, cv2.MORPH_CLOSE, kernel)
+        
+        # Apply mask to ROI
+        roi_masked = roi.copy()
+        roi_masked[background_mask > 0] = [128, 128, 128]  # Set background to neutral gray
+        
+        return roi_masked
+
+    def _correct_perspective(self, roi: np.ndarray) -> np.ndarray:
+        """Basic perspective correction assuming bottle should be vertical."""
+        h, w = roi.shape[:2]
+        
+        # Skip correction for very small ROIs
+        if h < 100 or w < 50:
+            return roi
+            
+        # Detect if there's significant perspective distortion
+        # Look for dominant vertical lines that are tilted
+        gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY) if roi.ndim == 3 else roi
+        
+        # Use HoughLines to detect dominant angle
+        edges = cv2.Canny(gray, 50, 150, apertureSize=3)
+        lines = cv2.HoughLines(edges, 1, np.pi/180, threshold=int(h*0.3))
+        
+        if lines is None:
+            return roi  # No correction needed
+            
+        # Find dominant vertical-ish lines - FIXED unpacking
+        angles = []
+        for line in lines[:10]:  # Check first 10 lines
+            rho, theta = line[0]  # FIXED: lines has shape (N, 1, 2)
+            angle_deg = np.degrees(theta)
+            # Look for nearly vertical lines (80-100 degrees or -10 to 10 degrees)
+            if (80 <= angle_deg <= 100) or (-10 <= angle_deg <= 10):
+                angles.append(angle_deg)
+                
+        if not angles:
+            return roi  # No vertical lines found
+            
+        # Calculate average tilt
+        avg_angle = np.mean(angles)
+        
+        # Convert to correction angle (how much to rotate to make vertical)
+        if avg_angle > 90:
+            correction_angle = avg_angle - 90
+        else:
+            correction_angle = avg_angle
+            
+        # Only apply correction if tilt is significant (> 2 degrees)
+        if abs(correction_angle) < 2:
+            return roi
+            
+        # Apply perspective correction via rotation
+        center = (w // 2, h // 2)
+        rotation_matrix = cv2.getRotationMatrix2D(center, -correction_angle, 1.0)
+        
+        # Calculate new bounding dimensions
+        cos_angle = abs(rotation_matrix[0, 0])
+        sin_angle = abs(rotation_matrix[0, 1])
+        new_w = int((h * sin_angle) + (w * cos_angle))
+        new_h = int((h * cos_angle) + (w * sin_angle))
+        
+        # Adjust translation
+        rotation_matrix[0, 2] += (new_w / 2) - center[0]
+        rotation_matrix[1, 2] += (new_h / 2) - center[1]
+        
+        # Apply rotation
+        corrected = cv2.warpAffine(roi, rotation_matrix, (new_w, new_h),
+                                  flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
+        
+        # Crop back to original size from center
+        start_x = max(0, (new_w - w) // 2)
+        start_y = max(0, (new_h - h) // 2)
+        end_x = min(new_w, start_x + w)
+        end_y = min(new_h, start_y + h)
+        
+        corrected_cropped = corrected[start_y:end_y, start_x:end_x]
+        
+        # Resize to original dimensions if needed
+        if corrected_cropped.shape[:2] != (h, w):
+            corrected_cropped = cv2.resize(corrected_cropped, (w, h))
+            
+        return corrected_cropped
+
     def _pipeline_candidates(self, roi: np.ndarray) -> List[np.ndarray]:
-        """Generate binary masks from multiple pipelines and return their contours.
+        """Enhanced pipeline with background masking and perspective correction.
 
         Pipelines:
         1) Adaptive threshold (Gaussian), then close/open
         2) Canny (hysteresis thresholds via MAD of gradients), then close
         3) CLAHE + Otsu threshold, then close
+        4) Plastic bottle specific pipeline
         """
-        gray = self._to_gray(roi)
+        # STEP 1: Apply background masking
+        roi_masked = self._mask_background_colors(roi)
+        
+        # STEP 2: Apply perspective correction
+        roi_corrected = self._correct_perspective(roi_masked)
+        
+        # STEP 3: Convert to grayscale for processing
+        gray = self._to_gray(roi_corrected)
         h, w = gray.shape[:2]
         candidates: List[np.ndarray] = []
 
@@ -131,6 +248,27 @@ class BottleDetector:
         except Exception:
             pass
 
+        # 4) Plastic bottle specific pipeline
+        try:
+            # Bilateral filter to reduce noise while preserving edges
+            bilateral = cv2.bilateralFilter(gray, 9, 75, 75)
+            
+            # Gradient-based detection for transparent edges
+            grad_x = cv2.Sobel(bilateral, cv2.CV_16S, 1, 0, ksize=3)
+            grad_y = cv2.Sobel(bilateral, cv2.CV_16S, 0, 1, ksize=3)
+            abs_grad_x = cv2.convertScaleAbs(grad_x)
+            abs_grad_y = cv2.convertScaleAbs(grad_y)
+            gradient = cv2.addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0)
+            
+            # Threshold gradient
+            _, grad_thresh = cv2.threshold(gradient, 30, 255, cv2.THRESH_BINARY)
+            grad_thresh = self._morph_close(grad_thresh, 3, 2)
+            
+            contours, _ = cv2.findContours(grad_thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            candidates.extend(contours)
+        except Exception:
+            pass
+
         return candidates
 
     def _score_contour(self, cnt: np.ndarray, roi_shape: Tuple[int, int], *, min_area_px: int) -> float:
@@ -160,13 +298,15 @@ class BottleDetector:
         else:
             area_score = (area - min_area_px) / max(1.0, (max_allowed - min_area_px))
 
-        # Feature: aspect ratio (>= min_aspect_ratio)
+        # Feature: aspect ratio (>= min_aspect_ratio) - IMPROVED for tall bottles
         aspect_score = 0.0
         if aspect >= self.min_aspect_ratio:
-            # Normalize with soft cap at 3x required aspect
-            aspect_score = min(1.0, (aspect / max(1e-6, self.min_aspect_ratio)) / 3.0)
+            # Favor very tall bottles (2.5+ aspect ratio) more
+            if aspect >= 2.5:
+                aspect_score = min(1.0, aspect / 4.0)  # Reward up to 4:1 ratio
+            else:
+                aspect_score = min(1.0, (aspect / max(1e-6, self.min_aspect_ratio)) / 3.0)
         else:
-            # allow a small tail instead of hard reject to compare across paths
             aspect_score = max(0.0, (aspect / max(1e-6, self.min_aspect_ratio)) - 0.2)
 
         # Feature: vertical alignment score based on tilt
@@ -195,19 +335,36 @@ class BottleDetector:
         min_dist = float(min(dist_left, dist_top, dist_right, dist_bottom))
         border_score = float(np.clip(min_dist / float(margin), 0.0, 1.0))
 
-        # Weighted sum
+        # NEW: Position feature (prefer bottles in center of frame)
+        M = cv2.moments(cnt)
+        if M["m00"] != 0:
+            cx = M["m10"] / M["m00"]
+            cy = M["m01"] / M["m00"]
+            
+            # Distance from center
+            center_x, center_y = w / 2, h / 2
+            dist_from_center = np.sqrt((cx - center_x)**2 + (cy - center_y)**2)
+            max_dist = np.sqrt(center_x**2 + center_y**2)
+            position_score = 1.0 - (dist_from_center / max_dist)
+        else:
+            position_score = 0.0
+
+        # Weighted sum - ENHANCED with position feature
         w_area = self.weights["area"]
         w_aspect = self.weights["aspect"]
         w_vert = self.weights["vertical"]
         w_sol = self.weights["solidity"]
         w_border = self.weights["border"]
-        total_w = max(1e-6, (w_area + w_aspect + w_vert + w_sol + w_border))
+        w_pos = 0.3  # NEW weight for position
+        
+        total_w = max(1e-6, (w_area + w_aspect + w_vert + w_sol + w_border + w_pos))
         score = (
             w_area * area_score
             + w_aspect * aspect_score
             + w_vert * vertical_score
             + w_sol * solidity_score
             + w_border * border_score
+            + w_pos * position_score
         ) / total_w
 
         return float(score)
@@ -270,12 +427,12 @@ class BottleMeasurer:
         classify: bool = True,
         known_bottle_specs: dict[str, dict[str, float]] | None = None,
         tolerance_percent: float = 30.0,
-        # Detector weighting parameters (silhouette scoring)
-        detector_weight_area: float = 1.0,
-        detector_weight_aspect: float = 1.0,
-        detector_weight_vertical: float = 1.0,
-        detector_weight_solidity: float = 1.0,
-        detector_weight_border: float = 0.5,
+        # Detector weighting parameters (silhouette scoring) - OPTIMIZED WEIGHTS
+        detector_weight_area: float = 0.7,
+        detector_weight_aspect: float = 1.8,
+        detector_weight_vertical: float = 1.6,
+        detector_weight_solidity: float = 0.9,
+        detector_weight_border: float = 1.4,
     ) -> None:
         if ref_real_width_mm is not None:
             # Provided via legacy param name – treat it as height value to
@@ -380,12 +537,12 @@ class BottleMeasurer:
             ref_rect = (0, 0, img.shape[1], y_ref)
             logger.debug("Reference ROI dimensions: %dx%d", ref_roi.shape[1], ref_roi.shape[0])
 
-        # Optional detection ROI from predictions (Roboflow)
+        # Optional detection ROI from predictions (Roboflow) - REDUCED MARGIN
         det_rect = self._build_detection_rect_from_predictions(
             img_width=img.shape[1],
             img_height=img.shape[0],
             predictions=predictions,
-            margin_ratio=0.15,
+            margin_ratio=0.00,  # REDUCED from 0.15 to 0.05 for tighter bounds
         ) if predictions else None
 
         # Choose final ROI: prefer intersection(ref, det) when viable
