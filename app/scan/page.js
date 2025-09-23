@@ -19,6 +19,23 @@ export default function ScanPage() {
   const [cameraStream, setCameraStream] = useState(null);
   const [capturedImage, setCapturedImage] = useState(null);
   const [cameraError, setCameraError] = useState(null);
+  const [isTorchOn, setIsTorchOn] = useState(false);
+  const toggleFlash = useCallback(async () => {
+    if (streamRef.current) {
+      const [track] = streamRef.current.getVideoTracks();
+      const capabilities = track.getCapabilities();
+      if (!capabilities.torch) {
+        console.warn('Torch not supported on this device');
+        return;
+      }
+      try {
+        await track.applyConstraints({ advanced: [{ torch: !isTorchOn }] });
+        setIsTorchOn(prev => !prev);
+      } catch (error) {
+        console.error('Torch toggle failed:', error);
+      }
+    }
+  }, [isTorchOn]);
 
   // QR code related states
   const [isScanningQR, setIsScanningQR] = useState(true);
@@ -1390,6 +1407,13 @@ export default function ScanPage() {
                 className="px-4 py-2 text-xs text-gray-700 bg-gray-200 rounded-[var(--radius-pill)] active:opacity-80"
               >
                 Stop Camera
+              </button>
+              <button
+                onClick={toggleFlash}
+                aria-label="Toggle flash"
+                className="px-4 py-2 text-xs text-gray-700 bg-gray-200 rounded-[var(--radius-pill)] active:opacity-80"
+              >
+                <img src={isTorchOn ? '/flash-on.svg' : '/flash-off.svg'} alt="Flash" className="w-5 h-5" />
               </button>
               {/* Manual reset button for stuck states */}
               {(isLoadingAfterQR || qrValidationInProgress) && (
