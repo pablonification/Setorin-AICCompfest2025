@@ -82,12 +82,6 @@ export default function ScanPage() {
     });
 
     // Check if phone is properly aligned (ideal conditions)
-    // Beta: front-to-back tilt (should be 90-100° for vertical position)
-    // Gamma: left-to-right tilt (should be 0-10° for level)
-    const betaTarget = 95; // degrees (vertical position)
-    const betaTolerance = 5; // degrees (90-100°)
-    const gammaTolerance = 10; // degrees (0-10°)
-    
     const isAligned = 
       Math.abs((beta || 0) - betaTarget) <= betaTolerance && 
       Math.abs(gamma || 0) <= gammaTolerance;
@@ -99,7 +93,7 @@ export default function ScanPage() {
       }
       return isAligned;
     });
-  }, []);
+  }, [betaTarget, betaTolerance, gammaTolerance]);
 
   // Request device orientation permission and set up listeners
   const requestOrientationPermission = useCallback(async () => {
