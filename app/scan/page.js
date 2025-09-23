@@ -70,6 +70,37 @@ export default function ScanPage() {
     console.log('User points:', user?.points);
   }, [user]);
 
+  // Handle device orientation changes
+  const handleOrientation = useCallback((event) => {
+    if (!mountedRef.current) return;
+    
+    const { alpha, beta, gamma } = event;
+    setOrientation({
+      alpha: alpha || 0,
+      beta: beta || 0,
+      gamma: gamma || 0
+    });
+
+    // Check if phone is properly aligned (ideal conditions)
+    // Beta: front-to-back tilt (should be 90-100° for vertical position)
+    // Gamma: left-to-right tilt (should be 0-10° for level)
+    const betaTarget = 95; // degrees (vertical position)
+    const betaTolerance = 5; // degrees (90-100°)
+    const gammaTolerance = 10; // degrees (0-10°)
+    
+    const isAligned = 
+      Math.abs((beta || 0) - betaTarget) <= betaTolerance && 
+      Math.abs(gamma || 0) <= gammaTolerance;
+    
+    // Haptic feedback when alignment changes
+    setIsPhoneAligned(prevAligned => {
+      if (isAligned && !prevAligned && 'navigator' in window && 'vibrate' in navigator) {
+        navigator.vibrate(100); // Short vibration when aligned
+      }
+      return isAligned;
+    });
+  }, []);
+
   // Request device orientation permission and set up listeners
   const requestOrientationPermission = useCallback(async () => {
     if (typeof DeviceOrientationEvent === 'undefined') {
@@ -108,37 +139,6 @@ export default function ScanPage() {
       return true;
     }
   }, [handleOrientation]);
-
-  // Handle device orientation changes
-  const handleOrientation = useCallback((event) => {
-    if (!mountedRef.current) return;
-    
-    const { alpha, beta, gamma } = event;
-    setOrientation({
-      alpha: alpha || 0,
-      beta: beta || 0,
-      gamma: gamma || 0
-    });
-
-    // Check if phone is properly aligned (ideal conditions)
-    // Beta: front-to-back tilt (should be 90-100° for vertical position)
-    // Gamma: left-to-right tilt (should be 0-10° for level)
-    const betaTarget = 95; // degrees (vertical position)
-    const betaTolerance = 5; // degrees (90-100°)
-    const gammaTolerance = 10; // degrees (0-10°)
-    
-    const wasAligned = isPhoneAligned;
-    const isAligned = 
-      Math.abs((beta || 0) - betaTarget) <= betaTolerance && 
-      Math.abs(gamma || 0) <= gammaTolerance;
-    
-    // Haptic feedback when alignment changes
-    if (isAligned && !wasAligned && 'navigator' in window && 'vibrate' in navigator) {
-      navigator.vibrate(100); // Short vibration when aligned
-    }
-    
-    setIsPhoneAligned(isAligned);
-  }, [isPhoneAligned]);
 
   // Set up device orientation monitoring
   useEffect(() => {
