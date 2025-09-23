@@ -28,8 +28,15 @@ from .esp32_device_ws import clients as esp32_clients
 router = APIRouter(prefix="/scan", tags=["scan"])
 logger = logging.getLogger(__name__)
 
-# Initialize services
-bottle_measurer = BottleMeasurer()
+# Initialize services with optimized parameters from Colab testing (0.7, 1.8, 1.6, 0.9, 1.4)
+bottle_measurer = BottleMeasurer(
+    detector_weight_area=0.7,
+    detector_weight_aspect=1.8,
+    detector_weight_vertical=1.6,
+    detector_weight_solidity=0.9,
+    detector_weight_border=1.4,
+    classify=True
+)
 roboflow_client = RoboflowClient()
 smartbin_client = SmartBinClient()
 transaction_service = get_transaction_service()
@@ -51,9 +58,18 @@ async def scan_bottle(
     if not user_email:
         raise HTTPException(status_code=401, detail="Invalid user token")
 
-    # OpenCV measurement
+    # Get Roboflow predictions first for ROI fusion
+    predictions = []
     try:
-        measurement, preview_bytes = bottle_measurer.measure(content, return_debug=True)
+        predictions = await roboflow_client.predict(content)
+        logger.info("Roboflow predictions received: %s", predictions)
+    except Exception as exc:
+        logger.error("Roboflow error (continuing without predictions): %s", exc)
+        predictions = []
+
+    # OpenCV measurement with ROI fusion
+    try:
+        measurement, preview_bytes = bottle_measurer.measure(content, predictions=predictions, return_debug=True)
         preview_b64: str | None = base64.b64encode(preview_bytes).decode()
         
         # Save debug image
@@ -66,13 +82,6 @@ async def scan_bottle(
     except MeasurementError as exc:
         logger.warning("Measurement failed: %s", exc)
         raise HTTPException(status_code=422, detail="Unable to measure bottle") from exc
-
-    # Roboflow predictions
-    try:
-        predictions = await roboflow_client.predict(content)
-    except Exception as exc:
-        logger.error("Roboflow error: %s", exc)
-        raise HTTPException(status_code=502, detail="Error contacting AI service") from exc
 
     # Validation
     validation_result = validate_scan(measurement, predictions)

@@ -25,7 +25,15 @@ from bson import ObjectId
 router = APIRouter(prefix="/api/scan", tags=["scan"])
 logger = logging.getLogger(__name__)
 
-bottle_measurer = BottleMeasurer()
+# Initialize with optimized parameters from Colab testing (0.7, 1.8, 1.6, 0.9, 1.4)
+bottle_measurer = BottleMeasurer(
+    detector_weight_area=0.7,
+    detector_weight_aspect=1.8,
+    detector_weight_vertical=1.6,
+    detector_weight_solidity=0.9,
+    detector_weight_border=1.4,
+    classify=True
+)
 roboflow_client = RoboflowClient()
 smartbin_client = SmartBinClient()
 transaction_service = get_transaction_service()
