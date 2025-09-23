@@ -52,3 +52,4 @@ backend/.venv
 
 eval_out/*
 eval_out_from_docker/*
+testing/*
