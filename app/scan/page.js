@@ -27,6 +27,12 @@ export default function ScanPage() {
   const [qrScanInterval, setQrScanInterval] = useState(null);
   const [qrValidationInProgress, setQrValidationInProgress] = useState(false);
 
+  // Overlay state
+  const [showBottleGuide, setShowBottleGuide] = useState(false);
+
+  // Instructions popup state
+  const [showInstructions, setShowInstructions] = useState(false);
+
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const qrCanvasRef = useRef(null);
@@ -99,6 +105,8 @@ export default function ScanPage() {
       setQrValidated(false);
       setIsLoadingAfterQR(false);
       setQrValidationInProgress(false);
+      setShowBottleGuide(false);
+      setShowInstructions(false);
     };
   }, [cleanupCamera]);
 
@@ -181,6 +189,8 @@ export default function ScanPage() {
         setQrValidated(false);
         setIsLoadingAfterQR(false);
         setQrValidationInProgress(false);
+        setShowBottleGuide(false);
+        setShowInstructions(false);
         setStatus('Ready');
       }
     };
@@ -500,6 +510,26 @@ export default function ScanPage() {
       clearTimeout(timer);
     };
   }, []);
+
+  // Show instructions on first visit (with a delay to let camera start)
+  useEffect(() => {
+    if (!mountedRef.current) return;
+
+    // Check if user has seen instructions before
+    const hasSeenInstructions = localStorage.getItem('setorin_instructions_seen');
+
+    if (!hasSeenInstructions) {
+      // Show instructions after camera starts and a brief delay
+      const showInstructionsTimer = setTimeout(() => {
+        if (mountedRef.current && cameraStream && !showInstructions && !showBottleGuide) {
+          console.log('🎯 First visit detected, showing instructions...');
+          setShowInstructions(true);
+        }
+      }, 2000); // 2 second delay after camera starts
+
+      return () => clearTimeout(showInstructionsTimer);
+    }
+  }, [cameraStream, showInstructions, showBottleGuide]);
 
   // CTA handler to start the camera via explicit user gesture (fallback)
   const handleStartScan = async () => {
@@ -928,6 +958,19 @@ export default function ScanPage() {
     }
   };
 
+  // Handle logo tap to show bottle placement guide
+  const handleLogoTap = () => {
+    console.log('🎯 Logo tapped, showing bottle placement guide...');
+    setShowBottleGuide(true);
+    setStatus('Bottle placement guide shown');
+  };
+
+  // Show instructions popup
+  const showInstructionsPopup = () => {
+    console.log('📖 Showing instructions popup...');
+    setShowInstructions(true);
+  };
+
   // Retry camera function with simplified approach
   const retryCamera = async () => {
     setCameraError(null);
@@ -1081,7 +1124,70 @@ export default function ScanPage() {
   return (
     <ProtectedRoute userOnly={true}>
       <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
-        <TopBar title="Duitin" />
+        <TopBar
+          title="Duitin"
+          right={
+            <button
+              onClick={showInstructionsPopup}
+              aria-label="Panduan"
+              className="w-9 h-9 flex items-center justify-center hover:opacity-80 transition-opacity"
+            >
+              <img src="/help.svg" alt="Panduan" className="w-6 h-6" />
+            </button>
+          }
+        />
+
+        {/* Instructions Popup - Now with just 2 steps */}
+        {showInstructions && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+            <div className="bg-white rounded-lg max-w-xs w-full mx-4 p-5 relative">
+              <h3 className="text-lg font-bold mb-3 text-center">Panduan Scan Botol</h3>
+              <div className="space-y-4 text-sm">
+                {/* Step 1 */}
+                <div className="flex gap-3">
+                  <div className="shrink-0 w-8 h-8 rounded-full bg-[var(--color-primary-700)] text-white flex items-center justify-center font-bold">1</div>
+                  <div>
+                    <p>Posisikan botol di atas kotak referensi</p>
+                    <div className="mt-2 rounded bg-gray-50 p-1">
+                      <img
+                        src="/scan-guide/step1.svg"
+                        alt="Posisikan botol"
+                        className="h-24 w-full object-contain"
+                        onError={(e) => e.target.src = '/scan.svg'}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Step 2 (combined) */}
+                <div className="flex gap-3">
+                  <div className="shrink-0 w-8 h-8 rounded-full bg-[var(--color-primary-700)] text-white flex items-center justify-center font-bold">2</div>
+                  <div>
+                    <p>Pastikan pencahayaan cukup terang dan jangan menutupi botol dengan tangan</p>
+                    <div className="mt-2 rounded bg-gray-50 p-1">
+                      <img
+                        src="/scan-guide/step2.svg"
+                        alt="Tips scan"
+                        className="h-24 w-full object-contain"
+                        onError={(e) => e.target.src = '/scan.svg'}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowInstructions(false);
+                  // Mark that user has seen instructions
+                  localStorage.setItem('setorin_instructions_seen', 'true');
+                }}
+                className="mt-5 w-full py-3 rounded-full bg-[var(--color-primary-700)] text-white font-medium"
+              >
+                Saya Mengerti
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Camera preview */}
         <div className="flex flex-col items-center pt-6 pb-24 px-4">
@@ -1115,19 +1221,65 @@ export default function ScanPage() {
                 />
                 <div className="absolute inset-0 border-4 border-white/60 rounded-[var(--radius-md)] pointer-events-none" />
                 
-                {/* Debug overlay with more info */}
-                {(videoRef.current?.videoWidth === 0) && !userGestureBoundRef.current && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none z-10">
-                    <img
-                      src="/logo-white.svg"
-                      alt="Setorin Logo"
-                      className="w-32 h-32 opacity-90"
-                      style={{ maxWidth: '80%', maxHeight: '80%' }}
-                      draggable={false}
-                    />
-                    <div className="mt-4 text-center text-white font-semibold text-base drop-shadow">
-                      Tap Setorin logo to start
+                {/* Logo and bottle placement guide overlay */}
+                {((videoRef.current?.videoWidth === 0 && !userGestureBoundRef.current) || showBottleGuide) && (
+                  <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center select-none z-10">
+                    {/* Logo */}
+                    <div className="flex flex-col items-center">
+                      <img
+                        src="/logo-white.svg"
+                        alt="Setorin Logo"
+                        className="w-32 h-32 opacity-90 cursor-pointer"
+                        style={{ maxWidth: '80%', maxHeight: '80%' }}
+                        draggable={false}
+                        onClick={handleLogoTap}
+                      />
+                      {!showBottleGuide && (
+                        <div className="mt-4 text-center text-white font-semibold text-base drop-shadow">
+                          Tap Setorin logo to start
+                        </div>
+                      )}
                     </div>
+
+                    {/* Bottle placement guide overlay */}
+                    {showBottleGuide && (
+                      <div className="mt-8 w-full px-4">
+                        <div className="relative w-full max-w-[280px] mx-auto">
+                          {/* Center bottle silhouette guide - moved up slightly */}
+                          <div className="absolute top-[35%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-64">
+                            <svg width="100%" height="100%" viewBox="0 0 100 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-40">
+                              <path d="M30 40 L30 10 L70 10 L70 40 L85 70 L85 180 L15 180 L15 70 Z" stroke="white" strokeWidth="3" strokeDasharray="5,5" />
+                              <rect x="38" y="170" width="24" height="4" fill="white" fillOpacity="0.6" />
+                              <text x="50" y="150" textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="bold">Botol</text>
+                            </svg>
+                          </div>
+
+                          {/* Reference object guide - positioned at the bottom with clear separation */}
+                          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-24 h-36">
+                            <svg width="100%" height="100%" viewBox="0 0 40 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-50">
+                              {/* 10cm width × 15cm height (2:3 ratio rectangle) */}
+                              <rect x="2" y="2" width="36" height="56" stroke="#00ff00" strokeWidth="2" strokeDasharray="4,2" />
+                              <text x="20" y="45" textAnchor="middle" fill="#00ff00" fontSize="5" fontWeight="bold">Referensi</text>
+                              <text x="20" y="50" textAnchor="middle" fill="#00ff00" fontSize="5" fontWeight="">10×15 cm</text>
+                            </svg>
+                          </div>
+
+                          {/* Instructions */}
+                          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 text-center">
+                            <p className="text-white text-sm font-medium drop-shadow">Posisikan botol di atas referensi</p>
+                            <p className="text-white/80 text-xs mt-1">Place bottle above the reference object</p>
+                          </div>
+
+                          {/* Hide overlay button */}
+                          <button
+                            onClick={() => setShowBottleGuide(false)}
+                            className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center text-white text-sm"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </>
