@@ -1241,7 +1241,6 @@ export default function ScanPage() {
   return (
     <ProtectedRoute userOnly={true}>
       <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
-        {useMemo(() => (
         <TopBar
           title="Duitin"
           right={
@@ -1253,7 +1252,7 @@ export default function ScanPage() {
               <img src="/help.svg" alt="Panduan" className="w-6 h-6" />
             </button>
           }
-        />), [])}
+        />
 
         {/* Instructions Popup - Now with just 2 steps */}
         {showInstructions && (
