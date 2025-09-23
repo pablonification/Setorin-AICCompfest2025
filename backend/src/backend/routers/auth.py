@@ -76,7 +76,6 @@ async def google_login():
 async def google_callback(code: str):
     """Handle Google OAuth2 callback and exchange code for tokens"""
     try:
-        # Exchange authorization code for access token
         token_url = "https://oauth2.googleapis.com/token"
         token_data = {
             "client_id": settings.GOOGLE_CLIENT_ID,
@@ -91,7 +90,6 @@ async def google_callback(code: str):
             token_response.raise_for_status()
             token_info = token_response.json()
             
-            # Get user info using access token
             user_info_url = "https://www.googleapis.com/oauth2/v2/userinfo"
             headers = {"Authorization": f"Bearer {token_info['access_token']}"}
             user_response = await client.get(user_info_url, headers=headers)

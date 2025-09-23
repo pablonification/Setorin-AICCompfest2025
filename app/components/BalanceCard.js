@@ -7,7 +7,6 @@ export default function BalanceCard() {
   const { user } = useAuth();
   const points = typeof user?.points === "number" ? user.points : 0;
 
-  // Tier thresholds and labels
   const tiers = [
     { name: "Perintis", threshold: 0, next: 5000 },
     { name: "Penjelajah", threshold: 5000, next: 20000 },
@@ -15,7 +14,6 @@ export default function BalanceCard() {
     { name: "Pewaris", threshold: 50000, next: 75000 },
   ];
 
-  // Determine current tier based on points
   const currentTier = (() => {
     if (points < 5000) return tiers[0];
     if (points < 20000) return tiers[1];
@@ -65,7 +63,6 @@ export default function BalanceCard() {
         </div>
       </div>
 
-      {/* Progress (clickable to Setor Level) */}
       <Link href="/setor-level" aria-label="Lihat Setor Level">
         <div
           className="mt-4 rounded-[12px] p-3"

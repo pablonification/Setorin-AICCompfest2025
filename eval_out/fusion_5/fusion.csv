@@ -1,0 +1,6 @@
+image,expected_ml,measured_ml,diameter_mm,height_mm,brand,confidence,error_ml,ok,debug_path
+/app/testing/second/simple/1500/IMG_4299.jpg,1500.0,1087.57,87.63,180.34,1000mL,91.24316495994904,412.43000000000006,True,/app/eval_out/fusion_5/debug/IMG_4299_fusion.jpg
+/app/testing/second/simple/1500/IMG_4272.jpg,1500.0,2225.57,105.01,257.0,Other (2226mL),0.0,725.5700000000002,True,/app/eval_out/fusion_5/debug/IMG_4272_fusion.jpg
+/app/testing/second/simple/1500/IMG_4306.jpg,1500.0,1895.08,103.49,225.31,Other (1895mL),10.491700469534294,395.0799999999999,True,/app/eval_out/fusion_5/debug/IMG_4306_fusion.jpg
+/app/testing/second/simple/1500/IMG_4312.jpg,1500.0,2569.46,101.55,317.24,Other (2569mL),0.0,1069.46,True,/app/eval_out/fusion_5/debug/IMG_4312_fusion.jpg
+/app/testing/second/simple/1500/IMG_4307.jpg,1500.0,1709.25,103.07,204.85,Other (1709mL),29.07535658151464,209.25,True,/app/eval_out/fusion_5/debug/IMG_4307_fusion.jpg

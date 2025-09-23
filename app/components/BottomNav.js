@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 export default function BottomNav() {
   const pathname = usePathname();
 
-
   if (pathname === "/login") return null;
   if (pathname.startsWith("/admin")) return null;
   if (pathname.startsWith("/scan")) return null;
@@ -27,7 +26,6 @@ export default function BottomNav() {
     <div className="fixed bottom-0 left-0 right-0 z-50">
       <div className="mx-auto max-w-[430px]">
         <div className="relative bg-white border-t border-gray-200 rounded-t-[24px] [box-shadow:var(--shadow-card)] pb-[env(safe-area-inset-bottom)]">
-          {/* Center FAB, floating above the bar */}
           <Link
             href="/scan"
             aria-label="Pindai"
@@ -47,9 +45,7 @@ export default function BottomNav() {
             </span>
           </Link>
 
-          {/* Tabs row (space for the FAB) */}
           <div className="flex items-end justify-between px-16 pt-3 pb-3">
-            {/* Left: Home */}
             <Link href="/" className="flex flex-col items-center text-xs">
               <div aria-hidden>
                 <img
@@ -64,7 +60,6 @@ export default function BottomNav() {
                 Beranda
               </span>
             </Link>
-            {/* Right: Saya */}
             <Link href="/profile" className="flex flex-col items-center text-xs">
               <div aria-hidden>
                 <img
