@@ -2,43 +2,215 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { makeAuthenticatedRequest } from '../utils/auth';
+import ProtectedRoute from '../components/ProtectedRoute';
+import { 
+  BiArrowToTop, 
+  BiBeer, 
+  BiBarcodeReader, 
+  BiLeaf, 
+  BiAward,
+  BiRefresh
+} from 'react-icons/bi';
 
-export default function StatisticsDashboard() {
-  const auth = useAuth();
+// Statistics Card Component
+function StatisticsCard({ icon: Icon, total, label, monthly, iconColor = "var(--color-accent-amber)" }) {
+  return (
+    <div className="bg-[var(--color-card)] rounded-[var(--radius-lg)] shadow-[var(--shadow-card)] overflow-hidden">
+      {/* Top Section - White Background */}
+      <div className="p-4 flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <div className="text-[var(--color-accent-amber)]">
+            <Icon size={24} />
+          </div>
+          <div>
+            <div className="text-[22px] leading-7 font-semibold text-[var(--color-primary-700)]">
+              {total}
+            </div>
+            <div className="text-[14px] leading-5 text-[var(--color-muted)]">
+              {label}
+            </div>
+          </div>
+        </div>
+        <div className="text-[var(--color-accent-amber)] opacity-20">
+          <Icon size={48} />
+        </div>
+      </div>
+      
+      {/* Bottom Section - Green Background */}
+      <div className="bg-[var(--color-primary-700)] px-4 py-3 flex justify-between items-center">
+        <span className="text-[14px] leading-5 text-white">Bulan ini :</span>
+        <span className="text-[14px] leading-5 text-white font-semibold">{monthly}</span>
+      </div>
+    </div>
+  );
+}
+
+// Points and Rank Card Component
+function PointsRankCard({ points, monthly, rank }) {
+  return (
+    <div className="bg-[var(--color-card)] rounded-[var(--radius-lg)] shadow-[var(--shadow-card)] overflow-hidden">
+      {/* Top Section - White Background */}
+      <div className="p-4 flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <div className="text-[var(--color-accent-amber)]">
+            <BiArrowToTop size={24} />
+          </div>
+          <div>
+            <div className="text-[22px] leading-7 font-semibold text-[var(--color-primary-700)]">
+              {points}
+            </div>
+            <div className="text-[14px] leading-5 text-[var(--color-muted)]">
+              Total Setor Poin
+            </div>
+          </div>
+        </div>
+        <div 
+          className="px-3 py-2 rounded-[var(--radius-pill)] text-white text-[14px] leading-5 font-medium"
+          style={{ background: 'var(--gradient-primary)' }}
+        >
+          <div className="flex items-center space-x-2">
+            <div className="w-2 h-2 bg-white rounded-full"></div>
+            <span>{rank}</span>
+          </div>
+        </div>
+      </div>
+      
+      {/* Bottom Section - Green Background */}
+      <div className="bg-[var(--color-primary-700)] px-4 py-3 flex justify-between items-center">
+        <span className="text-[14px] leading-5 text-white">Bulan ini :</span>
+        <span className="text-[14px] leading-5 text-white font-semibold">{monthly}</span>
+      </div>
+    </div>
+  );
+}
+
+// Environmental Impact Card Component
+function EnvironmentalImpactCard({ plasticAvoidedKg, co2AvoidedKg }) {
+  return (
+    <div className="bg-[var(--color-card)] rounded-[var(--radius-lg)] shadow-[var(--shadow-card)] overflow-hidden">
+      {/* Top Section - White Background */}
+      <div className="p-4 flex items-center space-x-3">
+        <div className="text-[var(--color-accent-amber)]">
+          <BiLeaf size={24} />
+        </div>
+        <div className="text-[22px] leading-7 font-semibold text-[var(--color-primary-700)]">
+          Dampak Lingkungan
+        </div>
+      </div>
+      
+      {/* Bottom Section - Green Background */}
+      <div className="bg-[var(--color-primary-700)] p-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="text-center">
+            <div className="text-[22px] leading-7 font-semibold text-[var(--color-accent-amber)]">
+              {plasticAvoidedKg.toFixed(3)} kg
+            </div>
+            <div className="text-[12px] leading-4 text-[var(--color-primary-500)] mt-1">
+              Sampah Plastik Dihindari
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-[22px] leading-7 font-semibold text-[var(--color-accent-amber)]">
+              {co2AvoidedKg.toFixed(2)} kg
+            </div>
+            <div className="text-[12px] leading-4 text-[var(--color-primary-500)] mt-1">
+              CO2 Dihindari
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Achievement Card Component
+function AchievementCard({ currentStreak, longestStreak }) {
+  return (
+    <div className="bg-[var(--color-card)] rounded-[var(--radius-lg)] shadow-[var(--shadow-card)] overflow-hidden">
+      {/* Top Section - White Background */}
+      <div className="p-4 flex items-center space-x-3">
+        <div className="text-[var(--color-accent-amber)]">
+          <BiAward size={24} />
+        </div>
+        <div className="text-[22px] leading-7 font-semibold text-[var(--color-primary-700)]">
+          Pencapaian
+        </div>
+      </div>
+      
+      {/* Bottom Section - Green Background */}
+      <div className="bg-[var(--color-primary-700)] p-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="text-center">
+            <div className="text-[22px] leading-7 font-semibold text-white">
+              {currentStreak}
+            </div>
+            <div className="text-[12px] leading-4 text-white mt-1">
+              Streak Hari Ini
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-[22px] leading-7 font-semibold text-white">
+              {longestStreak}
+            </div>
+            <div className="text-[12px] leading-4 text-white mt-1">
+              Streak Terpanjang
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function StatisticsPage() {
+  const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const fetchedOnceRef = useRef(false);
   const fetchingRef = useRef(false);
 
+  // Mock data structure for development
+  const mockStats = {
+    points: {
+      total: 100,
+      monthly: 50,
+      rank: "Perintis"
+    },
+    bottles: {
+      total: 100,
+      monthly: 19
+    },
+    scans: {
+      total: 100,
+      monthly: 16
+    },
+    impact: {
+      plasticAvoidedKg: 0.457,
+      co2AvoidedKg: 1.92
+    },
+    achievements: {
+      currentStreak: 1,
+      longestStreak: 1
+    }
+  };
+
   useEffect(() => {
-    if (!auth?.token) return;
-    if (fetchedOnceRef.current || fetchingRef.current) return;
-    fetchedOnceRef.current = true;
-    fetchingRef.current = true;
-    fetchStatistics().finally(() => { fetchingRef.current = false; });
-    // Re-fetch when token changes; do not depend on auth.user to avoid loops from updateUser
-  }, [auth.token]);
+    // For now, use mock data
+    setStats(mockStats);
+    setLoading(false);
+    
+    // TODO: Uncomment when API is ready
+    // if (!auth?.token) return;
+    // if (fetchedOnceRef.current || fetchingRef.current) return;
+    // fetchedOnceRef.current = true;
+    // fetchingRef.current = true;
+    // fetchStatistics().finally(() => { fetchingRef.current = false; });
+  }, []);
 
   const fetchStatistics = async () => {
-    const data = await makeAuthenticatedRequest(
-      '/api/statistics/personal',
-      {},
-      auth,
-      setError,
-      setLoading
-    );
-    
-    if (data) {
-      setStats(data);
-      // Keep user points in sync with personal statistics data
-      if (typeof data.total_points === 'number' && auth.updateUser) {
-        if (auth.user) {
-          auth.updateUser({ ...auth.user, points: data.total_points });
-        }
-      }
-    }
+    // TODO: Implement actual API call
+    console.log('Fetching statistics...');
   };
 
   const handleRetry = () => {
@@ -46,46 +218,33 @@ export default function StatisticsDashboard() {
     fetchStatistics();
   };
 
-  const handleLogout = () => {
-    auth.logout();
-  };
-
   if (loading) {
     return (
-      <div className="flex justify-center items-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+      <div className="max-w-[430px] mx-auto min-h-screen bg-gray-50 font-inter pt-4 pb-24 px-4">
+        <div className="flex justify-center items-center p-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-primary-600)]"></div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-        <div className="flex items-center justify-center mb-2">
-          <svg className="h-5 w-5 text-red-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-          </svg>
-          <p className="text-red-600 font-medium">Error: {error}</p>
-        </div>
-        <div className="space-x-2">
+      <div className="max-w-[430px] mx-auto min-h-screen bg-gray-50 font-inter pt-4 pb-24 px-4">
+        <div className="bg-red-50 border border-red-200 rounded-[var(--radius-md)] p-4 text-center">
+          <div className="flex items-center justify-center mb-2">
+            <svg className="h-5 w-5 text-red-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <p className="text-red-600 font-medium">Error: {error}</p>
+          </div>
           <button 
             onClick={handleRetry}
-            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+            className="px-4 py-2 bg-red-600 text-white rounded-[var(--radius-md)] hover:bg-red-700 transition-colors"
           >
             Retry
           </button>
-          <button 
-            onClick={handleLogout}
-            className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
-          >
-            Logout & Re-login
-          </button>
         </div>
-        {error.includes('500') && (
-          <p className="text-sm text-red-500 mt-2">
-            Server error detected. Please try again later or contact support.
-          </p>
-        )}
       </div>
     );
   }
@@ -95,110 +254,70 @@ export default function StatisticsDashboard() {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">📊 Statistik Personal</h2>
-      
-      {/* Main Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg p-6 text-center">
-          <div className="text-3xl font-bold">{stats.total_bottles}</div>
-          <div className="text-blue-100">Total Botol</div>
+    <ProtectedRoute userOnly={true}>
+      <div className="max-w-[430px] mx-auto min-h-screen bg-gray-50 font-inter pt-4 pb-24 px-4">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-[22px] leading-7 font-semibold text-[var(--color-primary-700)] mb-2">
+            Dashboard Statistik
+          </h1>
+          <p className="text-[14px] leading-5 text-[var(--color-muted)]">
+            Lihat progress dan impact kamu dalam program daur ulang Setorin
+          </p>
         </div>
-        
-        <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg p-6 text-center">
-          <div className="text-3xl font-bold">{stats.total_points}</div>
-          <div className="text-green-100">Total Poin</div>
+
+        {/* Points and Rank Card */}
+        <div className="mb-4">
+          <PointsRankCard 
+            points={stats.points.total}
+            monthly={stats.points.monthly}
+            rank={stats.points.rank}
+          />
         </div>
-        
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg p-6 text-center">
-          <div className="text-3xl font-bold">{stats.total_scans}</div>
-          <div className="text-purple-100">Total Scan</div>
+
+        {/* Middle Row - Two Cards Side by Side */}
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <StatisticsCard 
+            icon={BiBeer}
+            total={stats.bottles.total}
+            label="Total Botol"
+            monthly={stats.bottles.monthly}
+          />
+          <StatisticsCard 
+            icon={BiBarcodeReader}
+            total={stats.scans.total}
+            label="Total Scan"
+            monthly={stats.scans.monthly}
+          />
+        </div>
+
+        {/* Environmental Impact Card */}
+        <div className="mb-4">
+          <EnvironmentalImpactCard 
+            plasticAvoidedKg={stats.impact.plasticAvoidedKg}
+            co2AvoidedKg={stats.impact.co2AvoidedKg}
+          />
+        </div>
+
+        {/* Achievement Card */}
+        <div className="mb-6">
+          <AchievementCard 
+            currentStreak={stats.achievements.currentStreak}
+            longestStreak={stats.achievements.longestStreak}
+          />
+        </div>
+
+        {/* Refresh Button */}
+        <div className="text-center">
+          <button
+            onClick={fetchStatistics}
+            className="inline-flex items-center space-x-2 px-6 py-3 bg-[var(--color-primary-600)] text-white rounded-[var(--radius-md)] hover:bg-[var(--color-primary-700)] transition-colors"
+          >
+            <BiRefresh size={16} />
+            <span className="text-[14px] leading-5">Refresh Data</span>
+          </button>
         </div>
       </div>
-
-      {/* Monthly Progress */}
-      <div className="bg-gray-50 rounded-lg p-6 mb-8">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">📅 Progress Bulan Ini</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex items-center justify-between">
-            <span className="text-gray-600">Botol:</span>
-            <span className="font-semibold text-blue-600">{stats.bottles_this_month}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-600">Poin:</span>
-            <span className="font-semibold text-green-600">{stats.points_this_month}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Environmental Impact */}
-      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-6 mb-8">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">🌱 Dampak Lingkungan</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-emerald-600">
-              {stats.plastic_waste_diverted_kg.toFixed(3)} kg
-            </div>
-            <div className="text-sm text-gray-600">Sampah Plastik Dihindari</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-teal-600">
-              {stats.co2_emissions_saved_kg.toFixed(1)} kg
-            </div>
-            <div className="text-sm text-gray-600">CO2 Dihindari</div>
-          </div>
-        </div>
-        
-        {/* Environmental Summary */}
-        <div className="mt-4 p-4 bg-white rounded-lg">
-          <div className="text-sm text-gray-700 space-y-2">
-            <div>♻️ {stats.environmental_impact.bottles_equivalent}</div>
-            <div>🌿 {stats.environmental_impact.trees_equivalent}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Achievement Tracking */}
-      <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-6 mb-8">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">🏆 Achievement</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-amber-600">
-              {stats.current_streak_days}
-            </div>
-            <div className="text-sm text-gray-600">Streak Hari Ini</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-orange-600">
-              {stats.longest_streak_days}
-            </div>
-            <div className="text-sm text-gray-600">Streak Terpanjang</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Last Activity */}
-      {stats.last_scan_date && (
-        <div className="bg-gray-50 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">⏰ Aktivitas Terakhir</h3>
-          <div className="text-sm text-gray-600">
-            <div>Scan terakhir: {new Date(stats.last_scan_date).toLocaleDateString('id-ID')}</div>
-            {stats.last_reward_date && (
-              <div>Reward terakhir: {new Date(stats.last_reward_date).toLocaleDateString('id-ID')}</div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Refresh Button */}
-      <div className="mt-6 text-center">
-        <button
-          onClick={fetchStatistics}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          🔄 Refresh Data
-        </button>
-      </div>
-    </div>
+    </ProtectedRoute>
   );
 }
