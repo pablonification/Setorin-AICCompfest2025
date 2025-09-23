@@ -115,3 +115,26 @@ Fix metadata of this site and use favicon.ico from public for icon.
 ### Result
 
 Site now has comprehensive metadata for SEO, social sharing, and PWA capabilities. Favicon is properly configured using the existing `favicon.ico` file. All metadata follows Indonesian language preferences and includes proper OpenGraph/Twitter Card support.
+
+## Session 6: ROI Fusion Implementation & Evaluation
+
+### Actions Taken
+
+1. Implemented Option A (ROI fusion) in `backend/src/backend/services/opencv_service.py` with detection-box + reference ROI intersection and safe fallbacks.
+2. Added helpers for rectangle math and prediction box handling; annotated debug overlays.
+3. Introduced feature flag `USE_DETECTION_ROI_FUSION` and updated `scan` router to pass predictions when enabled.
+4. Created `src/backend/tools/eval_roi_fusion.py` to evaluate against `testing/second/{simple,complex}` and export CSV, summary JSON, and debug images.
+5. Ran full evaluation (fusion ON) and saved outputs under `eval_out/fusion_all/`.
+
+### Result Summary
+
+```
+use_fusion: true
+total: 302
+success: 265
+success_rate: 87.75%
+mae_ml: 804.35
+median_error_ml: 464.36
+```
+
+Artifacts: `eval_out/fusion_all/fusion.csv`, `eval_out/fusion_all/summary_fusion.json`, and `eval_out/fusion_all/debug/`.
