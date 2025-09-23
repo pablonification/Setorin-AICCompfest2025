@@ -81,132 +81,17 @@ class BottleDetector:
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (k, k))
         return cv2.morphologyEx(bin_img, cv2.MORPH_CLOSE, kernel, iterations=iters)
 
-    def _mask_background_colors(self, roi: np.ndarray) -> np.ndarray:
-        """Mask out brown/wooden background colors that interfere with detection."""
-        if roi.ndim != 3:
-            return roi  # Skip if already grayscale
-            
-        hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
-        
-        # Mask brown/wooden colors (cabinet background)
-        brown_lower = np.array([10, 50, 20])
-        brown_upper = np.array([20, 255, 200]) 
-        brown_mask = cv2.inRange(hsv, brown_lower, brown_upper)
-        
-        # Mask very bright/white areas (ceiling, lights)
-        gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-        _, bright_mask = cv2.threshold(gray, 240, 255, cv2.THRESH_BINARY)
-        
-        # Mask very dark areas that are likely shadows
-        _, dark_mask = cv2.threshold(gray, 15, 255, cv2.THRESH_BINARY_INV)
-        
-        # Combine all masks
-        background_mask = cv2.bitwise_or(brown_mask, bright_mask)
-        background_mask = cv2.bitwise_or(background_mask, dark_mask)
-        
-        # Clean up mask with morphology
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-        background_mask = cv2.morphologyEx(background_mask, cv2.MORPH_CLOSE, kernel)
-        
-        # Apply mask to ROI
-        roi_masked = roi.copy()
-        roi_masked[background_mask > 0] = [128, 128, 128]  # Set background to neutral gray
-        
-        return roi_masked
-
-    def _correct_perspective(self, roi: np.ndarray) -> np.ndarray:
-        """Basic perspective correction assuming bottle should be vertical."""
-        h, w = roi.shape[:2]
-        
-        # Skip correction for very small ROIs
-        if h < 100 or w < 50:
-            return roi
-            
-        # Detect if there's significant perspective distortion
-        # Look for dominant vertical lines that are tilted
-        gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY) if roi.ndim == 3 else roi
-        
-        # Use HoughLines to detect dominant angle
-        edges = cv2.Canny(gray, 50, 150, apertureSize=3)
-        lines = cv2.HoughLines(edges, 1, np.pi/180, threshold=int(h*0.3))
-        
-        if lines is None:
-            return roi  # No correction needed
-            
-        # Find dominant vertical-ish lines - FIXED unpacking
-        angles = []
-        for line in lines[:10]:  # Check first 10 lines
-            rho, theta = line[0]  # FIXED: lines has shape (N, 1, 2)
-            angle_deg = np.degrees(theta)
-            # Look for nearly vertical lines (80-100 degrees or -10 to 10 degrees)
-            if (80 <= angle_deg <= 100) or (-10 <= angle_deg <= 10):
-                angles.append(angle_deg)
-                
-        if not angles:
-            return roi  # No vertical lines found
-            
-        # Calculate average tilt
-        avg_angle = np.mean(angles)
-        
-        # Convert to correction angle (how much to rotate to make vertical)
-        if avg_angle > 90:
-            correction_angle = avg_angle - 90
-        else:
-            correction_angle = avg_angle
-            
-        # Only apply correction if tilt is significant (> 2 degrees)
-        if abs(correction_angle) < 2:
-            return roi
-            
-        # Apply perspective correction via rotation
-        center = (w // 2, h // 2)
-        rotation_matrix = cv2.getRotationMatrix2D(center, -correction_angle, 1.0)
-        
-        # Calculate new bounding dimensions
-        cos_angle = abs(rotation_matrix[0, 0])
-        sin_angle = abs(rotation_matrix[0, 1])
-        new_w = int((h * sin_angle) + (w * cos_angle))
-        new_h = int((h * cos_angle) + (w * sin_angle))
-        
-        # Adjust translation
-        rotation_matrix[0, 2] += (new_w / 2) - center[0]
-        rotation_matrix[1, 2] += (new_h / 2) - center[1]
-        
-        # Apply rotation
-        corrected = cv2.warpAffine(roi, rotation_matrix, (new_w, new_h),
-                                  flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
-        
-        # Crop back to original size from center
-        start_x = max(0, (new_w - w) // 2)
-        start_y = max(0, (new_h - h) // 2)
-        end_x = min(new_w, start_x + w)
-        end_y = min(new_h, start_y + h)
-        
-        corrected_cropped = corrected[start_y:end_y, start_x:end_x]
-        
-        # Resize to original dimensions if needed
-        if corrected_cropped.shape[:2] != (h, w):
-            corrected_cropped = cv2.resize(corrected_cropped, (w, h))
-            
-        return corrected_cropped
 
     def _pipeline_candidates(self, roi: np.ndarray) -> List[np.ndarray]:
-        """Enhanced pipeline with background masking and perspective correction.
+        """Generate binary masks from multiple pipelines and return their contours.
 
         Pipelines:
         1) Adaptive threshold (Gaussian), then close/open
         2) Canny (hysteresis thresholds via MAD of gradients), then close
         3) CLAHE + Otsu threshold, then close
-        4) Plastic bottle specific pipeline
+        4) NEW: Plastic bottle specific pipeline
         """
-        # STEP 1: Apply background masking
-        roi_masked = self._mask_background_colors(roi)
-        
-        # STEP 2: Apply perspective correction
-        roi_corrected = self._correct_perspective(roi_masked)
-        
-        # STEP 3: Convert to grayscale for processing
-        gray = self._to_gray(roi_corrected)
+        gray = self._to_gray(roi)
         h, w = gray.shape[:2]
         candidates: List[np.ndarray] = []
 
@@ -248,24 +133,24 @@ class BottleDetector:
         except Exception:
             pass
 
-        # 4) Plastic bottle specific pipeline
+        # 4) NEW: Plastic bottle specific pipeline
         try:
-            # Bilateral filter to reduce noise while preserving edges
-            bilateral = cv2.bilateralFilter(gray, 9, 75, 75)
-            
-            # Gradient-based detection for transparent edges
-            grad_x = cv2.Sobel(bilateral, cv2.CV_16S, 1, 0, ksize=3)
-            grad_y = cv2.Sobel(bilateral, cv2.CV_16S, 0, 1, ksize=3)
-            abs_grad_x = cv2.convertScaleAbs(grad_x)
-            abs_grad_y = cv2.convertScaleAbs(grad_y)
-            gradient = cv2.addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0)
-            
-            # Threshold gradient
-            _, grad_thresh = cv2.threshold(gradient, 30, 255, cv2.THRESH_BINARY)
-            grad_thresh = self._morph_close(grad_thresh, 3, 2)
-            
-            contours, _ = cv2.findContours(grad_thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            candidates.extend(contours)
+          # Bilateral filter to reduce noise while preserving edges
+          bilateral = cv2.bilateralFilter(gray, 9, 75, 75)
+
+          # Gradient-based detection for transparent edges
+          grad_x = cv2.Sobel(bilateral, cv2.CV_16S, 1, 0, ksize=3)
+          grad_y = cv2.Sobel(bilateral, cv2.CV_16S, 0, 1, ksize=3)
+          abs_grad_x = cv2.convertScaleAbs(grad_x)
+          abs_grad_y = cv2.convertScaleAbs(grad_y)
+          gradient = cv2.addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0)
+
+          # Threshold gradient
+          _, grad_thresh = cv2.threshold(gradient, 30, 255, cv2.THRESH_BINARY)
+          grad_thresh = self._morph_close(grad_thresh, 3, 2)
+
+          contours, _ = cv2.findContours(grad_thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+          candidates.extend(contours)
         except Exception:
             pass
 
@@ -398,6 +283,179 @@ class BottleDetector:
             box_points=box,
         )
 
+    def detect_with_debug(self, roi: np.ndarray, min_area_px: int) -> Tuple[PixelBottleInfo, bytes]:
+        """Same as detect() but returns debug visualization of all pipelines."""
+        gray = self._to_gray(roi)
+        h, w = gray.shape[:2]
+
+        # Store all masks and their contours
+        pipeline_masks = {}
+        pipeline_contours = {}
+        all_candidates = []
+
+        # 1) Adaptive threshold
+        try:
+            adp = cv2.adaptiveThreshold(
+                gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 3
+            )
+            adp_closed = self._morph_close(adp, 5, 1)
+            contours, _ = cv2.findContours(adp_closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            pipeline_masks['adaptive'] = adp_closed
+            pipeline_contours['adaptive'] = contours
+            all_candidates.extend(contours)
+        except Exception:
+            pipeline_masks['adaptive'] = np.zeros_like(gray)
+            pipeline_contours['adaptive'] = []
+
+        # 2) Canny with MAD-based thresholds
+        try:
+            gx = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
+            gy = cv2.Sobel(gray, cv2.CV_32F, 0, 1, ksize=3)
+            mag = cv2.magnitude(gx, gy)
+            med = float(np.median(mag))
+            mad = float(np.median(np.abs(mag - med)) + 1e-6)
+            low = max(5.0, 1.5 * mad)
+            high = max(low + 10.0, 3.0 * mad)
+            edges = cv2.Canny(gray, low, high)
+            edges_closed = self._morph_close(edges, 5, 1)
+            contours, _ = cv2.findContours(edges_closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            pipeline_masks['canny'] = edges_closed
+            pipeline_contours['canny'] = contours
+            all_candidates.extend(contours)
+        except Exception:
+            pipeline_masks['canny'] = np.zeros_like(gray)
+            pipeline_contours['canny'] = []
+
+        # 3) CLAHE + Otsu
+        try:
+            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+            eq = clahe.apply(gray)
+            _, otsu = cv2.threshold(eq, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            otsu_closed = self._morph_close(otsu, 5, 1)
+            contours, _ = cv2.findContours(otsu_closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            pipeline_masks['clahe_otsu'] = otsu_closed
+            pipeline_contours['clahe_otsu'] = contours
+            all_candidates.extend(contours)
+        except Exception:
+            pipeline_masks['clahe_otsu'] = np.zeros_like(gray)
+            pipeline_contours['clahe_otsu'] = []
+
+        if not all_candidates:
+            raise MeasurementError("Bottle not found in ROI.")
+
+        # Score all candidates and find best
+        best_cnt: Optional[np.ndarray] = None
+        best_score = -1e9
+        candidate_scores = []
+
+        for cnt in all_candidates:
+            sc = self._score_contour(cnt, (h, w), min_area_px=min_area_px)
+            candidate_scores.append((cnt, sc))
+            if sc > best_score:
+                best_score = sc
+                best_cnt = cnt
+
+        if best_cnt is None:
+            raise MeasurementError("Bottle not found in ROI.")
+
+        # Create debug visualization
+        debug_img = self._create_pipeline_debug(
+            roi, gray, pipeline_masks, pipeline_contours,
+            best_cnt, candidate_scores, min_area_px
+        )
+
+        # Encode debug image
+        _, debug_buf = cv2.imencode('.jpg', debug_img)
+        debug_bytes = debug_buf.tobytes()
+
+        # Return same result as regular detect()
+        rect = cv2.minAreaRect(best_cnt)
+        (_, _), (w_raw, h_raw), _ = rect
+        visual_h = max(w_raw, h_raw)
+        visual_w = min(w_raw, h_raw)
+        box = np.intp(cv2.boxPoints(rect))
+
+        result = PixelBottleInfo(
+            pixel_width=float(visual_w),
+            pixel_height=float(visual_h),
+            contour=best_cnt,
+            box_points=box,
+        )
+
+        return result, debug_bytes
+
+    def _create_pipeline_debug(self, roi, gray, pipeline_masks, pipeline_contours,
+                              best_cnt, candidate_scores, min_area_px):
+        """Create comprehensive debug visualization."""
+        h, w = roi.shape[:2]
+
+        # Create 2x3 grid: Original + 3 masks + candidates + final result
+        cell_h, cell_w = h, w
+        debug_img = np.zeros((cell_h * 2, cell_w * 3, 3), dtype=np.uint8)
+
+        # Row 1: Original + 3 pipeline masks
+        # Original ROI (top-left)
+        if roi.ndim == 3:
+            debug_img[0:cell_h, 0:cell_w] = roi
+        else:
+            debug_img[0:cell_h, 0:cell_w] = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+        cv2.putText(debug_img, "Original ROI", (5, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 1)
+
+        # Adaptive mask (top-center)
+        adaptive_bgr = cv2.cvtColor(pipeline_masks['adaptive'], cv2.COLOR_GRAY2BGR)
+        debug_img[0:cell_h, cell_w:cell_w*2] = adaptive_bgr
+        cv2.putText(debug_img, f"Adaptive ({len(pipeline_contours['adaptive'])} cnt)",
+                    (cell_w+5, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255), 1)
+
+        # Canny mask (top-right)
+        canny_bgr = cv2.cvtColor(pipeline_masks['canny'], cv2.COLOR_GRAY2BGR)
+        debug_img[0:cell_h, cell_w*2:cell_w*3] = canny_bgr
+        cv2.putText(debug_img, f"Canny ({len(pipeline_contours['canny'])} cnt)",
+                    (cell_w*2+5, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255), 1)
+
+        # Row 2: CLAHE+Otsu + All candidates + Final result
+        # CLAHE+Otsu mask (bottom-left)
+        clahe_bgr = cv2.cvtColor(pipeline_masks['clahe_otsu'], cv2.COLOR_GRAY2BGR)
+        debug_img[cell_h:cell_h*2, 0:cell_w] = clahe_bgr
+        cv2.putText(debug_img, f"CLAHE+Otsu ({len(pipeline_contours['clahe_otsu'])} cnt)",
+                    (5, cell_h+20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255), 1)
+
+        # All candidates with scores (bottom-center)
+        candidates_img = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR) if roi.ndim == 3 else roi.copy()
+        colors = [(255,0,0), (0,255,0), (0,0,255), (255,255,0), (255,0,255), (0,255,255)]
+
+        # Sort by score to show best ones prominently
+        sorted_candidates = sorted(candidate_scores, key=lambda x: x[1], reverse=True)[:10]
+
+        for i, (cnt, score) in enumerate(sorted_candidates):
+            if score < -1e8:  # Skip invalid contours
+                continue
+            color = colors[i % len(colors)]
+            thickness = 3 if cnt is best_cnt else 1
+            cv2.drawContours(candidates_img, [cnt], -1, color, thickness)
+
+        debug_img[cell_h:cell_h*2, cell_w:cell_w*2] = candidates_img
+        cv2.putText(debug_img, f"Candidates (min_area:{min_area_px}px)",
+                    (cell_w+5, cell_h+20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 1)
+
+        # Final result with best contour (bottom-right)
+        final_img = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR) if roi.ndim == 3 else roi.copy()
+        cv2.drawContours(final_img, [best_cnt], -1, (0, 255, 0), 2)
+
+        # Draw bounding box
+        rect = cv2.minAreaRect(best_cnt)
+        box = np.intp(cv2.boxPoints(rect))
+        cv2.drawContours(final_img, [box], -1, (255, 0, 0), 2)
+
+        debug_img[cell_h:cell_h*2, cell_w*2:cell_w*3] = final_img
+        
+        # Calculate best score for display
+        best_score = max([score for _, score in candidate_scores]) if candidate_scores else 0.0
+        cv2.putText(debug_img, f"CHOSEN (score:{best_score:.2f})",
+                    (cell_w*2+5, cell_h+20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 1)
+
+        return debug_img
+
 
 class BottleMeasurer:
     """Measure bottle dimensions using a coloured reference object for scale calibration.
@@ -483,25 +541,6 @@ class BottleMeasurer:
         logger.debug("Reference bbox: x=%d y=%d w=%d h=%d", x, y, w, h)
         return x, y, w, h
 
-    def _extract_bottle_contour(self, roi_gray: np.ndarray) -> np.ndarray:
-        """Return contour corresponding to the bottle silhouette."""
-        # Edge detection & thresholding
-        blur = cv2.GaussianBlur(roi_gray, (5, 5), 0)
-        _, thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        # Invert (bottle is darker/lighter?) – choose largest contour regardless
-        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        if not contours:
-            raise MeasurementError("No contours found in ROI for bottle.")
-        # Prefer contours that are fully inside ROI (not touching borders)
-        h_roi, w_roi = roi_gray.shape[:2]
-        candidates = sorted(contours, key=cv2.contourArea, reverse=True)
-        for c in candidates:
-            x, y, w, h = cv2.boundingRect(c)
-            if x > 2 and y > 2 and x + w < w_roi - 2 and y + h < h_roi - 2:
-                return c  # good candidate
-
-        # Fallback to largest contour if none fit the criteria
-        return candidates[0]
 
     def measure(
         self,
@@ -649,8 +688,8 @@ class BottleMeasurer:
             
             # Put size label (height x diameter in mm) at translated coordinates
             size_label = f"{height_mm:.0f}x{diameter_mm:.0f} mm"
-            label_x = abs_box_points[0][0]
-            label_y = abs_box_points[0][1] - 10
+            label_x = int(abs_box_points[0][0])
+            label_y = int(abs_box_points[0][1] - 10)
             cv2.putText(
                 debug,
                 size_label,
@@ -661,7 +700,7 @@ class BottleMeasurer:
                 2,
             )
             if classification:
-                class_y = max(abs_box_points[:, 1]) + 20
+                class_y = int(np.max(abs_box_points[:, 1]) + 20)
                 cv2.putText(
                     debug,
                     classification,
