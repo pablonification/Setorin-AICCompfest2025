@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from typing import Any, Optional, List
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from fastapi import APIRouter, File, UploadFile, HTTPException, status, Header, Depends, Query
 
@@ -368,7 +368,8 @@ async def get_user_transactions(
                 "confidence": scan.get("confidence", 0.0),
                 "valid": scan.get("valid", False),
                 "points": scan.get("points", 0),
-                "timestamp": scan.get("timestamp", datetime.now(timezone.utc)).isoformat(),
+                "timestamp": scan.get("timestamp", datetime.now(timezone.utc))
+                    .astimezone(timezone(timedelta(hours=7))).isoformat(),
                 "measurement": scan.get("measurement", {
                     "volume_ml": 0.0,
                     "diameter_mm": 0.0,
