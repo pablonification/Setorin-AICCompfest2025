@@ -5,17 +5,16 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  /* UI tokens (from hi-fi design) */
-  --color-primary-700: #016F2F; /* Green */
-  --color-primary-600: #0e7f4e; /* Medium Green */
-  --color-primary-500: #14a160; /* Light Green */
-  --color-accent-amber: #FFE200; /* Yellow */
+  --color-primary-700: #016F2F;
+  --color-primary-600: #0e7f4e;
+  --color-primary-500: #14a160;
+  --color-accent-amber: #FFE200;
   --color-card: #ffffff;
   --color-muted: #7a8b87;
   --color-success: #19c37d;
   --color-danger: #e24a4a;
   --gradient-primary: linear-gradient(90deg, #016F2F 0%, #FFE200 100%);
-  --color-overlay: rgba(17, 24, 39, 0.75); /* Equivalent to gray-900 with 75% opacity */
+  --color-overlay: rgba(17, 24, 39, 0.75);
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
@@ -23,20 +22,19 @@
   --shadow-card: 0 6px 18px rgba(0,0,0,0.08);
   --shadow-fab: 0 8px 24px rgba(0,0,0,0.16);
   
-  /* Font sizes (define as CSS variables and use via Tailwind utilities) */
-  --text-xs: 0.75rem; /* 12px */
-  --text-sm: 0.875rem; /* 14px */
-  --text-base: 1rem; /* 16px */
-  --text-lg: 1.125rem; /* 18px */
-  --text-xl: 1.25rem; /* 20px */
-  --text-2xl: 1.5rem; /* 24px */
-  --text-3xl: 1.875rem; /* 30px */
-  --text-4xl: 2.25rem; /* 36px */
-  --text-5xl: 3rem; /* 48px */
-  --text-6xl: 3.75rem; /* 60px */
-  --text-7xl: 4.5rem; /* 72px */
-  --text-8xl: 6rem; /* 96px */
-  --text-9xl: 8rem; /* 128px */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+  --text-6xl: 3.75rem;
+  --text-7xl: 4.5rem;
+  --text-8xl: 6rem;
+  --text-9xl: 8rem;
 }
 
 @theme inline {
@@ -46,7 +44,6 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* Force light theme for now (ignore system dark mode) */
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #ffffff;
@@ -66,7 +63,6 @@ html { background: var(--background); }
   font-family: "Inter", sans-serif;
 }
 
-/* Helpers for mobile frame and placeholders */
 .mobile-container {
   max-width: 430px;
   margin-left: auto;
@@ -75,11 +71,10 @@ html { background: var(--background); }
 }
 
 .placeholder-tile {
-  background-color: #d1d5db; /* gray-300 */
+  background-color: #d1d5db;
   border-radius: var(--radius-md);
 }
 
-/* Markdown content styling for RAG chat */
 .markdown-content {
   line-height: 1.5;
 }
@@ -119,7 +114,6 @@ html { background: var(--background); }
   font-size: 0.875rem;
 }
 
-/* ChatFab animations */
 @keyframes fade-in-up {
   from {
     opacity: 0;

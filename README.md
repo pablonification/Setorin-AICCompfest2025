@@ -1,11 +1,49 @@
 # ♻️ Setorin – AI-Powered Recycling System
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://docker.com)
 [![Next.js](https://img.shields.io/badge/Next.js-14+-black)](https://nextjs.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green)](https://fastapi.tiangolo.com)
 
 Setorin adalah sistem bank sampah cerdas yang menggabungkan teknologi Web, AI, dan IoT untuk memvalidasi serta memberikan reward setiap kali pengguna membuang botol plastik. Sistem ini menggunakan kecerdasan buatan untuk mengidentifikasi merek botol, mengukur dimensi, dan menghitung volume untuk memastikan keaslian dan kualitas sampah yang dikumpulkan.
+
+## 🌐 Live Demo
+
+**🚀 Deployed Application:** [https://setorin.app](https://setorin.app)
+
+## 📋 Table of Contents
+
+- [🎯 Tujuan Proyek](#-tujuan-proyek)
+- [✨ Fitur Utama](#-fitur-utama)
+  - [🤖 AI-Powered Validation](#-ai-powered-validation)
+  - [💰 Reward System](#-reward-system)
+  - [🌐 Real-time Dashboard](#-real-time-dashboard)
+  - [📱 IoT Integration](#-iot-integration)
+- [🏗️ Arsitektur & Tech Stack](#️-arsitektur--tech-stack)
+  - [Frontend Stack](#frontend-stack)
+  - [Backend Stack](#backend-stack)
+  - [IoT & Hardware](#iot--hardware)
+  - [DevOps & Tools](#devops--tools)
+- [📁 Struktur Proyek](#-struktur-proyek)
+- [🚀 Instalasi & Menjalankan Aplikasi](#-instalasi--menjalankan-aplikasi)
+  - [Prerequisites](#prerequisites)
+  - [Quick Start dengan Docker](#quick-start-dengan-docker)
+  - [Manual Installation](#manual-installation)
+    - [Backend Setup](#backend-setup)
+    - [Frontend Setup](#frontend-setup)
+    - [IoT Simulator Setup](#iot-simulator-setup)
+  - [Service Ports](#service-ports)
+  - [Environment Configuration](#environment-configuration)
+    - [Backend](#backend)
+    - [Frontend](#frontend)
+- [📊 Monitoring & Analytics](#-monitoring--analytics)
+  - [Admin Dashboard Features](#admin-dashboard-features)
+  - [Performance Metrics](#performance-metrics)
+- [🔧 Troubleshooting](#-troubleshooting)
+  - [Common Issues](#common-issues)
+    - [Docker Issues](#docker-issues)
+    - [API Connection Issues](#api-connection-issues)
+    - [WebSocket Issues](#websocket-issues)
+    - [Camera Issues](#camera-issues)
+- [🙏 Acknowledgments](#-acknowledgments)
 
 ## 🎯 Tujuan Proyek
 
@@ -58,12 +96,11 @@ Setorin bertujuan untuk:
 - **Protocol**: WebSocket
 - **Simulator**: ESP32 virtual simulator
 - **Communication**: JSON-based commands
-- **Hardware**: ESP32 microcontroller (simulated)
+- **Hardware**: ESP32 microcontroller
 
 ### DevOps & Tools
 - **Containerization**: Docker & Docker Compose
 - **Database**: MongoDB
-- **Cache**: Redis (optional)
 - **Testing**: Pytest
 - **Linting**: ESLint, Ruff
 
@@ -130,12 +167,12 @@ smartbin/
 
 ## 🚀 Instalasi & Menjalankan Aplikasi
 
-### Prasyarat Sistem
+### *Prerequisites*
 - **Docker & Docker Compose** (versi terbaru)
 - **Git** untuk cloning repository
 - **Roboflow API Key** (untuk AI validation)
 
-### Quick Start dengan Docker (Recommended)
+### *Quick Start* dengan Docker
 
 ```bash
 # 1. Clone repository
@@ -150,7 +187,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-### Manual Installation (Development)
+### Manual Installation
 
 #### Backend Setup
 ```bash
@@ -163,10 +200,8 @@ source venv/bin/activate  # Linux/Mac
 venv\Scripts\activate     # Windows
 
 # Install dependencies
-pip install -r requirements.txt
+pip install "fastapi>=0.116.1" "uvicorn[standard]>=0.35.0" motor pymongo redis python-dotenv requests httpx opencv-python-headless numpy Pillow python-multipart websockets PyJWT python-jose[cryptography] pytest pytest-asyncio inference-sdk langchain langchain-community langgraph chromadb langchain-google-genai
 
-# Setup environment
-cp .env.example .env
 # Configure your environment variables
 
 # Run backend
@@ -204,7 +239,7 @@ python websocket_server.py
 
 ### Environment Configuration
 
-#### Backend (.env)
+#### Backend
 ```bash
 # Database
 MONGODB_URI=mongodb://localhost:27017
@@ -225,7 +260,7 @@ IOT_WS_URL=ws://localhost:8080
 MIN_WITHDRAWAL_POINTS=20000
 ```
 
-#### Frontend (.env.local)
+#### Frontend
 ```bash
 NEXT_PUBLIC_BROWSER_API_URL=http://localhost:8000
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id
@@ -288,34 +323,6 @@ curl -X POST ws://localhost:8080 \
 - Pastikan browser memiliki akses ke kamera
 - Coba akses `https://localhost:3000` untuk HTTPS
 - Check browser console untuk error messages
-
-## 📈 Roadmap
-
-### Version 1.1 (Current)
-- ✅ AI-powered bottle validation
-- ✅ Real-time WebSocket updates
-- ✅ Admin dashboard
-- ✅ Reward system
-
-### Version 1.2 (Upcoming)
-- 🔄 Mobile app (React Native)
-- 🔄 Advanced analytics dashboard
-- 🔄 Multi-language support
-- 🔄 Integration with waste management partners
-
-### Version 2.0 (Future)
-- 🤖 Advanced ML models for better accuracy
-- 📱 IoT device management
-- 🌍 Multi-location support
-- 📊 Advanced reporting and insights
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-**MIT © 2025 Setorin Team**
-
----
 
 ## 🙏 Acknowledgments
 

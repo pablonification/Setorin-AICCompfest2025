@@ -7,24 +7,20 @@ import os
 import sys
 from pathlib import Path
 
-# Add the backend source to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-# Import required modules directly
 import cv2
 import numpy as np
 import math
 from typing import Tuple, Union, Optional
 from dataclasses import dataclass
 
-# Copy the classes directly to avoid import issues
 @dataclass
 class MeasurementResult:
     """Bottle measurement in millimeters and volume in milliliters."""
     diameter_mm: float
     height_mm: float
     volume_ml: float
-    # Additional optional fields produced by the advanced pipeline
     classification: Optional[str] = None
     confidence_percent: Optional[float] = None
 
@@ -34,8 +30,8 @@ class MeasurementError(RuntimeError):
 @dataclass
 class PixelBottleInfo:
     """Bottle data measured in *pixels* within the ROI."""
-    pixel_width: float  # visual width (shorter side)
-    pixel_height: float  # visual height (longer side)
+    pixel_width: float
+    pixel_height: float
     contour: np.ndarray
     box_points: np.ndarray
 
@@ -79,11 +75,10 @@ class BottleDetector:
             aspect = visual_h / visual_w
             if aspect < self.min_aspect_ratio:
                 continue
-            # Upright check
             upright = False
-            if h_raw >= w_raw:  # height is visual height
+            if h_raw >= w_raw:
                 upright = abs(angle) < self.max_tilt_deg
-            else:  # width is visual height -> expect vertical orientation
+            else:
                 deviation = abs(90.0 - abs(angle))
                 upright = deviation < self.max_tilt_deg
             if not upright:

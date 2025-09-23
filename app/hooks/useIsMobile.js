@@ -1,48 +1,35 @@
-// hooks/useIsMobile.js
-'use client';
-
 import { useState, useEffect } from 'react';
 
-/**
- * A custom hook to detect if the user is on a mobile device.
- * It checks window width, user agent, and touch capabilities.
- * @returns {boolean} - True if the device is identified as mobile, otherwise false.
- */
-export function useIsMobile(breakpoint = 768) {
+export function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    // This check ensures the code only runs on the client-side
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const checkDevice = () => {
-      const userAgent = navigator.userAgent.toLowerCase();
-      const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+    const checkIsMobile = () => {
+      const width = window.innerWidth;
+      const userAgent = navigator.userAgent;
+      const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
       
-      // Check for screen width, mobile user agent, or touch support.
-      // This provides a more reliable detection method.
-      return window.innerWidth < breakpoint || isMobileUA;
+      const breakpoint = 768;
+      const isMobileWidth = width < breakpoint;
+      const isMobileUserAgent = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+      const isMobileTouch = hasTouch;
+      
+      setIsMobile(isMobileWidth || isMobileUserAgent || isMobileTouch);
     };
 
-    const handleResize = () => {
-      setIsMobile(checkDevice());
-    };
+    checkIsMobile();
 
-    // Initial check on mount
-    handleResize();
+    const handleResize = () => checkIsMobile();
+    const handleOrientationChange = () => checkIsMobile();
 
-    // Add event listeners for resize and orientation changes
     window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleResize);
+    window.addEventListener('orientationchange', handleOrientationChange);
 
-    // Cleanup function to remove event listeners
     return () => {
       window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleResize);
+      window.removeEventListener('orientationchange', handleOrientationChange);
     };
-  }, [breakpoint]); // Re-run effect if the breakpoint changes
+  }, []);
 
   return isMobile;
 }   

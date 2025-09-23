@@ -10,27 +10,22 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing token on app load
     const storedToken = localStorage.getItem('smartbin_token');
     const storedUser = localStorage.getItem('smartbin_user');
     
     if (storedToken && storedUser && storedToken !== 'null') {
       try {
-        // Validate token by checking if it's expired
         const tokenParts = storedToken.split('.');
         if (tokenParts.length === 3) {
           const tokenData = JSON.parse(atob(tokenParts[1]));
           const currentTime = Math.floor(Date.now() / 1000);
           
           if (tokenData.exp > currentTime) {
-            // Token is still valid
             setToken(storedToken);
             setUser(JSON.parse(storedUser));
             console.log('Token loaded successfully, expires:', new Date(tokenData.exp * 1000));
-            // Hydrate latest points once at boot to avoid stale 0
             hydratePointsFromSummary(storedToken, JSON.parse(storedUser));
           } else {
-            // Token expired, remove from storage
             console.log('Token expired, removing from storage');
             localStorage.removeItem('smartbin_token');
             localStorage.removeItem('smartbin_user');
@@ -86,13 +81,9 @@ export function AuthProvider({ children }) {
     localStorage.setItem('smartbin_token', userToken);
     localStorage.setItem('smartbin_user', JSON.stringify(userData));
 
-    // Immediately sync points from backend so navbar reflects correct total
     syncPointsFromBackend(userToken, userData);
   };
 
-  /**
-   * Fetch user's total points from backend summary and update context
-   */
   const syncPointsFromBackend = async (validToken, existingUser) => {
     if (!validToken) return;
     try {
@@ -118,7 +109,6 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Compute tier based on points client-side as a fallback for UI; backend persists too
   const computeTier = (totalPoints) => {
     if (totalPoints >= 75000) return 'Pewaris';
     if (totalPoints >= 50000) return 'Panutan';
@@ -172,7 +162,6 @@ export function AuthProvider({ children }) {
     };
   };
 
-  // Enhanced token validation
   const validateToken = () => {
     if (!token || token === 'null') {
       return false;
@@ -202,7 +191,6 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Enhanced authentication check
   const isAuthenticated = () => {
     const isValid = validateToken();
     if (!isValid) {
@@ -211,7 +199,6 @@ export function AuthProvider({ children }) {
     return isValid && !!user;
   };
 
-  // Role-based access control
   const isAdmin = () => {
     return isAuthenticated() && user?.role === 'admin';
   };

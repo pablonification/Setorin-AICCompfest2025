@@ -19,12 +19,10 @@ export default function PayoutPage() {
   const [bankName, setBankName] = useState('');
   const [ewalletProvider, setEwalletProvider] = useState('OVO');
   const [phoneNumber, setPhoneNumber] = useState('');
-//   buat di set, value auto minimum yg autotyped
   const [amount, setAmount] = useState(1000);
   const [withdrawals, setWithdrawals] = useState([]);
   const [banks, setBanks] = useState(["BCA","BNI","BRI","MANDIRI"]);
   const [ewallets, setEwallets] = useState(["OVO","GOPAY","DANA","SHOPEEPAY"]);
-//   ini juga
   const [minWithdrawal, setMinWithdrawal] = useState(20000);
 
   const apiBase = process.env.NEXT_PUBLIC_BROWSER_API_URL || 'http://localhost:8000';

@@ -25,10 +25,10 @@ from bson import ObjectId
 router = APIRouter(prefix="/api/scan", tags=["scan"])
 logger = logging.getLogger(__name__)
 
-bottle_measurer = BottleMeasurer()  # default settings; could be injected
+bottle_measurer = BottleMeasurer()
 roboflow_client = RoboflowClient()
 smartbin_client = SmartBinClient()
-transaction_service = get_transaction_service()  # Get transaction service instance
+transaction_service = get_transaction_service()
 
 
 async def control_esp32_lid(device_id: str, duration_seconds: int = 3):
@@ -36,7 +36,6 @@ async def control_esp32_lid(device_id: str, duration_seconds: int = 3):
     try:
         db = await ensure_connection()
 
-        # Create log entry
         log_result = await db["esp32_logs"].insert_one({
             "device_id": device_id,
             "action": "open",
@@ -45,7 +44,6 @@ async def control_esp32_lid(device_id: str, duration_seconds: int = 3):
             "details": {"duration_seconds": duration_seconds}
         })
 
-        # Call the ESP32 router's control endpoint instead of IoT client directly
         import httpx
         from ..core.config import get_settings
         
@@ -72,13 +70,11 @@ async def control_esp32_lid(device_id: str, duration_seconds: int = 3):
                 response_data = response.json()
                 logger.info("ESP32 control successful: %s", response_data)
                 
-                # Update log as completed
                 await db["esp32_logs"].update_one(
                     {"_id": log_result.inserted_id},
                     {"$set": {"status": "completed", "response": response_data}}
                 )
                 
-                # Return events in the expected format
                 events = [
                     {
                         "event": "lid_opened",
@@ -92,7 +88,6 @@ async def control_esp32_lid(device_id: str, duration_seconds: int = 3):
                 error_message = f"ESP32 control failed with status {response.status_code}: {response.text}"
                 logger.error(error_message)
                 
-                # Update log as error
                 await db["esp32_logs"].update_one(
                     {"_id": log_result.inserted_id},
                     {"$set": {"status": "error", "error_message": error_message}}
@@ -101,7 +96,6 @@ async def control_esp32_lid(device_id: str, duration_seconds: int = 3):
 
     except Exception as exc:
         logger.error("ESP32 control failed: %s", exc)
-        # Update log as error if we have a log_result
         try:
             if 'log_result' in locals():
                 await db["esp32_logs"].update_one(
@@ -113,7 +107,6 @@ async def control_esp32_lid(device_id: str, duration_seconds: int = 3):
         return {"events": [], "error": str(exc)}
 
 
-# Add OPTIONS handlers for CORS preflight
 @router.options("")
 async def scan_options_no_slash():
     """Handle CORS preflight for scan endpoint without slash."""
@@ -154,46 +147,58 @@ async def scan_bottle(
     if not user_email:
         raise HTTPException(status_code=401, detail="Invalid user token")
 
-    # ----------------------------------------------------------------------
-    # 2. OpenCV measurement (with debug preview)
-    # ----------------------------------------------------------------------
+    # 2-3. Predictions and measurement (order depends on feature flag)
+    from ..core.config import get_settings
+    settings = get_settings()
+    predictions = []
+
     preview_b64: str | None = None  # ensure always defined
     debug_url: str | None = None
 
-    try:
-        measurement, preview_bytes = bottle_measurer.measure(content, return_debug=True)
-        preview_b64 = base64.b64encode(preview_bytes).decode()
-        # Save debug preview image to disk
-        debug_dir = Path("debug_images")
-        debug_dir.mkdir(exist_ok=True)
-        filename = f"{uuid4().hex}.jpg"
-        (debug_dir / filename).write_bytes(preview_bytes)
-        debug_url = f"/debug/{filename}"
-    except MeasurementError as exc:
-        # Instead of aborting the entire scan, log the error and continue with
-        # a placeholder measurement so that the frontend receives a response
-        # explaining what went wrong. This prevents generic "Scan failed"
-        # messages on the UI and allows the user to see the specific reason.
-        logger.warning("Measurement failed – continuing with fallback measurement: %s", exc)
+    if settings.USE_DETECTION_ROI_FUSION:
+        # Fetch predictions first to allow ROI fusion
+        try:
+            predictions = await roboflow_client.predict(content)
+            logger.info("Roboflow predictions received: %s", predictions)
+        except Exception as exc:  # noqa: BLE001
+            logger.error("Roboflow error (continuing without boxes): %s", exc)
+            predictions = []
 
-        # Use more realistic fallback values instead of all zeros
-        # This gives validation a chance to pass while still indicating measurement failure
-        measurement = MeasurementResult(
-            diameter_mm=65.0,  # Typical bottle diameter
-            height_mm=180.0,   # Typical bottle height (within valid range)
-            volume_ml=600.0    # Typical bottle volume
-        )
-        # Reason will be added later by the validation step if needed
-        preview_b64 = None
-        debug_url = None
+        try:
+            measurement, preview_bytes = bottle_measurer.measure(content, predictions=predictions, return_debug=True)
+            preview_b64 = base64.b64encode(preview_bytes).decode()
+            debug_dir = Path("debug_images")
+            debug_dir.mkdir(exist_ok=True)
+            filename = f"{uuid4().hex}.jpg"
+            (debug_dir / filename).write_bytes(preview_bytes)
+            debug_url = f"/debug/{filename}"
+        except MeasurementError as exc:
+            logger.warning("Measurement failed – continuing with fallback measurement: %s", exc)
+            measurement = MeasurementResult(diameter_mm=65.0, height_mm=180.0, volume_ml=600.0)
+            preview_b64 = None
+            debug_url = None
+    else:
+        # Original order: measure first, predictions second
+        try:
+            measurement, preview_bytes = bottle_measurer.measure(content, return_debug=True)
+            preview_b64 = base64.b64encode(preview_bytes).decode()
+            debug_dir = Path("debug_images")
+            debug_dir.mkdir(exist_ok=True)
+            filename = f"{uuid4().hex}.jpg"
+            (debug_dir / filename).write_bytes(preview_bytes)
+            debug_url = f"/debug/{filename}"
+        except MeasurementError as exc:
+            logger.warning("Measurement failed – continuing with fallback measurement: %s", exc)
+            measurement = MeasurementResult(diameter_mm=65.0, height_mm=180.0, volume_ml=600.0)
+            preview_b64 = None
+            debug_url = None
 
-    # 3. Roboflow predictions
-    try:
-        predictions = await roboflow_client.predict(content)
-        logger.info("Roboflow predictions received: %s", predictions)
-    except Exception as exc:  # noqa: BLE001
-        logger.error("Roboflow error: %s", exc)
-        raise HTTPException(status_code=502, detail="Error contacting AI service") from exc
+        try:
+            predictions = await roboflow_client.predict(content)
+            logger.info("Roboflow predictions received: %s", predictions)
+        except Exception as exc:  # noqa: BLE001
+            logger.error("Roboflow error: %s", exc)
+            raise HTTPException(status_code=502, detail="Error contacting AI service") from exc
 
     # 4. Validation
     validation_result = validate_scan(measurement, predictions)

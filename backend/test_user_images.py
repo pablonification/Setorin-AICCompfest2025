@@ -7,17 +7,14 @@ import os
 import sys
 from pathlib import Path
 
-# Add the backend source to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-# Import required modules directly
 import cv2
 import numpy as np
 import math
 from typing import Tuple, Union, Optional
 from dataclasses import dataclass
 
-# Copy the classes directly to avoid import issues
 @dataclass
 class MeasurementResult:
     """Bottle measurement in millimeters and volume in milliliters."""
@@ -119,14 +116,13 @@ class BottleMeasurer:
         self.ref_hsv_lower = np.array(ref_hsv_lower, dtype=np.uint8)
         self.ref_hsv_upper = np.array(ref_hsv_upper, dtype=np.uint8)
         self.classify = classify
-        # FIXED: Added 600mL to known bottle specs
         self.known_specs = (
             known_bottle_specs
             if known_bottle_specs is not None
             else {
                 "200mL": {"volume_ml": 200},
                 "500mL": {"volume_ml": 500},
-                "600mL": {"volume_ml": 600},  # FIXED: Added to match payout service
+                "600mL": {"volume_ml": 600},
                 "1000mL": {"volume_ml": 1000},
             }
         )
@@ -167,7 +163,6 @@ class BottleMeasurer:
         if roi.size == 0:
             raise MeasurementError("ROI is empty - cannot detect bottle")
 
-        # FIXED: Reduced minimum area threshold from 4 cm² to 0.5 cm²
         pixel_per_cm = 10.0 / scale
         min_area_px = int((pixel_per_cm ** 2) * 0.5)
 
