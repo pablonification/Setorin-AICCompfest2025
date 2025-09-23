@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '../components/ProtectedRoute';
@@ -75,7 +75,7 @@ export default function ScanPage() {
     if (typeof DeviceOrientationEvent === 'undefined') {
       console.warn('DeviceOrientationEvent not supported');
       setOrientationPermission('denied');
-      return;
+      return false;
     }
 
     // Check if permission is required (iOS 13+)
@@ -83,6 +83,13 @@ export default function ScanPage() {
       try {
         const permission = await DeviceOrientationEvent.requestPermission();
         setOrientationPermission(permission);
+        
+        // Immediately set up listener after permission is granted (fix for iPhone)
+        if (permission === 'granted' && mountedRef.current) {
+          console.log('📱 Setting up orientation listener immediately after iOS permission');
+          window.addEventListener('deviceorientation', handleOrientation);
+        }
+        
         return permission === 'granted';
       } catch (error) {
         console.error('Permission request failed:', error);
@@ -94,7 +101,7 @@ export default function ScanPage() {
       setOrientationPermission('granted');
       return true;
     }
-  }, []);
+  }, [handleOrientation]);
 
   // Handle device orientation changes
   const handleOrientation = useCallback((event) => {
@@ -108,15 +115,16 @@ export default function ScanPage() {
     });
 
     // Check if phone is properly aligned (ideal conditions)
-    // Beta: front-to-back tilt (should be near 0° for upright)
-    // Gamma: left-to-right tilt (should be near 0° for level)
-    const betaTolerance = 15; // degrees
-    const gammaTolerance = 10; // degrees
+    // Beta: front-to-back tilt (should be 90-100° for vertical)
+    // Gamma: left-to-right tilt (should be 0-10° for level)
+    const betaTarget = 95; // Ideal vertical angle
+    const betaTolerance = 5; // 90-100° range
+    const gammaTolerance = 10; // 0-10° range
     
     const wasAligned = isPhoneAligned;
     const isAligned = 
-      Math.abs(beta || 0) < betaTolerance && 
-      Math.abs(gamma || 0) < gammaTolerance;
+      Math.abs((beta || 0) - betaTarget) <= betaTolerance && 
+      Math.abs(gamma || 0) <= gammaTolerance;
     
     // Haptic feedback when alignment changes
     if (isAligned && !wasAligned && 'navigator' in window && 'vibrate' in navigator) {
@@ -131,23 +139,33 @@ export default function ScanPage() {
     if (!mountedRef.current) return;
 
     const setupOrientation = async () => {
+      // Skip if permission already granted and listener might already be attached (iOS fix)
+      if (orientationPermission === 'granted') {
+        // Remove any existing listener first
+        window.removeEventListener('deviceorientation', handleOrientation);
+        window.addEventListener('deviceorientation', handleOrientation);
+        console.log('📱 Device orientation monitoring started (permission already granted)');
+        return;
+      }
+      
       const hasPermission = await requestOrientationPermission();
       
-      if (hasPermission && mountedRef.current) {
+      // For non-iOS devices, manually add listener
+      if (hasPermission && mountedRef.current && typeof DeviceOrientationEvent.requestPermission !== 'function') {
         window.addEventListener('deviceorientation', handleOrientation);
-        console.log('📱 Device orientation monitoring started');
+        console.log('📱 Device orientation monitoring started (Android/older iOS)');
       }
     };
 
     // Only set up if we're on the bottle scanning phase
-    if (qrValidated && cameraStream) {
+    if (qrValidated && cameraStream && orientationPermission !== 'denied') {
       setupOrientation();
     }
 
     return () => {
       window.removeEventListener('deviceorientation', handleOrientation);
     };
-  }, [qrValidated, cameraStream, requestOrientationPermission, handleOrientation]);
+  }, [qrValidated, cameraStream, orientationPermission, requestOrientationPermission, handleOrientation]);
 
   // Cleanup function - removed qrScanInterval dependency to prevent infinite loop
   const cleanupCamera = useCallback(() => {
@@ -1231,20 +1249,121 @@ export default function ScanPage() {
     }
   }, [qrValidated]);
 
+  // Memoize TopBar right button to prevent re-renders
+  const topBarRightButton = useMemo(() => (
+    <button
+      onClick={showInstructionsPopup}
+      aria-label="Panduan"
+      className="w-9 h-9 flex items-center justify-center hover:opacity-80 transition-opacity"
+    >
+      <img src="/help.svg" alt="Panduan" className="w-6 h-6" />
+    </button>
+  ), []);
+
+  // Memoize orientation guidance components to prevent re-renders
+  const orientationGuidance = useMemo(() => {
+    if (orientationPermission !== 'granted') return null;
+
+    const betaTarget = 95;
+    const betaTolerance = 5;
+    const gammaTolerance = 10;
+    
+    const betaDeviation = (orientation.beta || 0) - betaTarget;
+    const gammaDeviation = orientation.gamma || 0;
+    
+    const needsTiltCorrection = Math.abs(gammaDeviation) > gammaTolerance;
+    const needsAngleCorrection = Math.abs(betaDeviation) > betaTolerance;
+
+    return (
+      <div className="absolute top-4 left-4 right-4 z-20">
+        <div className={`p-3 rounded-lg transition-all duration-300 ${
+          isPhoneAligned 
+            ? 'bg-green-500/80 text-white' 
+            : 'bg-red-500/80 text-white'
+        }`}>
+          <div className="flex items-center justify-center space-x-2">
+            {isPhoneAligned ? (
+              <>
+                <div className="w-4 h-4 rounded-full bg-white flex items-center justify-center">
+                  <svg className="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <span className="text-sm font-medium">Perfect! Ready to scan</span>
+              </>
+            ) : (
+              <>
+                <div className="w-4 h-4 rounded-full bg-white flex items-center justify-center">
+                  <svg className="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <span className="text-sm font-medium">Align your phone</span>
+              </>
+            )}
+          </div>
+          
+          {/* Intuitive directional guidance */}
+          {!isPhoneAligned && (
+            <div className="mt-3 flex items-center justify-center space-x-6">
+              {/* Left-right tilt guidance */}
+              {needsTiltCorrection && (
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center space-x-2">
+                    {gammaDeviation > 0 ? (
+                      // Tilt left
+                      <svg className="w-8 h-8 animate-bounce text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.59 5.58L20 12l-8-8-8 8z" transform="rotate(-45 12 12)"/>
+                      </svg>
+                    ) : (
+                      // Tilt right  
+                      <svg className="w-8 h-8 animate-bounce text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.59 5.58L20 12l-8-8-8 8z" transform="rotate(45 12 12)"/>
+                      </svg>
+                    )}
+                  </div>
+                  <span className="text-xs mt-1">
+                    Tilt {gammaDeviation > 0 ? 'Left' : 'Right'}
+                  </span>
+                  <span className="text-xs opacity-75">{Math.abs(gammaDeviation).toFixed(0)}°</span>
+                </div>
+              )}
+              
+              {/* Forward-back angle guidance */}
+              {needsAngleCorrection && (
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center space-x-2">
+                    {betaDeviation > 0 ? (
+                      // Tilt phone forward (toward you)
+                      <svg className="w-8 h-8 animate-pulse text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.59 5.58L20 12l-8-8-8 8z" transform="rotate(180 12 12)"/>
+                      </svg>
+                    ) : (
+                      // Tilt phone back (away from you)
+                      <svg className="w-8 h-8 animate-pulse text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.59 5.58L20 12l-8-8-8 8z"/>
+                      </svg>
+                    )}
+                  </div>
+                  <span className="text-xs mt-1">
+                    Tilt {betaDeviation > 0 ? 'Forward' : 'Back'}
+                  </span>
+                  <span className="text-xs opacity-75">{Math.abs(betaDeviation).toFixed(0)}°</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }, [orientation, isPhoneAligned, orientationPermission]);
+
   return (
     <ProtectedRoute userOnly={true}>
       <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
         <TopBar
           title="Duitin"
-          right={
-            <button
-              onClick={showInstructionsPopup}
-              aria-label="Panduan"
-              className="w-9 h-9 flex items-center justify-center hover:opacity-80 transition-opacity"
-            >
-              <img src="/help.svg" alt="Panduan" className="w-6 h-6" />
-            </button>
-          }
+          right={topBarRightButton}
         />
 
         {/* Instructions Popup - Now with just 2 steps */}
@@ -1358,73 +1477,8 @@ export default function ScanPage() {
                         {/* Bottle placement guide overlay */}
                         {showBottleGuide && qrValidated && (
                           <div className="absolute inset-0 pointer-events-none">
-                            {/* Phone alignment guidance */}
-                            {orientationPermission === 'granted' && (
-                              <div className="absolute top-4 left-4 right-4 z-20">
-                                <div className={`p-3 rounded-lg transition-all duration-300 ${
-                                  isPhoneAligned 
-                                    ? 'bg-green-500/80 text-white' 
-                                    : 'bg-red-500/80 text-white'
-                                }`}>
-                                  <div className="flex items-center justify-center space-x-2">
-                                    {isPhoneAligned ? (
-                                      <>
-                                        <div className="w-4 h-4 rounded-full bg-white flex items-center justify-center">
-                                          <svg className="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                          </svg>
-                                        </div>
-                                        <span className="text-sm font-medium">Perfect! Ready to scan</span>
-                                      </>
-                                    ) : (
-                                      <>
-                                        <div className="w-4 h-4 rounded-full bg-white flex items-center justify-center">
-                                          <svg className="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                                          </svg>
-                                        </div>
-                                        <span className="text-sm font-medium">Align your phone</span>
-                                      </>
-                                    )}
-                                  </div>
-                                  
-                                  {/* Tilt indicators */}
-                                  {!isPhoneAligned && (
-                                    <div className="mt-2 flex items-center justify-center space-x-4">
-                                      {/* Left-right tilt indicator */}
-                                      <div className="flex items-center space-x-1">
-                                        <span className="text-xs">Tilt:</span>
-                                        <div className="flex items-center">
-                                          {Math.abs(orientation.gamma) > 10 && (
-                                            <div className={`w-0 h-0 border-l-4 border-r-4 border-b-6 animate-bounce ${
-                                              orientation.gamma > 0 ? 'border-l-transparent border-r-white border-b-white rotate-90' : 'border-l-white border-r-transparent border-b-white -rotate-90'
-                                            }`} />
-                                          )}
-                                          <span className={`text-xs mx-1 transition-all duration-200 ${
-                                            Math.abs(orientation.gamma) > 10 ? 'font-bold' : ''
-                                          }`}>{Math.abs(orientation.gamma).toFixed(0)}°</span>
-                                        </div>
-                                      </div>
-                                      
-                                      {/* Forward-back tilt indicator */}
-                                      <div className="flex items-center space-x-1">
-                                        <span className="text-xs">Angle:</span>
-                                        <div className="flex items-center">
-                                          {Math.abs(orientation.beta) > 15 && (
-                                            <div className={`w-0 h-0 border-l-4 border-r-4 border-b-6 animate-pulse ${
-                                              orientation.beta > 0 ? 'border-l-transparent border-r-white border-b-white' : 'border-l-white border-r-transparent border-b-white rotate-180'
-                                            }`} />
-                                          )}
-                                          <span className={`text-xs mx-1 transition-all duration-200 ${
-                                            Math.abs(orientation.beta) > 15 ? 'font-bold' : ''
-                                          }`}>{Math.abs(orientation.beta).toFixed(0)}°</span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
+                            {/* Phone alignment guidance - using memoized component */}
+                            {orientationGuidance}
 
                             {/* Bottle silhouette guide - positioned with pixel precision */}
                             <div className="absolute w-32 h-64" style={{ 
@@ -1569,8 +1623,9 @@ export default function ScanPage() {
                 {/* Alignment help text */}
                 {orientationPermission === 'granted' && !isPhoneAligned && (
                   <div className="text-center text-xs text-[var(--color-muted)] max-w-[280px]">
-                    <p>Hold your phone steady and level for accurate measurements</p>
-                    <p className="mt-1">Tilt: ±{Math.abs(orientation.gamma).toFixed(0)}° | Angle: ±{Math.abs(orientation.beta).toFixed(0)}°</p>
+                    <p>Hold your phone steady and vertical for accurate measurements</p>
+                    <p className="mt-1">Target: Tilt ≤10° | Vertical 90-100°</p>
+                    <p className="text-[var(--color-warning)]">Current: Tilt {Math.abs(orientation.gamma).toFixed(0)}° | Vertical {Math.abs(orientation.beta).toFixed(0)}°</p>
                   </div>
                 )}
               </div>
