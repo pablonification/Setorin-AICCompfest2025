@@ -10,6 +10,7 @@ import SectionHeader from "../components/SectionHeader";
 import SettingsRow from "../components/SettingsRow";
 import HeaderBar from "../components/HeaderBar";
 import ChatFab from "../components/ChatFab";
+import ProfilePageSkeleton from "../components/skeletons/ProfilePageSkeleton";
 import {
   BiArrowToTop,
   BiBeer,
@@ -303,17 +304,20 @@ function StatisticsSection({ user }) {
 
   if (!auth?.token) return null;
 
+  if (loading) {
+    return (
+        <div className="space-y-4 animate-pulse">
+            <div className="bg-white rounded-lg shadow-md h-28"></div>
+            <div className="bg-white rounded-lg shadow-md h-28"></div>
+            <div className="bg-white rounded-lg shadow-md h-40"></div>
+            <div className="bg-white rounded-lg shadow-md h-52"></div>
+      </div>
+    );
+  }
+
   return (
     <>
       {/* Statistics Content */}
-      {loading && (
-        <div className="rounded-[16px] bg-white [box-shadow:var(--shadow-card)] p-4">
-          <div className="flex justify-center items-center p-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-primary-600)]"></div>
-          </div>
-        </div>
-      )}
-
       {error && (
         <div className="rounded-[16px] bg-white [box-shadow:var(--shadow-card)] p-4">
           <div className="bg-red-50 border border-red-200 rounded-[var(--radius-md)] p-4 text-center">
@@ -445,14 +449,18 @@ export default function ProfilePage() {
   const auth = useAuth();
   const router = useRouter();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!auth?.token) {
-      router.push("/login");
-      return;
+    if (!auth.loading) {
+      if (!auth?.token) {
+        router.push("/login");
+        return;
+      }
+      fetchUnread();
+      setLoading(false);
     }
-    fetchUnread();
-  }, [auth?.token]);
+  }, [auth.loading, auth.token]);
 
   const fetchUnread = useCallback(async () => {
     try {
@@ -467,6 +475,10 @@ export default function ProfilePage() {
       // ignore
     }
   }, [auth]);
+
+  if (loading || auth.loading) {
+    return <ProfilePageSkeleton />;
+  }
 
   return (
     <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">

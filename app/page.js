@@ -9,6 +9,7 @@ import HeroCarousel from './components/HeroCarousel';
 import HistoryList from './components/HistoryList';
 import HeaderBar from './components/HeaderBar';
 import ChatFab from './components/ChatFab';
+import HomePageSkeleton from './components/skeletons/HomePageSkeleton';
 
 export default function HomePage() {
   const { user, token, loading } = useAuth();
@@ -25,13 +26,7 @@ export default function HomePage() {
   }, [token, user, loading, router]);
 
   if (loading || !(token && user)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
-        </div>
-      </div>
-    );
+    return <HomePageSkeleton />;
   }
 
   return (
