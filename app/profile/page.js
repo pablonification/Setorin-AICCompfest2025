@@ -134,6 +134,18 @@ function PointsRankCard({ points, monthly, rank }) {
 
 // Environmental Impact Card Component
 function EnvironmentalImpactCard({ plasticAvoidedKg, co2AvoidedKg }) {
+  // Helper to safely format numbers
+  const safeNumber = (v, decimals) => {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return "-";
+    return n.toFixed(decimals);
+  };
+
+  // Default methodology text and factor (kept in sync with LLM review)
+  const defaultFactor = 2.25; // kg CO2e per kg plastic (default avoided virgin resin)
+  const methodology =
+    "CO2e savings estimated as diverted plastic (kg) × 2.25 kg CO2e/kg (default avoided virgin resin factor).";
+
   return (
     <div className="bg-[var(--color-card)] rounded-[var(--radius-lg)] shadow-[var(--shadow-card)] overflow-hidden">
       {/* Top Section - White Background */}
@@ -151,20 +163,21 @@ function EnvironmentalImpactCard({ plasticAvoidedKg, co2AvoidedKg }) {
         <div className="grid grid-cols-2 gap-4">
           <div className="text-center">
             <div className="text-[22px] leading-7 font-semibold text-[var(--color-accent-amber)]">
-              {plasticAvoidedKg.toFixed(3)} kg
+              {safeNumber(plasticAvoidedKg, 3)} kg
             </div>
-            <div className="text-[12px] text-white leading-4 mt-1">
-              Sampah Plastik Dihindari
-            </div>
+            <div className="text-[12px] text-white leading-4 mt-1">Sampah Plastik Dihindari</div>
           </div>
           <div className="text-center">
             <div className="text-[22px] leading-7 font-semibold text-[var(--color-accent-amber)]">
-              {co2AvoidedKg.toFixed(2)} kg
+              {safeNumber(co2AvoidedKg, 2)} kg
             </div>
-            <div className="text-[12px] text-white leading-4 mt-1">
-              CO2 Dihindari
-            </div>
+            <div className="text-[12px] text-white leading-4 mt-1">CO2 Dihindari</div>
           </div>
+        </div>
+
+        <div className="mt-3 text-xs text-white/90">
+          <div className="italic">{methodology}</div>
+          <div className="text-[11px] opacity-90 mt-1">Default factor: {defaultFactor} kg CO2e/kg (use polymer-specific factor when available)</div>
         </div>
       </div>
     </div>
