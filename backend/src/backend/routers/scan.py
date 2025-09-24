@@ -39,17 +39,23 @@ smartbin_client = SmartBinClient()
 transaction_service = get_transaction_service()
 
 
-async def control_esp32_lid(device_id: str, duration_seconds: int = 3):
-    """Control ESP32 lid via our new communication system."""
+async def control_esp32_lid(device_id: str, duration_seconds: int = 3, use_bottle_detection: bool = True):
+    """Control ESP32 lid via our new communication system with optional bottle detection."""
     try:
         db = await ensure_connection()
 
+        # Use detection-based action if available
+        action = "open_with_detection" if use_bottle_detection else "open"
+
         log_result = await db["esp32_logs"].insert_one({
             "device_id": device_id,
-            "action": "open",
+            "action": action,
             "timestamp": datetime.now(timezone.utc),
             "status": "pending",
-            "details": {"duration_seconds": duration_seconds}
+            "details": {
+                "duration_seconds": duration_seconds,
+                "bottle_detection_enabled": use_bottle_detection
+            }
         })
 
         import httpx
@@ -59,10 +65,10 @@ async def control_esp32_lid(device_id: str, duration_seconds: int = 3):
         backend_url = getattr(settings, 'BACKEND_URL', 'http://localhost:8000')
         esp32_control_url = f"{backend_url}/api/esp32/control"
         
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with httpx.AsyncClient(timeout=15.0) as client:  # Increased timeout for detection
             payload = {
                 "device_id": device_id,
-                "action": "open",
+                "action": action,
                 "duration_seconds": duration_seconds
             }
             
@@ -215,14 +221,30 @@ async def scan_bottle(
 
     # 5. Open bin via ESP32 if valid
     iot_events = []
+    physical_deposit_confirmed = False
     if validation_result.is_valid:
-        # Call ESP32 lid control with dynamic parameters
-        esp32_response = await control_esp32_lid(device_id, duration_seconds)
+        # Call ESP32 lid control with ultrasonic bottle detection
+        esp32_response = await control_esp32_lid(device_id, duration_seconds, use_bottle_detection=True)
         iot_events = esp32_response.get("events", [])
+        
+        # Check if bottle was physically detected and deposited
+        physical_deposit_confirmed = any(
+            event.get("event") == "lid_opened" and 
+            event.get("response", {}).get("bottle_detected") == "DETECTED"
+            for event in iot_events
+        )
+        
+        logger.info("Physical bottle detection result: %s", "CONFIRMED" if physical_deposit_confirmed else "NOT_DETECTED")
 
+    # Only award points if bottle was physically deposited (ultrasonic sensor confirmation)
     user_total_points: Optional[int] = None
-    if validation_result.is_valid and user_email:
-        user_total_points = await add_points(user_email, validation_result.points_awarded)
+    points_to_award = validation_result.points_awarded if physical_deposit_confirmed else 0
+    
+    if validation_result.is_valid and user_email and points_to_award > 0:
+        user_total_points = await add_points(user_email, points_to_award)
+        logger.info("Points awarded: %d (physical confirmation: %s)", points_to_award, physical_deposit_confirmed)
+    elif validation_result.is_valid and not physical_deposit_confirmed:
+        logger.info("Bottle validation passed but no physical deposit detected - no points awarded")
 
     # 6. Store to MongoDB (best-effort)
     scan_id = None
@@ -232,8 +254,10 @@ async def scan_bottle(
             "brand": validation_result.brand,
             "confidence": validation_result.confidence,
             "measurement": validation_result.measurement.__dict__,
-            "points": validation_result.points_awarded,
+            "points": points_to_award,  # Use actual points awarded (0 if no physical deposit)
+            "points_requested": validation_result.points_awarded,  # Original points before physical check
             "valid": validation_result.is_valid,
+            "physical_deposit_confirmed": physical_deposit_confirmed,
             "reason": validation_result.reason,
             "iot_events": iot_events,
             "user_email": user_email,
@@ -244,9 +268,9 @@ async def scan_bottle(
     except Exception as exc:  # noqa: BLE001
         logger.error("Failed to save scan to DB: %s", exc)
 
-    # 6.5. Create transaction record if scan was successful and valid
+    # 6.5. Create transaction record if scan was successful, valid, and physically confirmed
     transaction_id = None
-    if scan_id and validation_result.is_valid and user_email and validation_result.points_awarded > 0:
+    if scan_id and validation_result.is_valid and user_email and points_to_award > 0:
         try:
             # Resolve user's ObjectId by email for transactions
             user_doc = await db["users"].find_one({"email": user_email})
@@ -255,23 +279,23 @@ async def scan_bottle(
                 logger.warning("Could not resolve user_id for email %s; skipping transaction creation", user_email)
                 raise RuntimeError("User not found for transaction creation")
             
-            # Create transaction record
+            # Create transaction record with actual points awarded (physical confirmation required)
             created_transaction = await transaction_service.create_transaction_after_scan(
                 user_id=user_id,
                 scan_id=scan_id,
-                points_awarded=validation_result.points_awarded
+                points_awarded=points_to_award  # Use actual points (0 if no physical deposit)
             )
             
             if created_transaction:
                 transaction_id = str(created_transaction.id)
-                logger.info("Transaction created successfully with ID: %s for scan: %s", 
-                           transaction_id, scan_id)
+                logger.info("Transaction created successfully with ID: %s for scan: %s (points: %d)", 
+                           transaction_id, scan_id, points_to_award)
             else:
                 logger.warning("Failed to create transaction for scan: %s", scan_id)
-                
         except Exception as exc:
-            logger.error("Failed to create transaction for scan %s: %s", scan_id, exc)
-            # Don't fail the scan if transaction creation fails
+            logger.error("Failed to create transaction: %s", exc)
+    elif scan_id and validation_result.is_valid and not physical_deposit_confirmed:
+        logger.info("Transaction not created - no physical bottle deposit confirmed")
 
     # 7. Broadcast to connected WS clients
     await manager.broadcast_notification({
@@ -284,7 +308,9 @@ async def scan_bottle(
             "diameter_mm": validation_result.measurement.diameter_mm,
             "height_mm": validation_result.measurement.height_mm,
             "volume_ml": validation_result.measurement.volume_ml,
-            "points": validation_result.points_awarded,
+            "points": points_to_award,  # Use actual points awarded (0 if no physical deposit)
+            "points_requested": validation_result.points_awarded,  # Original points before physical check
+            "physical_deposit_confirmed": physical_deposit_confirmed,
             "total_points": user_total_points,
             "valid": validation_result.is_valid,
             "events": iot_events,
@@ -306,7 +332,8 @@ async def scan_bottle(
         diameter_mm=validation_result.measurement.diameter_mm,
         height_mm=validation_result.measurement.height_mm,
         volume_ml=validation_result.measurement.volume_ml,
-        points_awarded=validation_result.points_awarded,
+        points_awarded=points_to_award,  # Use actual points awarded (0 if no physical deposit)
+        physical_deposit_confirmed=physical_deposit_confirmed,
         total_points=user_total_points,
         debug_image=preview_b64,
         debug_url=debug_url,

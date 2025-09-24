@@ -36,6 +36,13 @@ const char* location = "Main Entrance";
 #define SERVO_OPEN_POSITION 180
 #define STATUS_LED_PIN 2  // Built-in LED on most ESP32 boards
 
+// Ultrasonic Sensor Configuration
+#define TRIG_PIN 19
+#define ECHO_PIN 21
+#define BOTTLE_THRESHOLD 50 // mm - distance change to detect bottle
+
+float baseline_distance = 0;
+
 // ============================================================================
 // GLOBAL OBJECTS AND VARIABLES
 // ============================================================================
@@ -266,6 +273,12 @@ void onWsMessage(WebsocketsMessage message) {
   } else if (action == "close" || cmd == "close") {
     Serial.println("🔒 [WS] Close command received");
     closeLid();
+  } else if (action == "open_with_detection") {
+    Serial.println("🎯 [WS] Open with detection command received");
+    String sessionToken = doc["session_token"] | "";
+    int lidSeconds = doc["lid_seconds"] | 3;
+    int detectSeconds = doc["detect_seconds"] | 10;
+    handleOpenWithDetection(sessionToken, lidSeconds, detectSeconds);
   } else if (doc.containsKey("event")) {
     // Events from server/simulator; log for visibility
     String ev = doc["event"].as<String>();
@@ -377,6 +390,19 @@ void initializeHardware() {
   lidServo.attach(SERVO_PIN);
   lidServo.write(SERVO_CLOSED_POSITION);
   delay(1000); // Give servo time to reach position
+  
+  // Initialize ultrasonic sensor pins
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+  digitalWrite(TRIG_PIN, LOW);
+  Serial.println("✅ Ultrasonic sensor pins initialized");
+  
+  // Measure initial baseline distance
+  delay(500); // Allow sensor to settle
+  baseline_distance = measureDistance();
+  Serial.print("📏 Baseline distance: ");
+  Serial.print(baseline_distance);
+  Serial.println(" cm");
   
   Serial.println("✅ Servo initialized and positioned to closed");
   Serial.println("✅ Status LED initialized");
@@ -806,6 +832,52 @@ void closeLid() {
   reportLidOperation("close", 0, "completed");
 }
 
+void handleOpenWithDetection(String sessionToken, int lidSeconds, int detectSeconds) {
+  Serial.println("🎯 Starting open-with-detection sequence");
+  
+  // 1. Open lid
+  Serial.print("🔓 Opening lid for ");
+  Serial.print(lidSeconds);
+  Serial.println(" seconds...");
+  openLid(lidSeconds);
+  
+  // 2. Measure baseline (empty bin)
+  delay(1000); // Allow lid to fully open
+  baseline_distance = measureDistance();
+  Serial.print("📏 New baseline distance: ");
+  Serial.print(baseline_distance);
+  Serial.println(" cm");
+  
+  // 3. Wait for bottle detection
+  Serial.print("👀 Waiting ");
+  Serial.print(detectSeconds);
+  Serial.println(" seconds for bottle deposit...");
+  bool bottleDetected = detectBottle(detectSeconds);
+  
+  // 4. Close lid
+  closeLid();
+  
+  // 5. Send result via WebSocket
+  String result = bottleDetected ? "DETECTED" : "NOT_DETECTED";
+  
+  DynamicJsonDocument response(256);
+  response["type"] = "detection_result";
+  response["session_token"] = sessionToken;
+  response["result"] = result;
+  response["baseline_distance_cm"] = baseline_distance;
+  response["detection_threshold_mm"] = BOTTLE_THRESHOLD;
+  
+  String payload;
+  serializeJson(response, payload);
+  
+  if (wsConnected) {
+    wsClient.send(payload);
+    Serial.println("📡 Detection result sent via WebSocket: " + result);
+  } else {
+    Serial.println("❌ WebSocket not connected, cannot send detection result");
+  }
+}
+
 void reportLidOperation(const char* action, int duration, const char* status) {
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("❌ WiFi not connected, cannot report operation");
@@ -824,6 +896,41 @@ void reportLidOperation(const char* action, int duration, const char* status) {
 // ============================================================================
 // SENSOR READING FUNCTIONS
 // ============================================================================
+
+float measureDistance() {
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+  
+  long duration = pulseIn(ECHO_PIN, HIGH);
+  float distance = duration * 0.034 / 2; // Convert to cm
+  
+  return distance;
+}
+
+bool detectBottle(int timeout_seconds) {
+  unsigned long startTime = millis();
+  
+  while (millis() - startTime < timeout_seconds * 1000) {
+    float current_distance = measureDistance();
+    
+    // Simple threshold check
+    if (baseline_distance - current_distance > BOTTLE_THRESHOLD) {
+      delay(500); // Wait to confirm
+      if (baseline_distance - measureDistance() > BOTTLE_THRESHOLD) {
+        Serial.println("🍼 Bottle detected!");
+        return true; // Bottle confirmed
+      }
+    }
+    
+    delay(200); // Check every 200ms
+  }
+  
+  Serial.println("⏰ Bottle detection timeout");
+  return false; // Timeout - no bottle detected
+}
 
 float readBatteryLevel() {
   // Mock battery level - replace with actual battery monitoring circuit
@@ -1040,7 +1147,24 @@ void handleSerialCommands() {
       Serial.println("  register   - Re-register device");
       Serial.println("  restart    - Restart ESP32");
       Serial.println("  debug      - Show debug commands");
+      Serial.println("  sensor     - Test ultrasonic sensor");
+      Serial.println("  test       - Test bottle detection (5 seconds)");
       Serial.println("  help       - Show this help");
+    } else if (command == "sensor") {
+      Serial.println("📏 Ultrasonic sensor test:");
+      float distance = measureDistance();
+      Serial.printf("  Current distance: %.2f cm\n", distance);
+      Serial.printf("  Baseline distance: %.2f cm\n", baseline_distance);
+      Serial.printf("  Distance change: %.2f cm\n", baseline_distance - distance);
+      Serial.printf("  Bottle threshold: %d mm\n", BOTTLE_THRESHOLD);
+      Serial.printf("  Detection status: %s\n", 
+                    (baseline_distance - distance) > (BOTTLE_THRESHOLD / 10.0) ? "WOULD DETECT" : "NO DETECTION");
+    } else if (command == "test") {
+      Serial.println("🧪 Testing bottle detection for 5 seconds...");
+      baseline_distance = measureDistance();
+      Serial.printf("📏 Baseline set to: %.2f cm\n", baseline_distance);
+      bool detected = detectBottle(5);
+      Serial.printf("🎯 Result: %s\n", detected ? "BOTTLE DETECTED" : "NO BOTTLE DETECTED");
     } else if (command.length() > 0) {
       Serial.printf("❌ Unknown command: %s\n", command.c_str());
       Serial.println("Type 'help' for available commands");
@@ -1210,6 +1334,19 @@ void handleControlRequest() {
     
     server.send(200, "application/json", "{\"status\":\"lid_closed\",\"message\":\"Lid closed successfully\"}");
 
+  } else if (action == "open_with_detection") {
+    Serial.println("🎯 [DIRECT] Open with detection command received");
+    
+    String sessionToken = doc["session_token"] | "";
+    int lidSeconds = doc["lid_seconds"] | 3;
+    int detectSeconds = doc["detect_seconds"] | 10;
+    
+    // Send immediate response to prevent HTTP timeout
+    server.send(200, "application/json", "{\"status\":\"detection_started\",\"message\":\"Bottle detection sequence started\"}");
+    
+    // Execute detection sequence (this will send results via WebSocket)
+    handleOpenWithDetection(sessionToken, lidSeconds, detectSeconds);
+
   } else {
     Serial.printf("❌ Unknown action: %s\n", action.c_str());
     server.send(400, "application/json", "{\"error\":\"Unknown action\"}");
@@ -1291,6 +1428,21 @@ void handleDebugCommands(String debugCmd) {
   } else if (debugCmd == "ws fallback off") {
     enablePollingFallback = false;
     Serial.println("🛑 Polling fallback disabled");
+  } else if (debugCmd == "sensor") {
+    Serial.println("📏 Ultrasonic sensor test:");
+    float distance = measureDistance();
+    Serial.printf("  Current distance: %.2f cm\n", distance);
+    Serial.printf("  Baseline distance: %.2f cm\n", baseline_distance);
+    Serial.printf("  Distance change: %.2f cm\n", baseline_distance - distance);
+    Serial.printf("  Bottle threshold: %d mm\n", BOTTLE_THRESHOLD);
+    Serial.printf("  Detection status: %s\n", 
+                  (baseline_distance - distance) > (BOTTLE_THRESHOLD / 10.0) ? "WOULD DETECT" : "NO DETECTION");
+  } else if (debugCmd == "test detect") {
+    Serial.println("🧪 Testing bottle detection for 5 seconds...");
+    baseline_distance = measureDistance();
+    Serial.printf("📏 Baseline set to: %.2f cm\n", baseline_distance);
+    bool detected = detectBottle(5);
+    Serial.printf("🎯 Result: %s\n", detected ? "BOTTLE DETECTED" : "NO BOTTLE DETECTED");
   } else {
     Serial.println("❌ Unknown debug command. Type 'debug' for available options.");
   }

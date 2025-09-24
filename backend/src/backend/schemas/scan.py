@@ -18,6 +18,7 @@ class ScanResponse(BaseModel):
 
     points_awarded: int
     total_points: Optional[int] = None
+    physical_deposit_confirmed: Optional[bool] = None  # Ultrasonic sensor confirmation
     # Transparency fields (optional)
     size_key: Optional[str] = None
     weight_g_used: Optional[float] = None

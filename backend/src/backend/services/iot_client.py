@@ -21,7 +21,7 @@ class SmartBinClient:
         self.control_url = f"http://{esp32_ip}:80/control" if esp32_ip else None
         self.backend_url = get_settings().BACKEND_URL if hasattr(get_settings(), 'BACKEND_URL') else "https://api.setorin.app"
 
-    async def open_bin(self, device_id: str = "ESP32-SMARTBIN-420", duration_seconds: int = 3) -> List[Dict[str, Any]]:
+    async def open_bin(self, device_id: str = "ESP32-SMARTBIN-420", duration_seconds: int = 3, use_bottle_detection: bool = False) -> List[Dict[str, Any]]:
         """Send open command to ESP32 via HTTP and return response data."""
         if not self.esp32_ip or not self.control_url:
             logger.error("ESP32 IP address not set")
@@ -34,7 +34,7 @@ class SmartBinClient:
 
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 payload = {
-                    "action": "open",
+                    "action": "open_with_detection" if use_bottle_detection else "open",
                     "duration_seconds": duration_seconds
                 }
 

@@ -178,12 +178,12 @@ async def control_lid(request: LidControlRequest, background_tasks: BackgroundTa
         logger.info("ESP32 lid control: %s - %s", device_id, action)
 
         # Handle different actions
-        if action == "open":
-            # For opening, we need to sequence: open -> wait -> close
-            logger.info("Starting background task for lid open sequence")
+        if action == "open" or action == "open_with_detection":
+            # For opening (with or without detection), we need to sequence: open -> wait -> close
+            logger.info("Starting background task for lid %s sequence", action)
             # Start the background task
-            asyncio.create_task(handle_lid_open_sequence(device_id, request.action, request.duration_seconds or 3, action_id))
-            response_message = f"Lid opening sequence started for {request.duration_seconds}s"
+            asyncio.create_task(handle_lid_open_sequence(device_id, action, request.duration_seconds or 3, action_id))
+            response_message = f"Lid {action} sequence started for {request.duration_seconds}s"
 
         elif action == "close":
             asyncio.create_task(handle_lid_close(device_id, action_id))
@@ -450,14 +450,15 @@ async def handle_lid_open_sequence(device_id: str, action: str, duration_seconds
                 message = json.dumps({"action": action, "duration_seconds": duration_seconds})
                 await websocket_clients[device_id].send_text(message)
                 events = [{"event": "websocket_command_sent", "status": "success"}]
-                logger.info("WebSocket command sent successfully for %s", device_id)
+                logger.info("WebSocket command sent successfully for %s: %s", device_id, action)
             else:
                 # Fall back to HTTP/IP communication
                 device_ip = device_info.get("ip_address")
                 if device_ip:
                     logger.info("ESP32 %s found at IP: %s - attempting direct communication", device_id, device_ip)
                     iot_client = SmartBinClient(esp32_ip=device_ip)
-                    events = await iot_client.open_bin(device_id=device_id, duration_seconds=duration_seconds)
+                    use_detection = action == "open_with_detection"
+                    events = await iot_client.open_bin(device_id=device_id, duration_seconds=duration_seconds, use_bottle_detection=use_detection)
                 else:
                     # No IP available, use command queuing
                     logger.info("No IP address available for %s, using command queuing", device_id)
@@ -469,7 +470,8 @@ async def handle_lid_open_sequence(device_id: str, action: str, duration_seconds
             if device_ip:
                 logger.info("ESP32 %s found at IP: %s - attempting direct communication", device_id, device_ip)
                 iot_client = SmartBinClient(esp32_ip=device_ip)
-                events = await iot_client.open_bin(device_id=device_id, duration_seconds=duration_seconds)
+                use_detection = action == "open_with_detection"
+                events = await iot_client.open_bin(device_id=device_id, duration_seconds=duration_seconds, use_bottle_detection=use_detection)
             else:
                 # No IP available, use command queuing
                 logger.info("No IP address available for %s, using command queuing", device_id)
