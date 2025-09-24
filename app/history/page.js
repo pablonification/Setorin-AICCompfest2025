@@ -104,6 +104,7 @@ export default function HistoryPage() {
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+      timeZone: 'Asia/Jakarta',
     });
   };
 
@@ -249,7 +250,7 @@ export default function HistoryPage() {
                     <div>
                       <div className="text-sm leading-5 font-medium">{w.amount_points} points</div>
                                               <div className="text-xs leading-4 text-[color:var(--color-muted)]">
-                        {new Date(w.created_at).toLocaleString('id-ID')}
+                        {formatDate(w.created_at)}
                       </div>
                     </div>
                     <div className={`text-sm font-semibold ${
