@@ -104,14 +104,32 @@ export default function AdminEducation() {
         const errorData = await resp.json().catch(() => ({}));
         throw new Error(errorData.detail || 'Failed to save content');
       }
-      
+
+      // Try to read returned item and update local list to avoid an extra fetch
+      try {
+        const saved = await resp.json().catch(() => null);
+        if (saved) {
+          if (showEditForm && selectedContent) {
+            setContents(prev => prev.map(c => (c.id === saved.id ? saved : c)));
+          } else {
+            setContents(prev => [saved, ...prev.filter(c => c.id !== saved.id)]);
+          }
+        } else {
+          // If server returned no JSON, fall back to refreshing list silently
+          fetchContents().catch(() => {});
+        }
+      } catch (err) {
+        // Swallow JSON/parse errors and attempt a background refresh
+        fetchContents().catch(() => {});
+      }
+
       setSuccess(showEditForm ? 'Content updated successfully!' : 'Content created successfully!');
       setShowCreateForm(false);
       setShowEditForm(false);
       setSelectedContent(null);
       resetForm();
-      fetchContents();
-      
+
+      // Clear success after short delay
       setTimeout(() => setSuccess(''), 3000);
     } catch (e) {
       setError(e.message || 'Failed to save content');
