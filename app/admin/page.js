@@ -210,7 +210,46 @@ export default function AdminPage() {
                 </div>
               </div>
             </div>
-            
+{/* 
+            <div className="bg-[var(--color-card)] rounded-[var(--radius-md)] [box-shadow:var(--shadow-card)] p-5">
+              <div className="flex items-center">
+                <div className="p-2 bg-purple-100 rounded-[var(--radius-sm)]">
+                  <FiShield className="h-6 w-6 text-purple-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-[12px] leading-4 text-[color:var(--color-muted)]">Active Connections</p>
+                  <p className="text-[20px] leading-[1.75] font-semibold text-[var(--foreground)]">{stats.activeConnections}</p>
+                </div>
+              </div>
+            </div> */}
+{/* 
+            <div className="bg-[var(--color-card)] rounded-[var(--radius-md)] [box-shadow:var(--shadow-card)] p-5">
+              <div className="flex items-center">
+                <div className="p-2 bg-indigo-100 rounded-[var(--radius-sm)]">
+                  <FiSettings className="h-6 w-6 text-indigo-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-[12px] leading-4 text-[color:var(--color-muted)]">System Status</p>
+                  <p className="text-[14px] leading-5 font-semibold text-green-600">Healthy</p>
+                </div>
+              </div>
+            </div> */}
+
+            {/* {stats.totalQrCodes >= 0 && (
+              <div className="bg-[var(--color-card)] rounded-[var(--radius-md)] [box-shadow:var(--shadow-card)] p-5">
+                <div className="flex items-center">
+                  <div className="p-2 bg-teal-100 rounded-[var(--radius-sm)]">
+                    <RiQrCodeLine className="h-6 w-6 text-teal-600" />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-[12px] leading-4 text-[color:var(--color-muted)]">Active QR Codes</p>
+                    <p className="text-[20px] leading-[1.75] font-semibold text-[var(--foreground)]">{stats.activeQrCodes}</p>
+                    <p className="text-[10px] leading-3 text-[color:var(--color-muted)]">{stats.totalQrCodes} total, {stats.expiredQrCodes} expired</p>
+                  </div>
+                </div>
+              </div>
+            )} */}
+          </div>
 
           {/* Quick Actions */}
           <div className="mt-6 bg-[var(--color-card)] rounded-[var(--radius-md)] [box-shadow:var(--shadow-card)] p-5">
