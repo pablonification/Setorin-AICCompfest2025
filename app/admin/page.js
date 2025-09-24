@@ -162,7 +162,7 @@ export default function AdminPage() {
           )}
 
           {/* Statistics Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <div className="bg-[var(--color-card)] rounded-[var(--radius-md)] [box-shadow:var(--shadow-card)] p-5">
               <div className="flex items-center">
                 <div className="p-2 bg-blue-100 rounded-[var(--radius-sm)]">
@@ -210,7 +210,7 @@ export default function AdminPage() {
                 </div>
               </div>
             </div>
-
+{/* 
             <div className="bg-[var(--color-card)] rounded-[var(--radius-md)] [box-shadow:var(--shadow-card)] p-5">
               <div className="flex items-center">
                 <div className="p-2 bg-purple-100 rounded-[var(--radius-sm)]">
@@ -221,7 +221,7 @@ export default function AdminPage() {
                   <p className="text-[20px] leading-[1.75] font-semibold text-[var(--foreground)]">{stats.activeConnections}</p>
                 </div>
               </div>
-            </div>
+            </div> */}
 {/* 
             <div className="bg-[var(--color-card)] rounded-[var(--radius-md)] [box-shadow:var(--shadow-card)] p-5">
               <div className="flex items-center">
@@ -235,7 +235,7 @@ export default function AdminPage() {
               </div>
             </div> */}
 
-            {stats.totalQrCodes >= 0 && (
+            {/* {stats.totalQrCodes >= 0 && (
               <div className="bg-[var(--color-card)] rounded-[var(--radius-md)] [box-shadow:var(--shadow-card)] p-5">
                 <div className="flex items-center">
                   <div className="p-2 bg-teal-100 rounded-[var(--radius-sm)]">
@@ -249,7 +249,7 @@ export default function AdminPage() {
                 </div>
               </div>
             )}
-          </div>
+          </div> */}
 
           {/* Quick Actions */}
           <div className="mt-6 bg-[var(--color-card)] rounded-[var(--radius-md)] [box-shadow:var(--shadow-card)] p-5">

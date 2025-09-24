@@ -54,7 +54,45 @@ class EducationalService:
             content_id = ObjectId(content_id)
         db = await ensure_connection()
         collection = db.educational_contents
-        await collection.update_one({"_id": content_id}, {"$set": data})
+        # Defensive normalization of incoming update data to avoid validation errors
+        try:
+            # Normalize tags: accept comma-separated string or list
+            if "tags" in data and data["tags"] is not None:
+                tags = data["tags"]
+                if isinstance(tags, str):
+                    data["tags"] = [t.strip() for t in tags.split(",") if t.strip()]
+
+            # Normalize estimated_read_time to int if provided
+            if "estimated_read_time" in data and data["estimated_read_time"] is not None:
+                try:
+                    data["estimated_read_time"] = int(data["estimated_read_time"])
+                except Exception:
+                    # leave as-is; pydantic will catch invalid type later
+                    pass
+
+            # Normalize is_published to boolean if provided as string
+            if "is_published" in data and isinstance(data["is_published"], str):
+                val = data["is_published"].lower()
+                data["is_published"] = val in ("1", "true", "yes", "on")
+
+            # Normalize slug to safe form if provided
+            if "slug" in data and isinstance(data["slug"], str):
+                # simple lower-case slug normalization (keep existing slugify behavior)
+                safe = ''.join(ch.lower() if ch.isalnum() else '-' for ch in data["slug"]) 
+                while '--' in safe:
+                    safe = safe.replace('--', '-')
+                data["slug"] = safe.strip('-')
+
+            # Always update the updated_at timestamp
+            from datetime import datetime
+            data["updated_at"] = datetime.utcnow()
+
+            await collection.update_one({"_id": content_id}, {"$set": data})
+        except Exception as e:
+            # Re-raise with more context for router to log
+            raise RuntimeError(f"Failed to update educational content: {e}")
+
+        # Return the updated document
         return await self.get(content_id)
 
     async def delete(self, content_id: str | ObjectId) -> bool:

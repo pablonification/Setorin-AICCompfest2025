@@ -131,9 +131,10 @@ async def export_users_csv(payload: dict = Depends(require_admin)):
         buffer = StringIO()
         writer = csv.writer(buffer)
         writer.writerow([
-            "id", "email", "name", "points", "tier", "created_at", "scan_ids_count"
+            "id", "email", "name", "points", "tier", "created_at",
+            "phone", "birthdate", "city", "gender", "scan_ids_count"
         ])
-        
+
         for user in users:
             scan_count = await db["scans"].count_documents({"user_email": user.get("email")})
             writer.writerow([
@@ -142,7 +143,13 @@ async def export_users_csv(payload: dict = Depends(require_admin)):
                 user.get("name", ""),
                 user.get("points", 0),
                 user.get("tier", ""),
-                user.get("created_at", ""),
+                # created_at may be datetime; serialize to ISO if so
+                (user.get("created_at").isoformat() if hasattr(user.get("created_at"), "isoformat") else user.get("created_at", "")),
+                user.get("phone", ""),
+                # birthdate may be date/datetime; convert to ISO string if possible
+                (user.get("birthdate").isoformat() if hasattr(user.get("birthdate"), "isoformat") else user.get("birthdate", "")),
+                user.get("city", ""),
+                user.get("gender", ""),
                 scan_count
             ])
         

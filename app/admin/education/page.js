@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { FiArrowLeft, FiPlus, FiEdit, FiTrash2, FiEye, FiRefreshCw, FiSearch, FiFilter } from 'react-icons/fi';
+import { FiArrowLeft, FiPlus, FiEdit, FiTrash2, FiEye, FiRefreshCw, FiSearch, FiFilter, FiX } from 'react-icons/fi';
 
 export default function AdminEducation() {
   const { token, user } = useAuth();
@@ -352,9 +352,9 @@ export default function AdminEducation() {
                   setSelectedContent(null);
                   resetForm();
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 p-2 rounded-full"
               >
-                âœ•
+                <FiX className="h-4 w-4" />
               </button>
             </div>
             
