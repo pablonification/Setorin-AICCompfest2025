@@ -36,13 +36,6 @@ const char* location = "Main Entrance";
 #define SERVO_OPEN_POSITION 180
 #define STATUS_LED_PIN 2  // Built-in LED on most ESP32 boards
 
-// Ultrasonic Sensor Configuration (HC-SR04)
-#define ULTRASONIC_TRIG_PIN 4
-#define ULTRASONIC_ECHO_PIN 5  // Use voltage divider: Echo -> 2.2kΩ -> Pin5 -> 1kΩ -> GND
-#define ULTRASONIC_MAX_DISTANCE 400  // Maximum distance in cm
-#define DEPOSIT_TIMEOUT_MS 15000     // 15 seconds timeout for deposit
-#define DEPOSIT_DETECTION_THRESHOLD 10  // cm - distance change to detect deposit
-
 // ============================================================================
 // GLOBAL OBJECTS AND VARIABLES
 // ============================================================================
@@ -70,11 +63,6 @@ void handleWebSocketLoop();
 void onWsMessage(WebsocketsMessage message);
 void onWsEvent(WebsocketsEvent event, String data);
 
-// Forward declarations (Ultrasonic)
-void initializeUltrasonic();
-float readUltrasonicDistance();
-void handleDepositDetection();
-
 // Timing Constants
 const unsigned long STATUS_INTERVAL = 30000;      // 30 seconds
 const unsigned long HEARTBEAT_INTERVAL = 60000;   // 1 minute
@@ -90,17 +78,6 @@ unsigned long lastHeartbeat = 0;
 unsigned long lastReconnectAttempt = 0;
 int connectionRetries = 0;
 const int MAX_RETRIES = 5;
-
-// Ultrasonic State Variables
-enum DepositState {
-  IDLE,
-  AWAIT_DEPOSIT,
-  DEPOSIT_DETECTED
-};
-DepositState depositState = IDLE;
-float baselineDistance = 0;
-unsigned long depositTimeoutStart = 0;
-unsigned long lastServoAction = 0;
 
 // Performance optimization variables
 unsigned long lastSuccessfulPoll = 0;
@@ -173,9 +150,6 @@ void setup() {
   
   // Initialize hardware
   initializeHardware();
-  
-  // Initialize ultrasonic sensor
-  initializeUltrasonic();
   
   // Connect to WiFi
   connectWiFi();
@@ -256,9 +230,6 @@ void loop() {
 
   // Handle serial commands (for manual testing)
   handleSerialCommands();
-
-  // Handle ultrasonic deposit detection
-  handleDepositDetection();
 
   // Small delay to prevent watchdog issues
   delay(100);
@@ -409,167 +380,6 @@ void initializeHardware() {
   
   Serial.println("✅ Servo initialized and positioned to closed");
   Serial.println("✅ Status LED initialized");
-}
-
-// ============================================================================
-// ULTRASONIC SENSOR FUNCTIONS
-// ============================================================================
-
-void initializeUltrasonic() {
-  Serial.println("🔊 Initializing HC-SR04 ultrasonic sensor...");
-  
-  pinMode(ULTRASONIC_TRIG_PIN, OUTPUT);
-  pinMode(ULTRASONIC_ECHO_PIN, INPUT);
-  
-  digitalWrite(ULTRASONIC_TRIG_PIN, LOW);
-  delay(100);
-  
-  // Take baseline reading
-  float total = 0;
-  int validReadings = 0;
-  
-  for (int i = 0; i < 5; i++) {
-    float distance = readUltrasonicDistance();
-    if (distance > 0 && distance < ULTRASONIC_MAX_DISTANCE) {
-      total += distance;
-      validReadings++;
-    }
-    delay(60); // HC-SR04 needs 60ms between readings
-  }
-  
-  if (validReadings > 0) {
-    baselineDistance = total / validReadings;
-    Serial.printf("✅ Ultrasonic sensor initialized - baseline: %.1f cm\n", baselineDistance);
-    Serial.println("⚠️ IMPORTANT: Use voltage divider on Echo pin (2.2kΩ + 1kΩ) for 5V protection!");
-  } else {
-    baselineDistance = 30.0; // Default fallback
-    Serial.println("⚠️ Ultrasonic sensor readings failed - using default baseline");
-  }
-  
-  depositState = IDLE;
-}
-
-float readUltrasonicDistance() {
-  // Avoid reading during servo movement (EMI protection)
-  if (millis() - lastServoAction < 250) {
-    return -1; // Invalid reading during servo movement
-  }
-  
-  digitalWrite(ULTRASONIC_TRIG_PIN, LOW);
-  delayMicroseconds(2);
-  digitalWrite(ULTRASONIC_TRIG_PIN, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(ULTRASONIC_TRIG_PIN, LOW);
-  
-  // Non-blocking pulseIn with timeout
-  unsigned long duration = pulseIn(ULTRASONIC_ECHO_PIN, HIGH, 30000); // 30ms timeout
-  
-  if (duration == 0) {
-    return -1; // Timeout or no echo
-  }
-  
-  float distance = (duration * 0.034) / 2; // Convert to cm
-  
-  // Validate reading
-  if (distance < 2 || distance > ULTRASONIC_MAX_DISTANCE) {
-    return -1; // Invalid reading
-  }
-  
-  return distance;
-}
-
-void handleDepositDetection() {
-  switch (depositState) {
-    case IDLE:
-      // Do nothing, waiting for lid open command
-      break;
-      
-    case AWAIT_DEPOSIT:
-      {
-        // Check timeout
-        if (millis() - depositTimeoutStart > DEPOSIT_TIMEOUT_MS) {
-          Serial.println("⏰ Deposit timeout - no bottle detected");
-          sendDepositEvent("timeout");
-          depositState = IDLE;
-          break;
-        }
-        
-        // Read distance with simple filtering (median of 3)
-        float readings[3];
-        int validCount = 0;
-        
-        for (int i = 0; i < 3; i++) {
-          readings[i] = readUltrasonicDistance();
-          if (readings[i] > 0) validCount++;
-          delay(20);
-        }
-        
-        if (validCount == 0) break; // No valid readings
-        
-        // Simple median filter
-        if (validCount >= 2) {
-          for (int i = 0; i < 2; i++) {
-            for (int j = i + 1; j < 3; j++) {
-              if (readings[i] > readings[j]) {
-                float temp = readings[i];
-                readings[i] = readings[j];
-                readings[j] = temp;
-              }
-            }
-          }
-        }
-        
-        float currentDistance = readings[validCount/2]; // Median
-        
-        // Check for deposit (significant distance decrease)
-        if (baselineDistance - currentDistance > DEPOSIT_DETECTION_THRESHOLD) {
-          Serial.printf("🎯 Bottle detected! Distance changed from %.1f to %.1f cm\n", 
-                       baselineDistance, currentDistance);
-          sendDepositEvent("detected");
-          depositState = DEPOSIT_DETECTED;
-        }
-      }
-      break;
-      
-    case DEPOSIT_DETECTED:
-      // Wait in this state until lid closes
-      break;
-  }
-}
-
-void sendDepositEvent(const char* eventType) {
-  if (!wsConnected && WiFi.status() != WL_CONNECTED) {
-    Serial.println("❌ Cannot send deposit event - no connection");
-    return;
-  }
-  
-  DynamicJsonDocument doc(256);
-  doc["type"] = "deposit_event";
-  doc["device_id"] = deviceId;
-  doc["event"] = eventType;
-  doc["timestamp"] = getCurrentTimestamp();
-  doc["baseline_distance"] = baselineDistance;
-  
-  String payload;
-  serializeJson(doc, payload);
-  
-  if (wsConnected) {
-    wsClient.send(payload);
-    Serial.println("📨 Deposit event sent via WebSocket: " + String(eventType));
-  } else {
-    // Fallback to HTTP POST if WebSocket not available
-    String endpoint = String(serverUrl) + "/api/esp32/deposit-event";
-    http.begin(wifiClient, endpoint);
-    http.addHeader("Content-Type", "application/json");
-    int responseCode = http.POST(payload);
-    http.end();
-    
-    if (responseCode > 0) {
-      Serial.println("📨 Deposit event sent via HTTP: " + String(eventType));
-    } else {
-      Serial.println("❌ Failed to send deposit event");
-    }
-  }
 }
 
 // ============================================================================
@@ -943,16 +753,10 @@ void openLid(int durationSeconds) {
   Serial.println(" seconds...");
 
   // Move servo to open position with error checking
-  lastServoAction = millis(); // Record servo movement time
   lidServo.write(SERVO_OPEN_POSITION);
   delay(100); // Give servo time to move
   lidOpen = true;
   Serial.println("✅ Lid opened");
-
-  // Start deposit detection
-  depositState = AWAIT_DEPOSIT;
-  depositTimeoutStart = millis();
-  Serial.println("🔍 Starting bottle deposit detection...");
 
   // Blink LED to indicate lid is open (non-blocking)
   for (int i = 0; i < 3; i++) {
@@ -966,28 +770,19 @@ void openLid(int durationSeconds) {
   Serial.println("⏳ Waiting for bottle drop...");
   unsigned long startTime = millis();
   while (millis() - startTime < (durationSeconds * 1000)) {
-    // Allow other operations to continue including deposit detection
+    // Allow other operations to continue
     server.handleClient();
     handleWebSocketLoop();
-    handleDepositDetection();
     handleSerialCommands();
     yield(); // Allow ESP32 to handle other tasks
     delay(50);
-    
-    // Exit early if deposit detected
-    if (depositState == DEPOSIT_DETECTED) {
-      Serial.println("🎯 Bottle deposit confirmed, closing lid early");
-      break;
-    }
   }
 
   // Close the lid
   Serial.println("🔒 Closing lid...");
-  lastServoAction = millis(); // Record servo movement time
   lidServo.write(SERVO_CLOSED_POSITION);
   delay(100); // Give servo time to move
   lidOpen = false;
-  depositState = IDLE; // Reset deposit detection state
   Serial.println("✅ Lid closed");
 
   Serial.println("🎉 Lid sequence completed!");
@@ -1003,10 +798,8 @@ void closeLid() {
   }
   
   Serial.println("🔒 Closing lid...");
-  lastServoAction = millis(); // Record servo movement time
   lidServo.write(SERVO_CLOSED_POSITION);
   lidOpen = false;
-  depositState = IDLE; // Reset deposit detection state
   Serial.println("✅ Lid closed");
   
   // Report completion to backend
@@ -1205,16 +998,6 @@ void handleSerialCommands() {
     } else if (command == "close") {
       Serial.println("🔒 Manual lid close command received");
       closeLid();
-    } else if (command == "ultrasonic") {
-      Serial.printf("🔊 Manual ultrasonic reading: %.1f cm (baseline: %.1f cm)\n", 
-                   readUltrasonicDistance(), baselineDistance);
-    } else if (command == "deposit") {
-      Serial.println("🔍 Testing deposit detection...");
-      depositState = AWAIT_DEPOSIT;
-      depositTimeoutStart = millis();
-    } else if (command == "baseline") {
-      Serial.println("📏 Recalibrating ultrasonic baseline...");
-      initializeUltrasonic();
     } else if (command == "status") {
       Serial.println("📊 Manual status request");
       sendStatusUpdate();
@@ -1250,9 +1033,6 @@ void handleSerialCommands() {
       Serial.println("📖 Available commands:");
       Serial.println("  open       - Open lid for 3 seconds");
       Serial.println("  close      - Close lid immediately");
-      Serial.println("  ultrasonic - Read ultrasonic distance");
-      Serial.println("  deposit    - Test deposit detection");
-      Serial.println("  baseline   - Recalibrate ultrasonic baseline");
       Serial.println("  status     - Send status update");
       Serial.println("  server     - Show HTTP server endpoints");
       Serial.println("  poll       - Manually poll for remote commands");
@@ -1275,10 +1055,6 @@ void printSystemInfo() {
   Serial.printf("Location: %s\n", location);
   Serial.printf("Registered: %s\n", isRegistered ? "Yes" : "No");
   Serial.printf("Lid Status: %s\n", lidOpen ? "Open" : "Closed");
-  Serial.printf("Deposit State: %s\n", 
-               depositState == IDLE ? "Idle" : 
-               depositState == AWAIT_DEPOSIT ? "Awaiting Deposit" : "Detected");
-  Serial.printf("Ultrasonic Baseline: %.1f cm\n", baselineDistance);
   Serial.printf("Free Heap: %d bytes\n", ESP.getFreeHeap());
   Serial.printf("Chip ID: %06X\n", (uint32_t)ESP.getEfuseMac());
   Serial.printf("CPU Frequency: %d MHz\n", ESP.getCpuFreqMHz());
@@ -1387,13 +1163,7 @@ void handleControlRequest() {
     lidServo.write(SERVO_OPEN_POSITION);
     delay(100); // Give servo time to move
     lidOpen = true;
-    lastServoAction = millis(); // Record servo movement time
     Serial.println("✅ [DIRECT] Lid opened");
-
-    // Start deposit detection
-    depositState = AWAIT_DEPOSIT;
-    depositTimeoutStart = millis();
-    Serial.println("🔍 [DIRECT] Starting deposit detection...");
 
     // Blink LED rapidly to indicate direct server command
     for (int i = 0; i < 8; i++) {
@@ -1412,25 +1182,16 @@ void handleControlRequest() {
     while (millis() - startTime < (durationSeconds * 1000)) {
       server.handleClient();
       handleWebSocketLoop();
-      handleDepositDetection();
       handleSerialCommands();
       yield();
       delay(50);
-      
-      // Exit early if deposit detected
-      if (depositState == DEPOSIT_DETECTED) {
-        Serial.println("🎯 [DIRECT] Deposit confirmed, closing lid early");
-        break;
-      }
     }
 
     // Close lid
     Serial.println("🔒 [DIRECT] Closing lid...");
-    lastServoAction = millis(); // Record servo movement time
     lidServo.write(SERVO_CLOSED_POSITION);
     delay(100); // Give servo time to move
     lidOpen = false;
-    depositState = IDLE; // Reset deposit detection state
     Serial.println("✅ [DIRECT] Lid closed");
     Serial.println("🎉 [DIRECT] Lid sequence completed!");
 
@@ -1442,11 +1203,9 @@ void handleControlRequest() {
     }
     
     Serial.println("🔒 [DIRECT] Closing lid...");
-    lastServoAction = millis(); // Record servo movement time
     lidServo.write(SERVO_CLOSED_POSITION);
     delay(100); // Give servo time to move
     lidOpen = false;
-    depositState = IDLE; // Reset deposit detection state
     Serial.println("✅ [DIRECT] Lid closed");
     
     server.send(200, "application/json", "{\"status\":\"lid_closed\",\"message\":\"Lid closed successfully\"}");
