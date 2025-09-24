@@ -19,7 +19,9 @@ export default function AdminEducation() {
   const [selectedContent, setSelectedContent] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
+    description: '',
     content: '',
+    slug: '',
     content_type: 'article',
     tags: '',
     difficulty_level: 'beginner',
@@ -67,8 +69,13 @@ export default function AdminEducation() {
     e.preventDefault();
     
     try {
+      // Ensure backend-required fields are present
+      const makeSlug = (text) => text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       const payload = {
         ...formData,
+        description: formData.description || (formData.content || '').slice(0, 200),
+        slug: formData.slug || makeSlug(formData.title || formData.description || formData.content || ''),
+        category: (['tutorial', 'guide', 'tip'].includes(formData.content_type) ? 'tutorial' : 'article'),
         tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
       };
       
@@ -115,7 +122,9 @@ export default function AdminEducation() {
     setSelectedContent(content);
     setFormData({
       title: content.title || '',
+      description: content.description || '',
       content: content.content || '',
+      slug: content.slug || '',
       content_type: content.content_type || 'article',
       tags: Array.isArray(content.tags) ? content.tags.join(', ') : content.tags || '',
       difficulty_level: content.difficulty_level || 'beginner',
@@ -152,6 +161,9 @@ export default function AdminEducation() {
   const resetForm = () => {
     setFormData({
       title: '',
+      description: '',
+      slug: '',
+      category: 'article',
       content: '',
       content_type: 'article',
       tags: '',
