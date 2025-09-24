@@ -23,7 +23,7 @@ const navItems = [
 	{ title: 'Users', href: '/admin/users', icon: FiUsers },
 	{ title: 'Withdrawals', href: '/admin/withdrawals', icon: FiDollarSign },
 	{ title: 'Education', href: '/admin/education', icon: FiBookOpen },
-	{ title: 'Monitoring', href: '/admin/monitoring', icon: FiActivity },
+	// { title: 'Monitoring', href: '/admin/monitoring', icon: FiActivity },
 	{ title: 'Export', href: '/admin/export', icon: FiDownload },
 	{ title: 'QR Codes', href: '/admin/qr-codes', icon: RiQrCodeLine },
 

@@ -42,7 +42,7 @@ class QRCode(BaseModel):
 class QRCodeCreate(BaseModel):
     """QR Code creation request model."""
     expires_in_hours: int = Field(default=24, ge=1, le=720, description="Hours until expiration")
-    max_uses: int = Field(default=1, ge=1, le=100, description="Maximum uses allowed")
+    max_uses: int = Field(default=1, ge=1, le=500, description="Maximum uses allowed")
     metadata: Optional[dict] = Field(None, description="Additional metadata")
 
 

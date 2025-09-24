@@ -195,7 +195,7 @@ export default function AdminMonitoring() {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          {/* <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className="p-2 bg-green-100 rounded-lg">
                 <FiUsers className="h-6 w-6 text-green-600" />
@@ -205,7 +205,7 @@ export default function AdminMonitoring() {
                 <p className="text-2xl font-bold text-gray-900">{wsStatus.total_connections}</p>
               </div>
             </div>
-          </div>
+          </div> */}
 
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">

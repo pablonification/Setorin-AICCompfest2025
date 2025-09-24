@@ -222,7 +222,7 @@ export default function AdminPage() {
                 </div>
               </div>
             </div>
-
+{/* 
             <div className="bg-[var(--color-card)] rounded-[var(--radius-md)] [box-shadow:var(--shadow-card)] p-5">
               <div className="flex items-center">
                 <div className="p-2 bg-indigo-100 rounded-[var(--radius-sm)]">
@@ -233,7 +233,7 @@ export default function AdminPage() {
                   <p className="text-[14px] leading-5 font-semibold text-green-600">Healthy</p>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             {stats.totalQrCodes >= 0 && (
               <div className="bg-[var(--color-card)] rounded-[var(--radius-md)] [box-shadow:var(--shadow-card)] p-5">
@@ -257,14 +257,14 @@ export default function AdminPage() {
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => router.push('/admin/withdrawals')}
-                className="px-4 py-2 bg-[color:var(--color-primary-600)] text-white rounded-[var(--radius-sm)] hover:opacity-90 transition-colors"
+                className="cursor-pointer px-4 py-2 bg-[color:var(--color-primary-600)] text-white rounded-[var(--radius-sm)] hover:opacity-90 transition-colors"
               >
                 Process Withdrawals
               </button>
               {stats.totalQrCodes >= 0 && (
                 <button
                   onClick={() => router.push('/admin/qr-codes')}
-                  className="px-4 py-2 bg-teal-600 text-white rounded-[var(--radius-sm)] hover:opacity-90 transition-colors flex items-center gap-2"
+                  className="cursor-pointer px-4 py-2 bg-teal-600 text-white rounded-[var(--radius-sm)] hover:opacity-90 transition-colors flex items-center gap-2"
                 >
                   <RiQrCodeLine className="h-4 w-4" />
                   Manage QR Codes
@@ -272,7 +272,7 @@ export default function AdminPage() {
               )}
               <button
                 onClick={() => router.push('/admin/export')}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-[var(--radius-sm)] hover:opacity-90 transition-colors"
+                className="cursor-pointer px-4 py-2 bg-indigo-600 text-white rounded-[var(--radius-sm)] hover:opacity-90 transition-colors"
               >
                 Export Data
               </button>

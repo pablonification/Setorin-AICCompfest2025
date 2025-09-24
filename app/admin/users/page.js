@@ -321,8 +321,20 @@ export default function AdminUsers() {
                     <p className="text-sm text-gray-900">{selectedUser.total_scans || 0}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Last Active</label>
-                    <p className="text-sm text-gray-900">{formatDate(selectedUser.last_active)}</p>
+                    <label className="block text-sm font-medium text-gray-700">Phone</label>
+                    <p className="text-sm text-gray-900">{selectedUser.phone || selectedUser.phone_number || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Birthdate</label>
+                    <p className="text-sm text-gray-900">{selectedUser.birthdate ? formatDate(selectedUser.birthdate) : 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">City</label>
+                    <p className="text-sm text-gray-900">{selectedUser.city || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Gender</label>
+                    <p className="text-sm text-gray-900">{selectedUser.gender || 'N/A'}</p>
                   </div>
                 </div>
                 

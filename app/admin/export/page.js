@@ -322,16 +322,6 @@ export default function AdminExport() {
             </button>
           </div>
         </div>
-
-        {/* Export History */}
-        <div className="mt-8 bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Export History</h2>
-          <div className="bg-gray-50 rounded-lg p-4">
-            <p className="text-sm text-gray-600">
-              Export history and logs will be displayed here. This feature is coming soon.
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );
