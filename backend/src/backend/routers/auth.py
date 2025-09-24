@@ -237,12 +237,13 @@ async def update_profile(
         raise HTTPException(status_code=404, detail="User not found")
 
     # Prepare update data
-    update_data = {
-        "name": profile_data.name,
-        "email": profile_data.email,
-    }
+    update_data = {}
 
-    # Add optional fields if provided
+    # Only include fields present in payload so we don't overwrite with null unintentionally
+    if profile_data.name is not None:
+        update_data["name"] = profile_data.name
+    if profile_data.email is not None:
+        update_data["email"] = profile_data.email
     if profile_data.phone is not None:
         update_data["phone"] = profile_data.phone
     if profile_data.birthdate is not None:
@@ -258,7 +259,25 @@ async def update_profile(
         {"$set": update_data}
     )
 
-    if result.modified_count == 0:
+    if result.modified_count == 0 and update_data:
+        # Nothing was modified even though we attempted update. This likely means
+        # the incoming data matches existing values, so we return current profile.
+        existing_user = await users_collection.find_one({"_id": user_id})
+        if existing_user:
+            return UserResponse(
+                id=str(existing_user["_id"]),
+                email=existing_user.get("email", ""),
+                name=existing_user.get("name", ""),
+                photo_url=existing_user.get("photo_url"),
+                points=existing_user.get("points", 0),
+                role=existing_user.get("role", "user"),
+                tier=existing_user.get("tier"),
+                phone=existing_user.get("phone"),
+                birthdate=existing_user.get("birthdate"),
+                city=existing_user.get("city"),
+                gender=existing_user.get("gender")
+            )
+
         raise HTTPException(status_code=500, detail="Failed to update profile")
 
     # Fetch updated user data
