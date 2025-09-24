@@ -29,3 +29,4 @@ class ScanResponse(BaseModel):
     base_rp: Optional[float] = None
     debug_image: str | None = None  # base64 JPEG with reference/bboxes
     debug_url: str | None = None
+    deposit_status: Optional[str] = None

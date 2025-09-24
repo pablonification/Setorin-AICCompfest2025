@@ -88,8 +88,8 @@ async def scan_bottle(
 
     # IoT bin control via WebSocket
     iot_events = []
+    device_id = "ESP32-SPARTANS"  # Default device ID used by firmware
     if validation_result.is_valid:
-        device_id = "ESP32-SPARTANS"  # Default device ID
         
         # Try WebSocket control first (preferred)
         if device_id in esp32_clients:
@@ -125,6 +125,8 @@ async def scan_bottle(
             "reason": validation_result.reason,
             "iot_events": iot_events,
             "user_email": user_email,
+            "device_id": device_id,
+            "deposit_status": "pending" if validation_result.is_valid else None,
             "timestamp": datetime.now(timezone.utc),
         })
         scan_id = str(scan_result.inserted_id)
@@ -171,6 +173,7 @@ async def scan_bottle(
             "email": user_email,
             "debug_url": debug_url,
             "debug_image": preview_b64,
+            "deposit_status": "pending" if validation_result.is_valid else None,
         }
     })
 
@@ -189,6 +192,7 @@ async def scan_bottle(
         total_points=user_total_points,
         debug_image=preview_b64,
         debug_url=debug_url,
+        deposit_status=("pending" if validation_result.is_valid else None),
     )
     
     # Add payout transparency fields

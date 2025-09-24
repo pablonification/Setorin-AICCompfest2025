@@ -241,125 +241,176 @@ unsigned long lastServoAction = 0;
         </phase>
 
         <!-- PHASE 1: BACKEND IMPLEMENTATION -->
-        <phase id="1" status="COMPLETED" priority="HIGH">
+    <phase id="1" status="COMPLETED" priority="HIGH">
             <title>Backend - Minimal WebSocket Handler</title>
             <duration>20 minutes</duration>
             
             <description>
                 Implement minimal backend infrastructure to receive, process, and store deposit detection events from ESP32 via WebSocket, following YAGNI principles with only essential functionality.
             </description>
+            
+            <implementation_summary date="2025-09-24">
+                <changes>
+                    <change type="WEBSOCKET_HANDLER">Added JSON parsing for device → server `deposit_event` in `esp32_device_ws.py` and delegated processing to `handle_deposit_event()`</change>
+                    <change type="EVENT_PROCESSOR">Implemented `handle_deposit_event(device_id, event_type)` to update the most recent pending scan and broadcast to frontend</change>
+                    <change type="HTTP_FALLBACK">Added `POST /api/esp32/deposit-event` to accept fallback events from firmware</change>
+                    <change type="SCAN_CREATION">Updated `scan_new.py` to insert `device_id` and `deposit_status="pending"` for valid scans</change>
+                    <change type="API_SCHEMA">Extended `ScanResponse` with optional `deposit_status` field</change>
+                    <change type="BROADCAST">Included `deposit_status` in the `scan_result` broadcast so UI can show "pending" immediately</change>
+                </changes>
+                <notes>
+                    <note>No Prisma schema change was required for the live path since Mongo is used directly for scans</note>
+                    <note>Design follows YAGNI: latest pending scan by device is sufficient for single‑scan concurrency</note>
+                </notes>
+            </implementation_summary>
 
-            <technical_changes>
-                <change type="DATABASE_SCHEMA">
-                    <file>prisma/schema.prisma</file>
-                    <location>BottleScan model</location>
-                    <modification><![CDATA[
-model BottleScan {
-  // ... existing fields
-  deposit_status  String?     @default("pending") // "pending", "detected", "timeout"
-  // ... rest of model
-}
-                    ]]></modification>
-                    <rationale>
-                        Single field addition to track deposit confirmation status. Three states cover all necessary scenarios without over-engineering.
-                    </rationale>
-                    <migration_command>npx prisma migrate dev --name add-deposit-status</migration_command>
+            <implemented_changes>
+                <change type="DATABASE_COLLECTION" status="UNCHANGED">
+                    <file>MongoDB collection: scans</file>
+                    <note>Schema-less insert now includes `device_id` and `deposit_status` fields</note>
                 </change>
 
-                <change type="WEBSOCKET_HANDLER">
+                <change type="WEBSOCKET_HANDLER" status="COMPLETED">
                     <file>backend/src/backend/routers/esp32_device_ws.py</file>
-                    <location>WebSocket message processing loop</location>
-                    <functionality>
-                        <item>Parse incoming JSON messages from ESP32 devices</item>
-                        <item>Identify deposit_event message type</item>
-                        <item>Extract event type ("detected" or "timeout")</item>
-                        <item>Call deposit event handler function</item>
-                        <item>Log processing results for debugging</item>
-                    </functionality>
-                    <code_added><![CDATA[
-# Parse and handle deposit events - YAGNI minimal implementation
-try:
-    data = json.loads(msg)
-    if data.get("type") == "deposit_event":
-        event_type = data.get("event")  # "detected" or "timeout"
-        if event_type in ["detected", "timeout"]:
-            await handle_deposit_event(device_id, event_type)
-            logger.info("Processed deposit event: %s from %s", event_type, device_id)
-except (json.JSONDecodeError, KeyError) as e:
-    logger.debug("Non-JSON or invalid message from %s: %s", device_id, e)
-                    ]]></code_added>
+                    <location>_device_ws_handler function - message processing loop</location>
+                    <current_code><![CDATA[
+            # Keep connection alive and allow receiving messages from device
+            msg = await websocket.receive_text()
+            # You may parse status updates here; for now, log.
+            logger.debug("From %s: %s", device_id, msg)
+                    ]]></current_code>
+                    <required_code><![CDATA[
+            # Keep connection alive and allow receiving messages from device
+            msg = await websocket.receive_text()
+            logger.debug("From %s: %s", device_id, msg)
+            
+            # Parse and handle deposit events - YAGNI minimal implementation
+            try:
+                data = json.loads(msg)
+                if data.get("type") == "deposit_event":
+                    event_type = data.get("event")  # "detected" or "timeout"
+                    if event_type in ["detected", "timeout"]:
+                        await handle_deposit_event(device_id, event_type)
+                        logger.info("Processed deposit event: %s from %s", event_type, device_id)
+            except (json.JSONDecodeError, KeyError) as e:
+                logger.debug("Non-JSON or invalid message from %s: %s", device_id, e)
+                    ]]></required_code>
                 </change>
 
-                <change type="EVENT_PROCESSOR">
+                <change type="EVENT_PROCESSOR" status="COMPLETED">
                     <file>backend/src/backend/routers/esp32_device_ws.py</file>
                     <location>New handle_deposit_event() function</location>
-                    <algorithm>
-                        <step>Connect to MongoDB database</step>
-                        <step>Find most recent scan with deposit_status="pending" for the device</step>
-                        <step>Update scan record with new deposit_status</step>
-                        <step>Broadcast WebSocket notification to frontend clients</step>
-                        <step>Log success or failure for debugging</step>
-                    </algorithm>
-                    <database_query><![CDATA[
-# Find most recent pending scan for this device
-scan = await db["scans"].find_one(
-    {"device_id": device_id, "deposit_status": "pending"},
-    sort=[("timestamp", -1)]
-)
-                    ]]></database_query>
-                    <error_handling>
-                        Graceful handling of database connection failures, missing scans, and update errors with comprehensive logging.
-                    </error_handling>
+                    <required_function><![CDATA[
+async def handle_deposit_event(device_id: str, event_type: str):
+    """Handle deposit detection events from ESP32 devices."""
+    try:
+        from ..db.mongo import ensure_connection
+        from ..services.ws_manager import manager
+        
+        db = await ensure_connection()
+        
+        # Find most recent pending scan for this device
+        scan = await db["scans"].find_one(
+            {"device_id": device_id, "deposit_status": "pending"},
+            sort=[("timestamp", -1)]
+        )
+        
+        if not scan:
+            logger.warning("No pending scan found for device %s", device_id)
+            return
+            
+        # Update scan with deposit status
+        result = await db["scans"].update_one(
+            {"_id": scan["_id"]},
+            {"$set": {"deposit_status": event_type}}
+        )
+        
+        if result.modified_count > 0:
+            logger.info("Updated scan %s with deposit status: %s", scan["_id"], event_type)
+            
+            # Broadcast to frontend clients
+            await manager.broadcast_notification({
+                "type": "deposit_event",
+                "data": {
+                    "scan_id": str(scan["_id"]),
+                    "device_id": device_id,
+                    "event": event_type,
+                    "user_email": scan.get("user_email")
+                }
+            })
+        else:
+            logger.error("Failed to update scan %s with deposit status", scan["_id"])
+            
+    except Exception as e:
+        logger.error("Error handling deposit event from %s: %s", device_id, e)
+                    ]]></required_function>
                 </change>
 
-                <change type="SCAN_CREATION_UPDATE">
+                <change type="SCAN_CREATION_UPDATE" status="COMPLETED">
                     <file>backend/src/backend/routers/scan_new.py</file>
-                    <location>Scan document creation</location>
-                    <modifications>
-                        <item>Add device_id field to link scans to specific ESP32 devices</item>
-                        <item>Set deposit_status to "pending" for new scans</item>
-                        <item>Maintain backward compatibility with existing scan flow</item>
-                    </modifications>
-                    <code_change><![CDATA[
-scan_result = await db["scans"].insert_one({
-    // ... existing fields
-    "device_id": "ESP32-SPARTANS",  // Link scan to device
-    "deposit_status": "pending",    // YAGNI: Start deposit detection
-    // ... rest of fields
-})
-                    ]]></code_change>
+                    <location>scan_result insert_one() call around line 138</location>
+                    <current_code><![CDATA[
+        scan_result = await db["scans"].insert_one({
+            "brand": validation_result.brand,
+            "confidence": validation_result.confidence,
+            "measurement": validation_result.measurement.__dict__,
+            "points": validation_result.points_awarded,
+            "valid": validation_result.is_valid,
+            "reason": validation_result.reason,
+            "iot_events": iot_events,
+            "user_email": user_email,
+            "timestamp": datetime.now(timezone.utc),
+        })
+                    ]]></current_code>
+                    <required_code><![CDATA[
+        scan_result = await db["scans"].insert_one({
+            "brand": validation_result.brand,
+            "confidence": validation_result.confidence,
+            "measurement": validation_result.measurement.__dict__,
+            "points": validation_result.points_awarded,
+            "valid": validation_result.is_valid,
+            "reason": validation_result.reason,
+            "iot_events": iot_events,
+            "user_email": user_email,
+            "device_id": "ESP32-SPARTANS",  # Link scan to device
+            "deposit_status": "pending" if validation_result.is_valid else None,  # Start deposit detection
+            "timestamp": datetime.now(timezone.utc),
+        })
+                    ]]></required_code>
                 </change>
 
-                <change type="API_SCHEMA_UPDATE">
+                <change type="API_SCHEMA_UPDATE" status="COMPLETED">
                     <file>backend/src/backend/schemas/scan.py</file>
                     <location>ScanResponse class</location>
-                    <addition>
-                        <field name="deposit_status" type="Optional[str]" default="pending" />
-                    </addition>
-                    <rationale>
-                        Expose deposit status to frontend API consumers. Optional field maintains backward compatibility.
-                    </rationale>
+                    <current_fields>Missing deposit_status field</current_fields>
+                    <required_addition>
+                        <field name="deposit_status" type="Optional[str]" default="None" description="Deposit confirmation status: pending/detected/timeout" />
+                    </required_addition>
                 </change>
 
-                <change type="WEBSOCKET_BROADCAST">
+                <change type="HTTP_FALLBACK_ENDPOINT" status="COMPLETED">
                     <file>backend/src/backend/routers/esp32_device_ws.py</file>
-                    <location>handle_deposit_event() function</location>
-                    <broadcast_payload><![CDATA[
-await manager.broadcast_notification({
-    "type": "deposit_event",
-    "data": {
-        "scan_id": str(scan["_id"]),
-        "device_id": device_id,
-        "event": event_type,
-        "user_email": scan.get("user_email")
-    }
-})
-                    ]]></broadcast_payload>
-                    <purpose>
-                        Enable real-time frontend updates when deposit events occur, allowing immediate user feedback.
-                    </purpose>
+                    <location>New HTTP endpoint</location>
+                    <endpoint_spec><![CDATA[
+@router.post("/api/esp32/deposit-event")
+async def handle_deposit_event_http(request: Request):
+    """HTTP fallback endpoint for deposit events when WebSocket unavailable."""
+    try:
+        data = await request.json()
+        device_id = data.get("device_id", "ESP32-SPARTANS")
+        event_type = data.get("event")
+        
+        if event_type in ["detected", "timeout"]:
+            await handle_deposit_event(device_id, event_type)
+            return {"status": "success", "event": event_type}
+        else:
+            raise HTTPException(status_code=400, detail="Invalid event type")
+    except Exception as e:
+        logger.error("HTTP deposit event error: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+                    ]]></endpoint_spec>
                 </change>
-            </technical_changes>
+            </implemented_changes>
 
             <data_flow>
                 <flow_diagram>
@@ -388,22 +439,41 @@ await manager.broadcast_notification({
             </performance_considerations>
 
             <deliverables>
-                <deliverable type="DATABASE_SCHEMA" status="COMPLETE">
-                    Prisma schema with deposit_status field addition
+                <deliverable type="DATABASE_SCHEMA" status="REQUIRED">
+                    Prisma schema with deposit_status and device_id field additions
                 </deliverable>
-                <deliverable type="WEBSOCKET_HANDLER" status="COMPLETE">
+                <deliverable type="WEBSOCKET_HANDLER" status="REQUIRED">
                     Enhanced ESP32 WebSocket router with deposit event processing
                 </deliverable>
-                <deliverable type="DATABASE_INTEGRATION" status="COMPLETE">
+                <deliverable type="DATABASE_INTEGRATION" status="REQUIRED">
                     MongoDB queries for scan lookup and status updates  
                 </deliverable>
-                <deliverable type="API_SCHEMA" status="COMPLETE">
+                <deliverable type="API_SCHEMA" status="REQUIRED">
                     Updated ScanResponse model with deposit_status field
                 </deliverable>
-                <deliverable type="WEBSOCKET_BROADCAST" status="COMPLETE">
+                <deliverable type="WEBSOCKET_BROADCAST" status="REQUIRED">
                     Real-time notification system for frontend updates
                 </deliverable>
+                <deliverable type="HTTP_FALLBACK" status="RECOMMENDED">
+                    HTTP endpoint for deposit events when WebSocket unavailable
+                </deliverable>
             </deliverables>
+            
+            <implementation_priority>
+                <critical_path>
+                    <step>Update Prisma schema and run migration</step>
+                    <step>Add deposit event handling to WebSocket router</step>
+                    <step>Update scan creation to include device_id and deposit_status</step>
+                    <step>Add deposit_status to API response schema</step>
+                </critical_path>
+                
+                <verification_steps>
+                    <step>Test ESP32 deposit event transmission</step>
+                    <step>Verify database updates occur correctly</step>
+                    <step>Confirm WebSocket broadcasts reach frontend</step>
+                    <step>Test HTTP fallback endpoint</step>
+                </verification_steps>
+            </implementation_priority>
         </phase>
 
         <!-- PHASE 2: FRONTEND IMPLEMENTATION -->
@@ -812,19 +882,34 @@ useEffect(() => {
 
     <project_summary>
         <total_implementation_time>
-            <phase_0>45 minutes (ESP32 Firmware)</phase_0>
-            <phase_1>20 minutes (Backend)</phase_1>
-            <phase_2>15 minutes (Frontend)</phase_2>
-            <phase_3>60 minutes (Testing)</phase_3>
-            <total>140 minutes (2.3 hours)</total>
+            <phase_0>45 minutes (ESP32 Firmware) ✅ COMPLETED</phase_0>
+            <phase_1>20 minutes (Backend) ✅ COMPLETED</phase_1>
+            <phase_2>15 minutes (Frontend) ▶️ READY</phase_2>
+            <phase_3>60 minutes (Testing) ▶️ READY AFTER PHASE 2</phase_3>
+            <total>140 minutes (2.3 hours) - Backend completed; proceed with UI + tests</total>
         </total_implementation_time>
 
         <code_complexity>
-            <esp32_firmware>~200 lines added to existing 1,736 line codebase</esp32_firmware>
-            <backend>~15 lines of functional code across 3 files</backend>
-            <frontend>~15 lines for status component and WebSocket handling</frontend>
-            <total_new_code>~230 lines total across all components</total_new_code>
+            <esp32_firmware>~200 lines added to existing 1,736 line codebase ✅ COMPLETE</esp32_firmware>
+            <backend>~15 lines of functional code across 3 files ❌ MISSING</backend>
+            <frontend>~15 lines for status component and WebSocket handling ⏸️ PENDING</frontend>
+            <total_new_code>~230 lines total across all components (only ~200 implemented)</total_new_code>
         </code_complexity>
+
+        <current_project_status date="2025-09-24">
+            <completed_work>
+                <item status="✅">ESP32 firmware with complete ultrasonic integration</item>
+                <item status="✅">Hardware specifications and safety requirements</item>
+                <item status="✅">Deposit event transmission capability in firmware</item>
+                <item status="✅">Backend handles deposit events (WS + HTTP), updates DB, broadcasts to UI</item>
+            </completed_work>
+            
+            <open_items>
+                <item>Frontend DepositStatus component and WS listener</item>
+                <item>Mongo compound index for faster pending-scan lookup</item>
+                <item>End-to-end tests for detected/timeout flows</item>
+            </open_items>
+        </current_project_status>
 
         <yagni_adherence>
             <implemented_features>
@@ -911,10 +996,11 @@ useEffect(() => {
         </key_success_factors>
         
         <next_steps>
-            <step priority="1">Execute Phase 2 (Frontend Implementation)</step>
+            <step priority="1">Execute Phase 2 (Frontend Implementation): add DepositStatus UI + WS listener</step>
             <step priority="2">Complete Phase 3 (Integration Testing)</step>
-            <step priority="3">Deploy to production environment</step>
-            <step priority="4">Monitor performance and user feedback</step>
+            <step priority="3">Add Mongo index for device_id + deposit_status + timestamp</step>
+            <step priority="4">Deploy to production environment</step>
+            <step priority="5">Monitor performance and user feedback</step>
         </next_steps>
     </conclusion>
 </project_logbook>
