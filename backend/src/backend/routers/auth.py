@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import httpx
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
@@ -250,7 +250,16 @@ async def update_profile(
         if profile_data.phone is not None:
             update_data["phone"] = profile_data.phone
         if profile_data.birthdate is not None:
-            update_data["birthdate"] = profile_data.birthdate
+            # Pydantic gives us a date object; MongoDB/bson expects datetime for dates.
+            # Convert date -> datetime at midnight to make it encodable.
+            try:
+                if isinstance(profile_data.birthdate, date) and not isinstance(profile_data.birthdate, datetime):
+                    update_data["birthdate"] = datetime.combine(profile_data.birthdate, datetime.min.time())
+                else:
+                    update_data["birthdate"] = profile_data.birthdate
+            except Exception:
+                # Fallback: store as-is (driver will raise if invalid)
+                update_data["birthdate"] = profile_data.birthdate
         if profile_data.city is not None:
             update_data["city"] = profile_data.city
         if profile_data.gender is not None:
