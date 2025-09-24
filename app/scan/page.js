@@ -85,8 +85,8 @@ export default function ScanPage() {
     // Beta: front-to-back tilt (should be 90-100° for vertical)
     // Gamma: left-to-right tilt (should be 0-10° for level)
     const betaTarget = 95; // Ideal vertical angle
-    const betaTolerance = 5; // 90-100° range
-    const gammaTolerance = 10; // 0-10° range
+    const betaTolerance = 15; // 80-110° range
+    const gammaTolerance = 30; // 0-10° range
     
     const wasAligned = isPhoneAligned;
     const isAligned = 
