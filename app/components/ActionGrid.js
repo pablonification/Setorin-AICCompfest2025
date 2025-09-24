@@ -28,9 +28,9 @@ export default function ActionGrid() {
     <div className="grid grid-cols-3 bg-white rounded-[12px] p-4">
       <ActionItem href="/infoin" iconSrc="/infoin.svg" alt="Infoin" />
       <ActionItem
-        href="/scan"
+        href="/payout"
         iconSrc="/duitin.avif"
-        alt="Duitin"
+        alt="Tarikin"
         containerClassName="w-[102px] h-[102px] -translate-y-[8.5px]"
         imgClassName="w-full h-full object-contain"
         labelClassName="mt-1 -translate-y-[18px] text-xs font-medium text-[var(--color-muted)]"

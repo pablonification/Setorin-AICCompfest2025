@@ -145,7 +145,7 @@ export default function ScanResultPage() {
   return (
     <ProtectedRoute userOnly={true}>
       <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
-        <TopBar title="Duitin" backHref="/scan" />
+        <TopBar title="Setorin" backHref="/scan" />
         
         <Suspense fallback={
           <div className="px-4 mt-12 flex flex-col items-center justify-center text-center">

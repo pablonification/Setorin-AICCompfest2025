@@ -1385,7 +1385,7 @@ export default function ScanPage() {
     <ProtectedRoute userOnly={true}>
       <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
         <TopBar
-          title="Duitin"
+          title="Setorin"
           right={topBarRightButton}
         />
 
