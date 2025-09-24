@@ -506,6 +506,14 @@ export default function ProfilePage() {
                       {auth?.user?.email}
                     </div>
                   </div>
+					<Link
+						href="/profile/edit"
+						className="inline-flex items-center gap-2 px-4 py-2 rounded-[var(--radius-pill)] border border-[var(--color-primary-700)] text-[var(--color-primary-700)] text-sm font-medium hover:bg-[rgba(0,117,58,0.08)] transition-colors"
+						aria-label="Edit Profil"
+					>
+						<span>Edit Profil</span>
+						<img src="/edit-profile.svg" alt="Edit" className="w-4 h-4" />
+					</Link>
                 </div>
               </div>
             </div>
