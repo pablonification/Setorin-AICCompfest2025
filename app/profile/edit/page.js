@@ -61,21 +61,26 @@ export default function EditProfilePage() {
         }
       });
 
-      // Call backend API to update profile
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/profile`, {
+      // Call backend API to update profile (use browser-facing base URL)
+      const apiBase = process.env.NEXT_PUBLIC_BROWSER_API_URL || process.env.NEXT_PUBLIC_API_URL;
+
+      // Build payload only with editable fields. Email is intentionally not sent
+      // because email cannot be changed from the profile edit screen.
+      const payload = {
+        name: name.trim(),
+        phone: phone.trim() || null,
+        birthdate: birthdate || null,
+        city: city.trim() || null,
+        gender: gender || null,
+      };
+
+      const response = await fetch(`${apiBase}/auth/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          name: name.trim(),
-          email: email.trim(),
-          phone: phone.trim() || null,
-          birthdate: birthdate || null,
-          city: city.trim() || null,
-          gender: gender || null,
-        }),
+        body: JSON.stringify(payload),
       });
 
       console.log('API Response:', {
@@ -84,13 +89,27 @@ export default function EditProfilePage() {
         ok: response.ok
       });
 
+      const responseText = await response.text();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('API Error:', errorData);
-        throw new Error(errorData.detail || 'Failed to update profile');
+        let errorData = null;
+        try {
+          errorData = JSON.parse(responseText);
+        } catch (_) {
+          console.error('Non-JSON error response:', responseText);
+        }
+
+        const message = errorData?.detail || errorData?.message || response.statusText || 'Failed to update profile';
+        throw new Error(message);
       }
 
-      const updatedUserData = await response.json();
+      let updatedUserData = null;
+      try {
+        updatedUserData = JSON.parse(responseText);
+      } catch (parseErr) {
+        console.error('Failed to parse profile update response:', parseErr, responseText);
+        throw new Error('Server returned invalid response');
+      }
       console.log('Updated user data from API:', updatedUserData);
 
       // Update local user context with the response from backend
@@ -159,12 +178,9 @@ export default function EditProfilePage() {
           <input
             type="email"
             value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              setSuccessMessage("");
-              setErrorMessage("");
-            }}
-            className="w-full px-4 py-3 rounded-[var(--radius-sm)] bg-gray-50 outline-none text-[var(--color-primary-700)] font-semibold"
+            readOnly
+            onFocus={(e) => e.target.blur()}
+            className="w-full px-4 py-3 rounded-[var(--radius-sm)] bg-gray-50 outline-none text-[var(--color-primary-700)] font-semibold cursor-not-allowed"
             placeholder="email@contoh.com"
           />
         </Field>

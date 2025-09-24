@@ -44,7 +44,7 @@ export default function TentangKamiPage() {
                       : "unknown"
                   }.webp`}
                   alt={p.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover rounded-full"
                 />
               </div>
               <div className="mt-3">

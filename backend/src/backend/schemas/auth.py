@@ -37,8 +37,8 @@ class LoginRequest(BaseModel):
 
 class ProfileUpdateRequest(BaseModel):
     """Profile update request"""
-    name: str
-    email: str
+    name: Optional[str] = None
+    email: Optional[str] = None
     phone: Optional[str] = None
     birthdate: Optional[date] = None
     city: Optional[str] = None
