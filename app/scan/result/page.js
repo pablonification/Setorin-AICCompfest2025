@@ -44,6 +44,72 @@ function ScanResultContent() {
     return () => clearInterval(interval);
   }, []);
 
+  /* FRONTEND PHASE 2 IMPLEMENTATION - Add WebSocket listener for deposit events on result page */
+  useEffect(() => {
+    if (!data || !data.scan_id) return;
+    
+    const apiUrl = process.env.NEXT_PUBLIC_BROWSER_API_URL || 'http://localhost:8000';
+    const wsUrl = apiUrl.replace('http://', 'ws://').replace('https://', 'wss://');
+    
+    // Connect to WebSocket for deposit event updates
+    let ws;
+    try {
+      // Use a generic notification endpoint that can receive deposit events
+      const fullWsUrl = `${wsUrl}/ws/notifications/result-${data.scan_id}`;
+      console.log('🔌 Connecting to WebSocket for deposit updates:', fullWsUrl);
+      
+      ws = new WebSocket(fullWsUrl);
+      
+      ws.onopen = () => {
+        console.log('✅ Deposit event WebSocket connected for scan:', data.scan_id);
+      };
+      
+      ws.onmessage = (e) => {
+        try {
+          const msg = JSON.parse(e.data);
+          console.log('📨 WebSocket message received on result page:', msg);
+          
+          if (msg.type === 'deposit_event' && msg.data.scan_id === data.scan_id) {
+            console.log('🔄 Updating deposit status on result page:', msg.data.event);
+            
+            // Update local state
+            setData(prev => ({
+              ...prev,
+              deposit_status: msg.data.event
+            }));
+            
+            // Update localStorage
+            try {
+              const updatedResult = { ...data, deposit_status: msg.data.event };
+              localStorage.setItem('smartbin_last_scan', JSON.stringify(updatedResult));
+              console.log('💾 Updated localStorage on result page with deposit status:', msg.data.event);
+            } catch (e) {
+              console.warn('LocalStorage update failed on result page:', e);
+            }
+          }
+        } catch (error) {
+          console.error('Error parsing WebSocket message on result page:', error);
+        }
+      };
+      
+      ws.onerror = (error) => {
+        console.error('❌ WebSocket error on result page:', error);
+      };
+      
+      ws.onclose = () => {
+        console.log('🔌 WebSocket disconnected on result page');
+      };
+    } catch (error) {
+      console.error('Failed to create WebSocket on result page:', error);
+    }
+    
+    return () => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+    };
+  }, [data]);
+
   // If still loading after 10 seconds, show error
   useEffect(() => {
     const timeout = setTimeout(() => {

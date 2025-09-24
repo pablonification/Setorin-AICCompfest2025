@@ -906,6 +906,30 @@ export default function ScanPage() {
             console.log('⚠️ WebSocket result received but manual result already exists, skipping...');
           }
         }
+        /* FRONTEND PHASE 2 IMPLEMENTATION - Add deposit event WebSocket handling */
+        else if (msg.type === 'deposit_event') {
+          console.log('🔍 Deposit event received via WebSocket:', msg.data);
+          
+          // Update the scan result with deposit status if we have a matching result
+          if (result && result.scan_id === msg.data.scan_id) {
+            console.log('✅ Updating existing result with deposit status:', msg.data.event);
+            setResult(prev => ({
+              ...prev,
+              deposit_status: msg.data.event
+            }));
+            
+            // Update localStorage as well so the status persists
+            try {
+              const updatedResult = { ...result, deposit_status: msg.data.event };
+              localStorage.setItem('smartbin_last_scan', JSON.stringify(updatedResult));
+              console.log('💾 Updated localStorage with deposit status:', msg.data.event);
+            } catch (e) {
+              console.warn('LocalStorage update failed:', e);
+            }
+          } else {
+            console.log('⚠️ Deposit event received but no matching scan result found');
+          }
+        }
       } catch (error) {
         console.error('Error parsing WebSocket message:', error);
       }

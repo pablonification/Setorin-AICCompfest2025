@@ -1,4 +1,6 @@
 import React from 'react';
+/* FRONTEND PHASE 2 IMPLEMENTATION - Import DepositStatus component */
+import DepositStatus from './DepositStatus';
 
 export default function MobileScanResult({ result }) {
   if (!result) {
@@ -58,6 +60,9 @@ export default function MobileScanResult({ result }) {
           <p>{result.reason}</p>
         </div>
       )}
+
+      {/* FRONTEND PHASE 2 IMPLEMENTATION - Add deposit status display */}
+      <DepositStatus scanResult={result} />
 
       {(previewB64 || previewUrl) && (
         <div className="mt-4">
