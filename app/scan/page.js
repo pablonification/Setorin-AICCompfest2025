@@ -24,6 +24,7 @@ export default function ScanPage() {
   // Device orientation states
   const [orientation, setOrientation] = useState({ alpha: 0, beta: 0, gamma: 0 });
   const [orientationPermission, setOrientationPermission] = useState('unknown');
+  const [orientationSupported, setOrientationSupported] = useState(null);
   const [isPhoneAligned, setIsPhoneAligned] = useState(false);
   
   const toggleFlash = useCallback(async () => {
@@ -73,8 +74,24 @@ export default function ScanPage() {
   // Handle device orientation changes
   const handleOrientation = useCallback((event) => {
     if (!mountedRef.current) return;
-    
+
     const { alpha, beta, gamma } = event;
+
+    // Some browsers fire orientation events with null values when unsupported
+    if (beta === null || gamma === null || beta === undefined || gamma === undefined) {
+      // Mark as unsupported once and clean up listener
+      if (orientationSupported !== false) {
+        setOrientationSupported(false);
+        window.removeEventListener('deviceorientation', handleOrientation);
+      }
+      return;
+    }
+
+    // Mark as supported on first valid event
+    if (orientationSupported === null) {
+      setOrientationSupported(true);
+    }
+
     setOrientation({
       alpha: alpha || 0,
       beta: beta || 0,
@@ -83,13 +100,13 @@ export default function ScanPage() {
 
     // Check if phone is properly aligned (ideal conditions)
     // Beta: front-to-back tilt (should be 90-100° for vertical)
-    // Gamma: left-to-right tilt (should be 0-10° for level)
+    // Gamma: left-to-right tilt (should be within a moderate range for level)
     const betaTarget = 95; // Ideal vertical angle
-    const betaTolerance = 5; // 90-100° range
-    const gammaTolerance = 10; // 0-10° range
+    const betaTolerance = 15; // allow 80-110° range
+    const gammaTolerance = 30; // allow 0-30° side tilt
     
     const wasAligned = isPhoneAligned;
-    const isAligned = 
+    const isAligned = orientationSupported !== false &&
       Math.abs((beta || 0) - betaTarget) <= betaTolerance && 
       Math.abs(gamma || 0) <= gammaTolerance;
     
@@ -99,15 +116,19 @@ export default function ScanPage() {
     }
     
     setIsPhoneAligned(isAligned);
-  }, [isPhoneAligned]);
+  }, [isPhoneAligned, orientationSupported]);
 
   // Request device orientation permission and set up listeners
   const requestOrientationPermission = useCallback(async () => {
     if (typeof DeviceOrientationEvent === 'undefined') {
       console.warn('DeviceOrientationEvent not supported');
+      setOrientationSupported(false);
       setOrientationPermission('denied');
       return false;
     }
+
+    // Some browsers expose DeviceOrientationEvent but without actual sensor data
+    setOrientationSupported(true);
 
     // Check if permission is required (iOS 13+)
     if (typeof DeviceOrientationEvent.requestPermission === 'function') {
@@ -158,14 +179,14 @@ export default function ScanPage() {
     };
 
     // Only set up if we're on the bottle scanning phase
-    if (qrValidated && cameraStream && orientationPermission !== 'denied') {
+    if (qrValidated && cameraStream && orientationPermission !== 'denied' && orientationSupported !== false) {
       setupOrientation();
     }
 
     return () => {
       window.removeEventListener('deviceorientation', handleOrientation);
     };
-  }, [qrValidated, cameraStream, orientationPermission, requestOrientationPermission, handleOrientation]);
+  }, [qrValidated, cameraStream, orientationPermission, requestOrientationPermission, handleOrientation, orientationSupported]);
 
   // Cleanup function - removed qrScanInterval dependency to prevent infinite loop
   const cleanupCamera = useCallback(() => {
@@ -205,6 +226,7 @@ export default function ScanPage() {
     // Reset states
     setCameraStream(null);
     setCameraError(null);
+    setOrientationSupported(null); // Reset orientationSupported on cleanup
   }, []); // Empty dependency array to prevent infinite loop
 
   // Component unmount cleanup
@@ -227,6 +249,7 @@ export default function ScanPage() {
       setQrValidationInProgress(false);
       setShowBottleGuide(false);
       setShowInstructions(false);
+      setOrientationSupported(null);
     };
   }, [cleanupCamera]);
 
@@ -1262,7 +1285,7 @@ export default function ScanPage() {
 
   // Memoize orientation guidance components to prevent re-renders
   const orientationGuidance = useMemo(() => {
-    if (orientationPermission !== 'granted') return null;
+    if (orientationPermission !== 'granted' || orientationSupported === false) return null;
 
     const betaTarget = 95;
     const betaTolerance = 5;
@@ -1356,7 +1379,7 @@ export default function ScanPage() {
         </div>
       </div>
     );
-  }, [orientation, isPhoneAligned, orientationPermission]);
+  }, [orientation, isPhoneAligned, orientationPermission, orientationSupported]);
 
   return (
     <ProtectedRoute userOnly={true}>
@@ -1475,36 +1498,40 @@ export default function ScanPage() {
                       )}
 
                         {/* Bottle placement guide overlay */}
-                        {showBottleGuide && qrValidated && (
+                        {showBottleGuide && qrValidated && orientationSupported !== false && (
                           <div className="absolute inset-0 pointer-events-none">
                             {/* Phone alignment guidance - using memoized component */}
                             {orientationGuidance}
 
-                            {/* Bottle silhouette guide - positioned with pixel precision */}
-                            <div className="absolute w-32 h-64" style={{ 
-                              top: '46%', 
-                              left: '54%', 
-                              transform: 'translate(-50%, -50%)' 
-                            }}>
-                              <svg width="80%" height="80%" viewBox="0 0 100 200" fill="none" xmlns="http://www.w3.org/2000/svg" className={`transition-opacity duration-300 ${isPhoneAligned ? 'opacity-60' : 'opacity-20'}`}>
-                                <path d="M30 40 L30 10 L70 10 L70 40 L85 70 L85 180 L15 180 L15 70 Z" stroke="white" strokeWidth="3" strokeDasharray="5,5" />
-                                <rect x="38" y="170" width="24" height="4" fill="white" fillOpacity="0.6" />
-                                <text x="50" y="150" textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="bold">Botol</text>
-                              </svg>
-                            </div>
-                            
-                            {/* Reference object guide - positioned separately */}
-                            <div className="absolute w-24 h-36" style={{ 
-                              bottom: '6%', 
-                              left: '50%', 
-                              transform: 'translateX(-50%)' 
-                            }}>
-                              <svg width="100%" height="100%" viewBox="0 0 40 60" fill="none" xmlns="http://www.w3.org/2000/svg" className={`transition-opacity duration-300 ${isPhoneAligned ? 'opacity-70' : 'opacity-30'}`}>
-                                <rect x="2" y="2" width="36" height="56" stroke="#00ff00" strokeWidth="2" strokeDasharray="4,2" />
-                                <text x="20" y="45" textAnchor="middle" fill="#00ff00" fontSize="5" fontWeight="bold">Referensi</text>
-                                <text x="20" y="50" textAnchor="middle" fill="#00ff00" fontSize="5">10×15 cm</text>
-                              </svg>
-                            </div>
+                            {orientationSupported !== false && (
+                              <>
+                                {/* Bottle silhouette guide - positioned with pixel precision */}
+                                <div className="absolute w-32 h-64" style={{ 
+                                  top: '46%', 
+                                  left: '54%', 
+                                  transform: 'translate(-50%, -50%)' 
+                                }}>
+                                  <svg width="80%" height="80%" viewBox="0 0 100 200" fill="none" xmlns="http://www.w3.org/2000/svg" className={`transition-opacity duration-300 ${isPhoneAligned ? 'opacity-60' : 'opacity-20'}`}>
+                                    <path d="M30 40 L30 10 L70 10 L70 40 L85 70 L85 180 L15 180 L15 70 Z" stroke="white" strokeWidth="3" strokeDasharray="5,5" />
+                                    <rect x="38" y="170" width="24" height="4" fill="white" fillOpacity="0.6" />
+                                    <text x="50" y="150" textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="bold">Botol</text>
+                                  </svg>
+                                </div>
+                                
+                                {/* Reference object guide - positioned separately */}
+                                <div className="absolute w-24 h-36" style={{ 
+                                  bottom: '6%', 
+                                  left: '50%', 
+                                  transform: 'translateX(-50%)' 
+                                }}>
+                                  <svg width="100%" height="100%" viewBox="0 0 40 60" fill="none" xmlns="http://www.w3.org/2000/svg" className={`transition-opacity duration-300 ${isPhoneAligned ? 'opacity-70' : 'opacity-30'}`}>
+                                    <rect x="2" y="2" width="36" height="56" stroke="#00ff00" strokeWidth="2" strokeDasharray="4,2" />
+                                    <text x="20" y="45" textAnchor="middle" fill="#00ff00" fontSize="5" fontWeight="bold">Referensi</text>
+                                    <text x="20" y="50" textAnchor="middle" fill="#00ff00" fontSize="5">10×15 cm</text>
+                                  </svg>
+                                </div>
+                              </>
+                            )}
                           </div>
                         )}
                     </div>
@@ -1589,7 +1616,7 @@ export default function ScanPage() {
                     </button>
                   )}
                   <p className="mb-4 text-sm text-[var(--color-muted)]">
-                    {orientationPermission === 'granted' ? (
+                    {orientationPermission === 'granted' && orientationSupported === true ? (
                       isPhoneAligned ? 
                         'Perfect alignment! Tap to capture' : 
                         'Align your phone level and straight'
@@ -1600,19 +1627,19 @@ export default function ScanPage() {
                 </div>
                 <button
                   onClick={captureAndScan}
-                  disabled={isScanning || (orientationPermission === 'granted' && !isPhoneAligned)}
+                  disabled={isScanning || (orientationPermission === 'granted' && orientationSupported === true && !isPhoneAligned)}
                   aria-label="Capture image"
                   className={`flex items-center justify-center w-24 h-24 rounded-full [box-shadow:var(--shadow-fab)] active:scale-95 transition-all duration-300 ${
-                    isScanning || (orientationPermission === 'granted' && !isPhoneAligned) 
+                    isScanning || (orientationPermission === 'granted' && orientationSupported === true && !isPhoneAligned) 
                       ? 'opacity-50 cursor-not-allowed' 
                       : 'opacity-100'
                   } ${
-                    orientationPermission === 'granted' && isPhoneAligned 
+                    orientationPermission === 'granted' && orientationSupported === true && isPhoneAligned 
                       ? 'animate-pulse' 
                       : ''
                   }`}
                   style={{ 
-                    background: orientationPermission === 'granted' && isPhoneAligned 
+                    background: orientationPermission === 'granted' && orientationSupported === true && isPhoneAligned 
                       ? 'var(--color-success)' 
                       : 'var(--color-primary-700)' 
                   }}
@@ -1621,11 +1648,16 @@ export default function ScanPage() {
                 </button>
                 
                 {/* Alignment help text */}
-                {orientationPermission === 'granted' && !isPhoneAligned && (
+                {orientationPermission === 'granted' && orientationSupported === true && !isPhoneAligned && (
                   <div className="text-center text-xs text-[var(--color-muted)] max-w-[280px]">
                     <p>Hold your phone steady and vertical for accurate measurements</p>
-                    <p className="mt-1">Target: Tilt ≤10° | Vertical 90-100°</p>
+                    <p className="mt-1">Target: Tilt ≤15° | Vertical 90-105°</p>
                     <p className="text-[var(--color-warning)]">Current: Tilt {Math.abs(orientation.gamma).toFixed(0)}° | Vertical {Math.abs(orientation.beta).toFixed(0)}°</p>
+                  </div>
+                )}
+                {orientationSupported === false && (
+                  <div className="text-center text-xs text-[var(--color-muted)] max-w-[280px]">
+                    <p>Device motion sensors not available. You can still capture manually.</p>
                   </div>
                 )}
               </div>
