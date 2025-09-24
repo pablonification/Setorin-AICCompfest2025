@@ -2,6 +2,7 @@
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <WebServer.h>
+#include <ArduinoWebsockets.h>
 #include <ArduinoJson.h>
 #include <ESP32Servo.h>
 #include <time.h>
@@ -18,6 +19,12 @@ const char* password = "1234nais";
 // Server Configuration
 const char* serverUrl = "https://api.setorin.app";
 
+// WebSocket Configuration (primary channel)
+// Production: wss://api.setorin.app/ws/ESP32-SPARTANS
+const char* websocketHost = "api.setorin.app";
+const int websocketPort = 443; // 443 for wss (secure), 80 for ws
+const char* websocketPathPrefix = "/ws/"; // final path will be /ws/<deviceId>
+
 // Device Configuration
 const char* deviceId = "ESP32-SPARTANS";
 const char* firmwareVersion = "2.1.0";
@@ -25,9 +32,16 @@ const char* location = "Main Entrance";
 
 // Hardware Configuration
 #define SERVO_PIN 18
-#define SERVO_CLOSED_POSITION 38
+#define SERVO_CLOSED_POSITION 39
 #define SERVO_OPEN_POSITION 180
 #define STATUS_LED_PIN 2  // Built-in LED on most ESP32 boards
+
+// Ultrasonic Sensor Configuration (HC-SR04)
+#define ULTRASONIC_TRIG_PIN 4
+#define ULTRASONIC_ECHO_PIN 5  // Use voltage divider: Echo -> 2.2kΩ -> Pin5 -> 1kΩ -> GND
+#define ULTRASONIC_MAX_DISTANCE 400  // Maximum distance in cm
+#define DEPOSIT_TIMEOUT_MS 15000     // 15 seconds timeout for deposit
+#define DEPOSIT_DETECTION_THRESHOLD 10  // cm - distance change to detect deposit
 
 // ============================================================================
 // GLOBAL OBJECTS AND VARIABLES
@@ -38,6 +52,28 @@ HTTPClient http;
 WebServer server(80);  // HTTP server on port 80 for receiving commands
 Servo lidServo;  // Using Servo class from ESP32Servo library
 Preferences preferences;
+using namespace websockets;
+
+// WebSocket objects and state
+WebsocketsClient wsClient;
+bool wsConnected = false;
+unsigned long lastWsConnectAttempt = 0;
+const unsigned long WS_RECONNECT_BACKOFF_MIN = 2000;
+const unsigned long WS_RECONNECT_BACKOFF_MAX = 30000;
+unsigned long wsBackoff = WS_RECONNECT_BACKOFF_MIN;
+bool wsInitialized = false;
+
+// Forward declarations (WebSocket)
+void setupWebSocket();
+bool connectWebSocket(bool immediate);
+void handleWebSocketLoop();
+void onWsMessage(WebsocketsMessage message);
+void onWsEvent(WebsocketsEvent event, String data);
+
+// Forward declarations (Ultrasonic)
+void initializeUltrasonic();
+float readUltrasonicDistance();
+void handleDepositDetection();
 
 // Timing Constants
 const unsigned long STATUS_INTERVAL = 30000;      // 30 seconds
@@ -55,9 +91,27 @@ unsigned long lastReconnectAttempt = 0;
 int connectionRetries = 0;
 const int MAX_RETRIES = 5;
 
+// Ultrasonic State Variables
+enum DepositState {
+  IDLE,
+  AWAIT_DEPOSIT,
+  DEPOSIT_DETECTED
+};
+DepositState depositState = IDLE;
+float baselineDistance = 0;
+unsigned long depositTimeoutStart = 0;
+unsigned long lastServoAction = 0;
+
+// Performance optimization variables
+unsigned long lastSuccessfulPoll = 0;
+unsigned long lastCommand = 0;
+const unsigned long MIN_COMMAND_INTERVAL = 2000; // 2 seconds between commands
+bool pollingInProgress = false;
+bool enablePollingFallback = true; // set true to poll when WS is not connected
+
 // Debug Configuration
-bool debugMode = true;  // Set to false to reduce serial output
-bool verboseAPI = true; // Set to false to reduce API debug logs
+bool debugMode = false;  // Set to false to reduce serial output
+bool verboseAPI = false; // Set to false to reduce API debug logs
 
 // ============================================================================
 // ROOT CA CERTIFICATE FOR HTTPS
@@ -120,6 +174,9 @@ void setup() {
   // Initialize hardware
   initializeHardware();
   
+  // Initialize ultrasonic sensor
+  initializeUltrasonic();
+  
   // Connect to WiFi
   connectWiFi();
   
@@ -128,6 +185,9 @@ void setup() {
   
   // Setup HTTP server for receiving commands
   setupHTTPServer();
+
+  // Setup WebSocket (primary communication)
+  setupWebSocket();
   
   // Register device with backend
   registerDevice();
@@ -137,9 +197,10 @@ void setup() {
   lastHeartbeat = millis();
   
   Serial.println("✅ ESP32 SmartBin initialized successfully!");
-  Serial.println("🚀 Device is now operational with HYBRID communication!");
+  Serial.println("🚀 Communication: WebSocket-first with HTTP polling fallback");
   Serial.println("📡 DIRECT HTTP: Backend can send commands to ESP32 HTTP server");
-  Serial.println("🔍 POLLING: ESP32 checks for queued commands every 5 seconds");
+  Serial.println("� WEBSOCKET: Server can push commands instantly over persistent connection");
+  Serial.println("�🔍 POLLING (fallback): ESP32 checks queued commands if WS disconnected");
   Serial.println("🌐 CROSS-NETWORK: Works across any network topology");
   Serial.println("🎯 Ready to receive commands from SmartBin app");
   Serial.println("🐛 Type 'debug' for debug commands or 'help' for all commands");
@@ -185,14 +246,149 @@ void loop() {
   // Handle HTTP server requests
   server.handleClient();
 
-  // Poll for remote commands from backend (cross-network communication)
-  pollForRemoteCommands();
+  // WebSocket maintenance
+  handleWebSocketLoop();
+
+  // Poll for remote commands only if WS not connected or fallback forced
+  if (enablePollingFallback && !wsConnected) {
+    pollForRemoteCommands();
+  }
 
   // Handle serial commands (for manual testing)
   handleSerialCommands();
 
+  // Handle ultrasonic deposit detection
+  handleDepositDetection();
+
   // Small delay to prevent watchdog issues
   delay(100);
+}
+
+// ============================================================================
+// WEBSOCKET CLIENT (primary channel)
+// ============================================================================
+
+void onWsMessage(WebsocketsMessage message) {
+  String data = message.data();
+  if (debugMode) {
+    Serial.println("📨 WS message: " + data);
+  }
+
+  DynamicJsonDocument doc(1024);
+  DeserializationError err = deserializeJson(doc, data);
+  if (err) {
+    Serial.print("❌ WS JSON parse error: ");
+    Serial.println(err.c_str());
+    return;
+  }
+
+  // Accept either {"action":"open|close", "duration_seconds":N}
+  // or simulator schema {"cmd":"open|close"}
+  String action = doc["action"] | "";
+  String cmd = doc["cmd"] | "";
+  int duration = doc["duration_seconds"] | 3;
+  if (duration < 1 || duration > 30) duration = 3;
+
+  if (action == "open" || cmd == "open") {
+    Serial.println("🚪 [WS] Open command received");
+    openLid(duration);
+  } else if (action == "close" || cmd == "close") {
+    Serial.println("🔒 [WS] Close command received");
+    closeLid();
+  } else if (doc.containsKey("event")) {
+    // Events from server/simulator; log for visibility
+    String ev = doc["event"].as<String>();
+    if (debugMode) Serial.println("🎙️ WS event: " + ev);
+  } else {
+    if (debugMode) Serial.println("❓ WS unknown payload");
+  }
+}
+
+void onWsEvent(WebsocketsEvent event, String data) {
+  switch (event) {
+    case WebsocketsEvent::ConnectionOpened:
+      wsConnected = true;
+      wsBackoff = WS_RECONNECT_BACKOFF_MIN;
+      Serial.println("🔗 WebSocket connected");
+      {
+        DynamicJsonDocument hello(256);
+        hello["type"] = "hello";
+        hello["device_id"] = deviceId;
+        hello["firmware_version"] = firmwareVersion;
+        String payload;
+        serializeJson(hello, payload);
+        wsClient.send(payload);
+      }
+      break;
+    case WebsocketsEvent::ConnectionClosed:
+      wsConnected = false;
+      Serial.println("❌ WebSocket disconnected");
+      break;
+    case WebsocketsEvent::GotPing:
+      if (debugMode) Serial.println("🏓 WS ping");
+      break;
+    case WebsocketsEvent::GotPong:
+      if (debugMode) Serial.println("🏓 WS pong");
+      break;
+  }
+}
+
+void setupWebSocket() {
+  if (wsInitialized) return;
+
+  // TLS root CA for wss://
+  // ArduinoWebsockets will validate server if CA is provided.
+  wsClient.setCACert(rootCACertificate);
+  // For testing only (insecure): wsClient.setInsecure();
+
+  wsClient.onMessage(onWsMessage);
+  wsClient.onEvent(onWsEvent);
+
+  wsInitialized = true;
+  // Attempt initial connect immediately
+  connectWebSocket(true);
+}
+
+bool connectWebSocket(bool immediate) {
+  String path = String(websocketPathPrefix) + String(deviceId);
+  unsigned long now = millis();
+  if (!immediate && (now - lastWsConnectAttempt) < wsBackoff) {
+    return false;
+  }
+  lastWsConnectAttempt = now;
+
+  Serial.print("🔌 Connecting WS to ");
+  Serial.print(websocketHost);
+  Serial.print(":");
+  Serial.print(websocketPort);
+  Serial.print(" path ");
+  Serial.println(path);
+
+  // Prefer URL-based connect to select ws/wss explicitly
+  String scheme = (websocketPort == 443) ? "wss://" : "ws://";
+  String url = scheme + String(websocketHost) + ":" + String(websocketPort) + path;
+  bool ok = wsClient.connect(url);
+  if (!ok) {
+    wsConnected = false;
+    wsBackoff = min(WS_RECONNECT_BACKOFF_MAX, wsBackoff * 2);
+    Serial.printf("❌ WS connect failed, backoff to %lums\n", wsBackoff);
+  } else {
+    wsConnected = true;
+    wsBackoff = WS_RECONNECT_BACKOFF_MIN;
+  }
+  return ok;
+}
+
+void handleWebSocketLoop() {
+  if (!wsInitialized) return;
+
+  if (wsConnected) {
+    wsClient.poll();
+    return;
+  }
+
+  // Attempt reconnect with backoff
+  connectWebSocket(false);
 }
 
 // ============================================================================
@@ -213,6 +409,167 @@ void initializeHardware() {
   
   Serial.println("✅ Servo initialized and positioned to closed");
   Serial.println("✅ Status LED initialized");
+}
+
+// ============================================================================
+// ULTRASONIC SENSOR FUNCTIONS
+// ============================================================================
+
+void initializeUltrasonic() {
+  Serial.println("🔊 Initializing HC-SR04 ultrasonic sensor...");
+  
+  pinMode(ULTRASONIC_TRIG_PIN, OUTPUT);
+  pinMode(ULTRASONIC_ECHO_PIN, INPUT);
+  
+  digitalWrite(ULTRASONIC_TRIG_PIN, LOW);
+  delay(100);
+  
+  // Take baseline reading
+  float total = 0;
+  int validReadings = 0;
+  
+  for (int i = 0; i < 5; i++) {
+    float distance = readUltrasonicDistance();
+    if (distance > 0 && distance < ULTRASONIC_MAX_DISTANCE) {
+      total += distance;
+      validReadings++;
+    }
+    delay(60); // HC-SR04 needs 60ms between readings
+  }
+  
+  if (validReadings > 0) {
+    baselineDistance = total / validReadings;
+    Serial.printf("✅ Ultrasonic sensor initialized - baseline: %.1f cm\n", baselineDistance);
+    Serial.println("⚠️ IMPORTANT: Use voltage divider on Echo pin (2.2kΩ + 1kΩ) for 5V protection!");
+  } else {
+    baselineDistance = 30.0; // Default fallback
+    Serial.println("⚠️ Ultrasonic sensor readings failed - using default baseline");
+  }
+  
+  depositState = IDLE;
+}
+
+float readUltrasonicDistance() {
+  // Avoid reading during servo movement (EMI protection)
+  if (millis() - lastServoAction < 250) {
+    return -1; // Invalid reading during servo movement
+  }
+  
+  digitalWrite(ULTRASONIC_TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(ULTRASONIC_TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(ULTRASONIC_TRIG_PIN, LOW);
+  
+  // Non-blocking pulseIn with timeout
+  unsigned long duration = pulseIn(ULTRASONIC_ECHO_PIN, HIGH, 30000); // 30ms timeout
+  
+  if (duration == 0) {
+    return -1; // Timeout or no echo
+  }
+  
+  float distance = (duration * 0.034) / 2; // Convert to cm
+  
+  // Validate reading
+  if (distance < 2 || distance > ULTRASONIC_MAX_DISTANCE) {
+    return -1; // Invalid reading
+  }
+  
+  return distance;
+}
+
+void handleDepositDetection() {
+  switch (depositState) {
+    case IDLE:
+      // Do nothing, waiting for lid open command
+      break;
+      
+    case AWAIT_DEPOSIT:
+      {
+        // Check timeout
+        if (millis() - depositTimeoutStart > DEPOSIT_TIMEOUT_MS) {
+          Serial.println("⏰ Deposit timeout - no bottle detected");
+          sendDepositEvent("timeout");
+          depositState = IDLE;
+          break;
+        }
+        
+        // Read distance with simple filtering (median of 3)
+        float readings[3];
+        int validCount = 0;
+        
+        for (int i = 0; i < 3; i++) {
+          readings[i] = readUltrasonicDistance();
+          if (readings[i] > 0) validCount++;
+          delay(20);
+        }
+        
+        if (validCount == 0) break; // No valid readings
+        
+        // Simple median filter
+        if (validCount >= 2) {
+          for (int i = 0; i < 2; i++) {
+            for (int j = i + 1; j < 3; j++) {
+              if (readings[i] > readings[j]) {
+                float temp = readings[i];
+                readings[i] = readings[j];
+                readings[j] = temp;
+              }
+            }
+          }
+        }
+        
+        float currentDistance = readings[validCount/2]; // Median
+        
+        // Check for deposit (significant distance decrease)
+        if (baselineDistance - currentDistance > DEPOSIT_DETECTION_THRESHOLD) {
+          Serial.printf("🎯 Bottle detected! Distance changed from %.1f to %.1f cm\n", 
+                       baselineDistance, currentDistance);
+          sendDepositEvent("detected");
+          depositState = DEPOSIT_DETECTED;
+        }
+      }
+      break;
+      
+    case DEPOSIT_DETECTED:
+      // Wait in this state until lid closes
+      break;
+  }
+}
+
+void sendDepositEvent(const char* eventType) {
+  if (!wsConnected && WiFi.status() != WL_CONNECTED) {
+    Serial.println("❌ Cannot send deposit event - no connection");
+    return;
+  }
+  
+  DynamicJsonDocument doc(256);
+  doc["type"] = "deposit_event";
+  doc["device_id"] = deviceId;
+  doc["event"] = eventType;
+  doc["timestamp"] = getCurrentTimestamp();
+  doc["baseline_distance"] = baselineDistance;
+  
+  String payload;
+  serializeJson(doc, payload);
+  
+  if (wsConnected) {
+    wsClient.send(payload);
+    Serial.println("📨 Deposit event sent via WebSocket: " + String(eventType));
+  } else {
+    // Fallback to HTTP POST if WebSocket not available
+    String endpoint = String(serverUrl) + "/api/esp32/deposit-event";
+    http.begin(wifiClient, endpoint);
+    http.addHeader("Content-Type", "application/json");
+    int responseCode = http.POST(payload);
+    http.end();
+    
+    if (responseCode > 0) {
+      Serial.println("📨 Deposit event sent via HTTP: " + String(eventType));
+    } else {
+      Serial.println("❌ Failed to send deposit event");
+    }
+  }
 }
 
 // ============================================================================
@@ -576,16 +933,28 @@ void openLid(int durationSeconds) {
     return;
   }
   
+  // Input validation
+  if (durationSeconds < 1 || durationSeconds > 30) {
+    durationSeconds = 3; // Default to 3 seconds if invalid
+  }
+  
   Serial.print("🚪 Opening lid for ");
   Serial.print(durationSeconds);
   Serial.println(" seconds...");
 
-  // Move servo to open position
+  // Move servo to open position with error checking
+  lastServoAction = millis(); // Record servo movement time
   lidServo.write(SERVO_OPEN_POSITION);
+  delay(100); // Give servo time to move
   lidOpen = true;
   Serial.println("✅ Lid opened");
 
-  // Blink LED to indicate lid is open
+  // Start deposit detection
+  depositState = AWAIT_DEPOSIT;
+  depositTimeoutStart = millis();
+  Serial.println("🔍 Starting bottle deposit detection...");
+
+  // Blink LED to indicate lid is open (non-blocking)
   for (int i = 0; i < 3; i++) {
     digitalWrite(STATUS_LED_PIN, HIGH);
     delay(200);
@@ -593,14 +962,32 @@ void openLid(int durationSeconds) {
     delay(200);
   }
 
-  // Wait for the specified duration
+  // Non-blocking wait for the specified duration
   Serial.println("⏳ Waiting for bottle drop...");
-  delay(durationSeconds * 1000);
+  unsigned long startTime = millis();
+  while (millis() - startTime < (durationSeconds * 1000)) {
+    // Allow other operations to continue including deposit detection
+    server.handleClient();
+    handleWebSocketLoop();
+    handleDepositDetection();
+    handleSerialCommands();
+    yield(); // Allow ESP32 to handle other tasks
+    delay(50);
+    
+    // Exit early if deposit detected
+    if (depositState == DEPOSIT_DETECTED) {
+      Serial.println("🎯 Bottle deposit confirmed, closing lid early");
+      break;
+    }
+  }
 
   // Close the lid
   Serial.println("🔒 Closing lid...");
+  lastServoAction = millis(); // Record servo movement time
   lidServo.write(SERVO_CLOSED_POSITION);
+  delay(100); // Give servo time to move
   lidOpen = false;
+  depositState = IDLE; // Reset deposit detection state
   Serial.println("✅ Lid closed");
 
   Serial.println("🎉 Lid sequence completed!");
@@ -616,8 +1003,10 @@ void closeLid() {
   }
   
   Serial.println("🔒 Closing lid...");
+  lastServoAction = millis(); // Record servo movement time
   lidServo.write(SERVO_CLOSED_POSITION);
   lidOpen = false;
+  depositState = IDLE; // Reset deposit detection state
   Serial.println("✅ Lid closed");
   
   // Report completion to backend
@@ -689,30 +1078,52 @@ void blinkStatusLED(int count, int delayMs) {
 // REMOTE COMMAND POLLING (for cross-network communication)
 // ============================================================================
 
+// Function declarations
+void markCommandComplete(String commandId);
+
 void pollForRemoteCommands() {
-  if (WiFi.status() != WL_CONNECTED) {
+  if (WiFi.status() != WL_CONNECTED || pollingInProgress) {
     return;
   }
 
   static unsigned long lastPoll = 0;
-  const unsigned long POLL_INTERVAL = 5000; // Poll every 5 seconds
+  const unsigned long POLL_INTERVAL = 2000; // Poll every 5 seconds
+  
+  if (millis() - lastSuccessfulPoll < 1000) {
+    return;
+  }
+  
+  // Exponential backoff on failures
+  unsigned long backoffDelay = min(30000, 1000 * (1 << connectionRetries));
+  if (millis() - lastPoll < backoffDelay) {
+    return;
+  }
 
   if (millis() - lastPoll >= POLL_INTERVAL) {
     lastPoll = millis();
+    pollingInProgress = true;
 
-    HTTPClient http;
+    // Use global HTTPClient instead of creating local one
     String url = String(serverUrl) + "/api/esp32/commands/" + String(deviceId);
 
-    Serial.println("🔍 Polling for remote commands from: " + url);
+    if (debugMode) {
+      Serial.println("🔍 Polling for remote commands from: " + url);
+    }
 
     http.begin(wifiClient, url);
     http.addHeader("Content-Type", "application/json");
+    http.setTimeout(5000); // 5 second timeout
 
     int httpResponseCode = http.GET();
 
     if (httpResponseCode == 200) {
       String response = http.getString();
-      Serial.println("📥 Command poll response: " + response);
+      lastSuccessfulPoll = millis();
+      connectionRetries = 0; // Reset retry counter on success
+      
+      if (debugMode) {
+        Serial.println("📥 Command poll response: " + response);
+      }
 
       DynamicJsonDocument doc(1024);
       DeserializationError error = deserializeJson(doc, response);
@@ -725,42 +1136,57 @@ void pollForRemoteCommands() {
           int duration = command["duration_seconds"] | 3;
           String commandId = command["id"];
 
+          // Input validation
+          if (duration < 1 || duration > 30) {
+            duration = 3; // Default to 3 seconds if invalid
+          }
+
           Serial.printf("🎯 Received remote command: %s (duration: %ds, ID: %s)\n",
                        action.c_str(), duration, commandId.c_str());
 
           if (action == "open") {
             Serial.println("🚪 Executing remote open command");
             openLid(duration);
-
-            // Mark command as complete
-            String completeUrl = String(serverUrl) + "/api/esp32/commands/" + commandId + "/complete";
-            Serial.println("✅ Marking command complete: " + completeUrl);
-
-            http.begin(wifiClient, completeUrl);
-            http.PUT("");
-            http.end();
+            markCommandComplete(commandId);
 
           } else if (action == "close") {
             Serial.println("🔒 Executing remote close command");
             closeLid();
-
-            // Mark command as complete
-            String completeUrl = String(serverUrl) + "/api/esp32/commands/" + commandId + "/complete";
-            Serial.println("✅ Marking command complete: " + completeUrl);
-
-            http.begin(wifiClient, completeUrl);
-            http.PUT("");
-            http.end();
+            markCommandComplete(commandId);
           }
         }
       } else {
         Serial.println("❌ Failed to parse command response: " + String(error.c_str()));
       }
     } else {
-      Serial.printf("❌ Command poll failed with HTTP %d\n", httpResponseCode);
+      connectionRetries++;
+      Serial.printf("❌ Command poll failed with HTTP %d (retry %d/%d)\n", 
+                   httpResponseCode, connectionRetries, MAX_RETRIES);
     }
 
     http.end();
+    pollingInProgress = false;
+  }
+}
+
+void markCommandComplete(String commandId) {
+  if (WiFi.status() != WL_CONNECTED) {
+    return;
+  }
+  
+  String completeUrl = String(serverUrl) + "/api/esp32/commands/" + commandId + "/complete";
+  
+  if (debugMode) {
+    Serial.println("✅ Marking command complete: " + completeUrl);
+  }
+  
+  http.begin(wifiClient, completeUrl);
+  http.setTimeout(3000);
+  int responseCode = http.PUT("");
+  http.end();
+  
+  if (debugMode) {
+    Serial.printf("Command completion response: %d\n", responseCode);
   }
 }
 
@@ -779,6 +1205,16 @@ void handleSerialCommands() {
     } else if (command == "close") {
       Serial.println("🔒 Manual lid close command received");
       closeLid();
+    } else if (command == "ultrasonic") {
+      Serial.printf("🔊 Manual ultrasonic reading: %.1f cm (baseline: %.1f cm)\n", 
+                   readUltrasonicDistance(), baselineDistance);
+    } else if (command == "deposit") {
+      Serial.println("🔍 Testing deposit detection...");
+      depositState = AWAIT_DEPOSIT;
+      depositTimeoutStart = millis();
+    } else if (command == "baseline") {
+      Serial.println("📏 Recalibrating ultrasonic baseline...");
+      initializeUltrasonic();
     } else if (command == "status") {
       Serial.println("📊 Manual status request");
       sendStatusUpdate();
@@ -807,20 +1243,24 @@ void handleSerialCommands() {
       Serial.println("  debug ssl    - Test SSL connection");
       Serial.println("  debug heap   - Show memory usage");
       Serial.println("  debug config - Show full configuration");
+      Serial.println("  debug ws     - Show WS help");
     } else if (command.startsWith("debug ")) {
       handleDebugCommands(command.substring(6));
     } else if (command == "help") {
       Serial.println("📖 Available commands:");
-      Serial.println("  open     - Open lid for 3 seconds");
-      Serial.println("  close    - Close lid immediately");
-      Serial.println("  status   - Send status update");
-      Serial.println("  server   - Show HTTP server endpoints");
-      Serial.println("  poll     - Manually poll for remote commands");
-      Serial.println("  info     - Print system information");
-      Serial.println("  register - Re-register device");
-      Serial.println("  restart  - Restart ESP32");
-      Serial.println("  debug    - Show debug commands");
-      Serial.println("  help     - Show this help");
+      Serial.println("  open       - Open lid for 3 seconds");
+      Serial.println("  close      - Close lid immediately");
+      Serial.println("  ultrasonic - Read ultrasonic distance");
+      Serial.println("  deposit    - Test deposit detection");
+      Serial.println("  baseline   - Recalibrate ultrasonic baseline");
+      Serial.println("  status     - Send status update");
+      Serial.println("  server     - Show HTTP server endpoints");
+      Serial.println("  poll       - Manually poll for remote commands");
+      Serial.println("  info       - Print system information");
+      Serial.println("  register   - Re-register device");
+      Serial.println("  restart    - Restart ESP32");
+      Serial.println("  debug      - Show debug commands");
+      Serial.println("  help       - Show this help");
     } else if (command.length() > 0) {
       Serial.printf("❌ Unknown command: %s\n", command.c_str());
       Serial.println("Type 'help' for available commands");
@@ -835,6 +1275,10 @@ void printSystemInfo() {
   Serial.printf("Location: %s\n", location);
   Serial.printf("Registered: %s\n", isRegistered ? "Yes" : "No");
   Serial.printf("Lid Status: %s\n", lidOpen ? "Open" : "Closed");
+  Serial.printf("Deposit State: %s\n", 
+               depositState == IDLE ? "Idle" : 
+               depositState == AWAIT_DEPOSIT ? "Awaiting Deposit" : "Detected");
+  Serial.printf("Ultrasonic Baseline: %.1f cm\n", baselineDistance);
   Serial.printf("Free Heap: %d bytes\n", ESP.getFreeHeap());
   Serial.printf("Chip ID: %06X\n", (uint32_t)ESP.getEfuseMac());
   Serial.printf("CPU Frequency: %d MHz\n", ESP.getCpuFreqMHz());
@@ -842,6 +1286,7 @@ void printSystemInfo() {
   Serial.printf("WiFi RSSI: %d dBm\n", WiFi.RSSI());
   Serial.printf("IP Address: %s\n", WiFi.localIP().toString().c_str());
   Serial.printf("Uptime: %lu seconds\n", millis() / 1000);
+  Serial.printf("WebSocket: %s (host=%s, port=%d)\n", wsConnected ? "connected" : "disconnected", websocketHost, websocketPort);
   Serial.printf("Battery Level: %.1f%%\n", readBatteryLevel());
   Serial.printf("Temperature: %.1f°C\n", readTemperature());
   Serial.println();
@@ -892,9 +1337,20 @@ void handleControlRequest() {
     return;
   }
 
+  // Rate limiting
+  unsigned long currentTime = millis();
+  if (currentTime - lastCommand < MIN_COMMAND_INTERVAL) {
+    server.send(429, "application/json", "{\"error\":\"Too Many Requests\",\"retry_after\":2}");
+    return;
+  }
+  lastCommand = currentTime;
+
   String requestBody = server.arg("plain");
   Serial.println("🎯 DIRECT SERVER COMMAND RECEIVED!");
-  Serial.println("📥 Request: " + requestBody);
+  
+  if (debugMode) {
+    Serial.println("📥 Request: " + requestBody);
+  }
   
   debugLog("Processing direct server command: " + requestBody);
 
@@ -910,6 +1366,11 @@ void handleControlRequest() {
 
   String action = doc["action"];
   int durationSeconds = doc["duration_seconds"] | 3;
+  
+  // Input validation
+  if (durationSeconds < 1 || durationSeconds > 30) {
+    durationSeconds = 3;
+  }
 
   Serial.printf("🔧 Executing direct command: %s (duration: %ds)\n", action.c_str(), durationSeconds);
 
@@ -924,8 +1385,15 @@ void handleControlRequest() {
     
     // Execute lid opening sequence
     lidServo.write(SERVO_OPEN_POSITION);
+    delay(100); // Give servo time to move
     lidOpen = true;
+    lastServoAction = millis(); // Record servo movement time
     Serial.println("✅ [DIRECT] Lid opened");
+
+    // Start deposit detection
+    depositState = AWAIT_DEPOSIT;
+    depositTimeoutStart = millis();
+    Serial.println("🔍 [DIRECT] Starting deposit detection...");
 
     // Blink LED rapidly to indicate direct server command
     for (int i = 0; i < 8; i++) {
@@ -938,14 +1406,31 @@ void handleControlRequest() {
     // Send immediate response
     server.send(200, "application/json", "{\"status\":\"lid_opened\",\"message\":\"Lid opened successfully\"}");
     
-    // Wait for duration in background
+    // Non-blocking wait for duration
     Serial.printf("⏳ [DIRECT] Waiting %d seconds for bottle drop...\n", durationSeconds);
-    delay(durationSeconds * 1000);
+    unsigned long startTime = millis();
+    while (millis() - startTime < (durationSeconds * 1000)) {
+      server.handleClient();
+      handleWebSocketLoop();
+      handleDepositDetection();
+      handleSerialCommands();
+      yield();
+      delay(50);
+      
+      // Exit early if deposit detected
+      if (depositState == DEPOSIT_DETECTED) {
+        Serial.println("🎯 [DIRECT] Deposit confirmed, closing lid early");
+        break;
+      }
+    }
 
     // Close lid
     Serial.println("🔒 [DIRECT] Closing lid...");
+    lastServoAction = millis(); // Record servo movement time
     lidServo.write(SERVO_CLOSED_POSITION);
+    delay(100); // Give servo time to move
     lidOpen = false;
+    depositState = IDLE; // Reset deposit detection state
     Serial.println("✅ [DIRECT] Lid closed");
     Serial.println("🎉 [DIRECT] Lid sequence completed!");
 
@@ -957,8 +1442,11 @@ void handleControlRequest() {
     }
     
     Serial.println("🔒 [DIRECT] Closing lid...");
+    lastServoAction = millis(); // Record servo movement time
     lidServo.write(SERVO_CLOSED_POSITION);
+    delay(100); // Give servo time to move
     lidOpen = false;
+    depositState = IDLE; // Reset deposit detection state
     Serial.println("✅ [DIRECT] Lid closed");
     
     server.send(200, "application/json", "{\"status\":\"lid_closed\",\"message\":\"Lid closed successfully\"}");
@@ -1023,6 +1511,27 @@ void handleDebugCommands(String debugCmd) {
     printMemoryUsage();
   } else if (debugCmd == "config") {
     printFullConfiguration();
+  } else if (debugCmd == "ws") {
+    Serial.println("🛰️ WebSocket debug:");
+    Serial.printf("  State: %s\n", wsConnected ? "connected" : "disconnected");
+    Serial.printf("  Host: %s\n", websocketHost);
+    Serial.printf("  Port: %d\n", websocketPort);
+    Serial.printf("  Path: %s%s\n", websocketPathPrefix, deviceId);
+    Serial.printf("  Fallback polling: %s\n", enablePollingFallback ? "enabled" : "disabled");
+    Serial.println("  Commands:");
+    Serial.println("    debug ws reconnect     - Force WS reconnect");
+    Serial.println("    debug ws fallback on   - Enable polling fallback");
+    Serial.println("    debug ws fallback off  - Disable polling fallback");
+  } else if (debugCmd == "ws reconnect") {
+    wsConnected = false;
+    wsBackoff = WS_RECONNECT_BACKOFF_MIN;
+    connectWebSocket(true);
+  } else if (debugCmd == "ws fallback on") {
+    enablePollingFallback = true;
+    Serial.println("🔁 Polling fallback enabled");
+  } else if (debugCmd == "ws fallback off") {
+    enablePollingFallback = false;
+    Serial.println("🛑 Polling fallback disabled");
   } else {
     Serial.println("❌ Unknown debug command. Type 'debug' for available options.");
   }

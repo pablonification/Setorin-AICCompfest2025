@@ -1,0 +1,920 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project_logbook>
+    <metadata>
+        <title>Ultrasonic Deposit Detection Integration</title>
+        <project>Setorin SmartBin - ESP32 Physical Deposit Confirmation</project>
+        <date_started>2025-09-24</date_started>
+        <methodology>YAGNI (You Aren't Gonna Need It) - Minimal Viable Implementation</methodology>
+        <author>GitHub Copilot Assistant</author>
+        <version>1.0</version>
+    </metadata>
+
+    <project_overview>
+        <objective>
+            Add ultrasonic sensor (HC-SR04) to ESP32 smart bin to physically confirm bottle deposits after successful scans, ensuring users actually drop bottles into the bin rather than just scanning and leaving.
+        </objective>
+        
+        <technical_requirements>
+            <requirement id="1">HC-SR04 ultrasonic sensor integration with ESP32</requirement>
+            <requirement id="2">Voltage level protection (5V → 3.3V)</requirement>
+            <requirement id="3">Non-blocking sensor readings to maintain WebSocket connectivity</requirement>
+            <requirement id="4">Basic noise filtering to reduce false positives</requirement>
+            <requirement id="5">EMI mitigation during servo operation</requirement>
+            <requirement id="6">Backend event handling for deposit confirmation</requirement>
+            <requirement id="7">Frontend UI updates for user feedback</requirement>
+            <requirement id="8">Timeout fallback if no deposit detected</requirement>
+        </technical_requirements>
+
+        <yagni_principles_applied>
+            <principle>Implement only essential safety features (voltage protection)</principle>
+            <principle>Use simple filtering (median-of-3) instead of complex algorithms</principle>
+            <principle>Minimal state machine (3 states only)</principle>
+            <principle>Basic timeout handling without retry mechanisms</principle>
+            <principle>Simple WebSocket events without complex payloads</principle>
+            <principle>No configuration interfaces or admin panels</principle>
+            <principle>No analytics, logging, or monitoring beyond basic functionality</principle>
+        </yagni_principles_applied>
+    </project_overview>
+
+    <implementation_phases>
+        
+        <!-- PHASE 0: ESP32 FIRMWARE IMPLEMENTATION -->
+        <phase id="0" status="COMPLETED" priority="CRITICAL">
+            <title>ESP32 Firmware - Ultrasonic Integration</title>
+            <duration>45 minutes</duration>
+            
+            <description>
+                Implement HC-SR04 ultrasonic sensor integration directly into existing ESP32 firmware with minimal code changes while maintaining all existing functionality.
+            </description>
+
+            <technical_changes>
+                <change type="HARDWARE_CONFIG">
+                    <file>setorin.ino</file>
+                    <location>Hardware Configuration section</location>
+                    <code_added><![CDATA[
+// Ultrasonic Sensor Configuration (HC-SR04)
+#define ULTRASONIC_TRIG_PIN 4
+#define ULTRASONIC_ECHO_PIN 5  // Use voltage divider: Echo -> 2.2kΩ -> Pin5 -> 1kΩ -> GND
+#define ULTRASONIC_MAX_DISTANCE 400  // Maximum distance in cm
+#define DEPOSIT_TIMEOUT_MS 15000     // 15 seconds timeout for deposit
+#define DEPOSIT_DETECTION_THRESHOLD 10  // cm - distance change to detect deposit
+                    ]]></code_added>
+                    <rationale>
+                        Added essential configuration constants for HC-SR04 sensor with voltage divider protection warning. 15-second timeout and 10cm threshold chosen for reliable detection without false positives.
+                    </rationale>
+                </change>
+
+                <change type="STATE_MACHINE">
+                    <file>setorin.ino</file>
+                    <location>State Variables section</location>
+                    <code_added><![CDATA[
+// Ultrasonic State Variables
+enum DepositState {
+  IDLE,
+  AWAIT_DEPOSIT,
+  DEPOSIT_DETECTED
+};
+DepositState depositState = IDLE;
+float baselineDistance = 0;
+unsigned long depositTimeoutStart = 0;
+unsigned long lastServoAction = 0;
+                    ]]></code_added>
+                    <rationale>
+                        Minimal 3-state machine: IDLE (normal), AWAIT_DEPOSIT (monitoring), DEPOSIT_DETECTED (confirmed). Tracks baseline distance and servo timing for EMI protection.
+                    </rationale>
+                </change>
+
+                <change type="SENSOR_INITIALIZATION">
+                    <file>setorin.ino</file>
+                    <location>New initializeUltrasonic() function</location>
+                    <functionality>
+                        <item>Configures GPIO pins for HC-SR04 (Trig as OUTPUT, Echo as INPUT)</item>
+                        <item>Takes 5 baseline readings and calculates average for reference</item>
+                        <item>Provides fallback baseline (30cm) if sensor readings fail</item>
+                        <item>Warns about voltage divider requirement for 5V protection</item>
+                    </functionality>
+                    <safety_features>
+                        <item>Voltage divider warning for ESP32 GPIO protection</item>
+                        <item>Invalid reading detection and filtering</item>
+                        <item>Timeout protection on sensor readings</item>
+                    </safety_features>
+                </change>
+
+                <change type="SENSOR_READING">
+                    <file>setorin.ino</file>
+                    <location>New readUltrasonicDistance() function</location>
+                    <functionality>
+                        <item>Non-blocking pulseIn() with 30ms timeout</item>
+                        <item>EMI protection: avoids readings within 250ms of servo movement</item>
+                        <item>Distance validation (2-400cm range)</item>
+                        <item>Returns -1 for invalid/timeout readings</item>
+                    </functionality>
+                    <emi_mitigation>
+                        Servo motors create electromagnetic interference that can affect ultrasonic sensors. Implementation tracks servo movement timing and gates sensor readings for 250ms after servo operations.
+                    </emi_mitigation>
+                </change>
+
+                <change type="DEPOSIT_DETECTION">
+                    <file>setorin.ino</file>
+                    <location>New handleDepositDetection() function</location>
+                    <algorithm>
+                        <step>Check current deposit state (IDLE/AWAIT_DEPOSIT/DEPOSIT_DETECTED)</step>
+                        <step>If AWAIT_DEPOSIT: Take 3 consecutive readings with 20ms intervals</step>
+                        <step>Apply median filter to reduce noise</step>
+                        <step>Compare median distance to baseline with 10cm threshold</step>
+                        <step>If significant decrease detected: transition to DEPOSIT_DETECTED</step>
+                        <step>If 15-second timeout exceeded: send timeout event</step>
+                    </algorithm>
+                    <filtering_strategy>
+                        Uses simple median-of-3 filter instead of complex algorithms. Sufficient for reducing noise while maintaining fast response time.
+                    </filtering_strategy>
+                </change>
+
+                <change type="WEBSOCKET_EVENTS">
+                    <file>setorin.ino</file>
+                    <location>New sendDepositEvent() function</location>
+                    <event_types>
+                        <event type="detected">Sent when bottle deposit confirmed via distance change</event>
+                        <event type="timeout">Sent when 15-second timeout expires without detection</event>
+                    </event_types>
+                    <payload_structure><![CDATA[
+{
+  "type": "deposit_event",
+  "device_id": "ESP32-SPARTANS", 
+  "event": "detected|timeout",
+  "timestamp": "2025-09-24T10:30:00Z",
+  "baseline_distance": 25.4
+}
+                    ]]></payload_structure>
+                    <fallback_mechanism>
+                        Primary: WebSocket transmission to backend
+                        Fallback: HTTP POST to /api/esp32/deposit-event if WebSocket unavailable
+                    </fallback_mechanism>
+                </change>
+
+                <change type="LID_CONTROL_INTEGRATION">
+                    <file>setorin.ino</file>
+                    <location>Modified openLid() function</location>
+                    <enhancements>
+                        <item>Automatically starts deposit detection when lid opens</item>
+                        <item>Closes lid early if bottle detected (instead of waiting full duration)</item>
+                        <item>Maintains non-blocking operation with WebSocket handling</item>
+                        <item>Records servo movement times for EMI protection</item>
+                    </enhancements>
+                    <integration_benefits>
+                        Zero changes required to existing scan flow - deposit detection automatically activates when lid opens via existing commands.
+                    </integration_benefits>
+                </change>
+
+                <change type="DEBUG_COMMANDS">
+                    <file>setorin.ino</file>
+                    <location>Enhanced handleSerialCommands() function</location>
+                    <new_commands>
+                        <command name="ultrasonic">Read current distance and baseline</command>
+                        <command name="deposit">Manually start deposit detection test</command>
+                        <command name="baseline">Recalibrate ultrasonic baseline distance</command>
+                    </new_commands>
+                    <testing_value>
+                        Enables manual testing and calibration without requiring full scan flow or backend connectivity.
+                    </testing_value>
+                </change>
+            </technical_changes>
+
+            <hardware_requirements>
+                <component name="HC-SR04 Ultrasonic Sensor">
+                    <specifications>
+                        <operating_voltage>5V DC</operating_voltage>
+                        <operating_current>15mA</operating_current>
+                        <ranging_distance>2cm - 400cm</ranging_distance>
+                        <accuracy>±3mm</accuracy>
+                        <measuring_angle>30°</measuring_angle>
+                    </specifications>
+                    <wiring_diagram>
+                        <connection pin="VCC" target="5V or VIN on ESP32" />
+                        <connection pin="GND" target="GND on ESP32" />
+                        <connection pin="Trig" target="GPIO4 on ESP32" />
+                        <connection pin="Echo" target="GPIO5 via voltage divider" note="CRITICAL: 5V protection required" />
+                    </wiring_diagram>
+                    <voltage_divider_protection>
+                        <purpose>HC-SR04 Echo pin outputs 5V logic which can damage ESP32 3.3V GPIO pins</purpose>
+                        <circuit>Echo Pin → 2.2kΩ resistor → GPIO5 → 1kΩ resistor → GND</circuit>
+                        <voltage_reduction>5V × (1kΩ / (2.2kΩ + 1kΩ)) = 1.56V (safe for ESP32)</voltage_reduction>
+                        <alternative>Use dedicated 5V-to-3.3V level shifter module</alternative>
+                    </voltage_divider_protection>
+                </component>
+                
+                <power_considerations>
+                    <servo_interference>
+                        Servo motors can cause power supply fluctuations and EMI that affect sensor readings. Solution: 250ms gating period after servo movement.
+                    </servo_interference>
+                    <power_supply_isolation>
+                        Consider separate power rails or decoupling capacitors if experiencing sensor instability during servo operation.
+                    </power_supply_isolation>
+                </power_considerations>
+            </hardware_requirements>
+
+            <testing_strategy>
+                <unit_tests>
+                    <test name="Voltage Divider">Verify Echo pin voltage stays below 3.3V</test>
+                    <test name="Distance Accuracy">Compare readings with known distances</test>
+                    <test name="EMI Immunity">Test readings during servo movement</test>
+                    <test name="Baseline Calibration">Verify consistent baseline readings</test>
+                </unit_tests>
+                <integration_tests>
+                    <test name="WebSocket Events">Verify deposit events reach backend</test>
+                    <test name="Lid Integration">Test automatic detection during lid sequence</test>
+                    <test name="Timeout Handling">Verify 15-second timeout triggers correctly</test>
+                </integration_tests>
+            </testing_strategy>
+
+            <deliverables>
+                <deliverable type="CODE" status="COMPLETE">
+                    Enhanced setorin.ino with ultrasonic integration (1,736 lines total, ~200 lines added)
+                </deliverable>
+                <deliverable type="DOCUMENTATION" status="COMPLETE">
+                    Inline code comments and debug command documentation
+                </deliverable>
+                <deliverable type="HARDWARE_SPEC" status="COMPLETE">
+                    Voltage divider circuit specification and wiring diagram
+                </deliverable>
+            </deliverables>
+        </phase>
+
+        <!-- PHASE 1: BACKEND IMPLEMENTATION -->
+        <phase id="1" status="COMPLETED" priority="HIGH">
+            <title>Backend - Minimal WebSocket Handler</title>
+            <duration>20 minutes</duration>
+            
+            <description>
+                Implement minimal backend infrastructure to receive, process, and store deposit detection events from ESP32 via WebSocket, following YAGNI principles with only essential functionality.
+            </description>
+
+            <technical_changes>
+                <change type="DATABASE_SCHEMA">
+                    <file>prisma/schema.prisma</file>
+                    <location>BottleScan model</location>
+                    <modification><![CDATA[
+model BottleScan {
+  // ... existing fields
+  deposit_status  String?     @default("pending") // "pending", "detected", "timeout"
+  // ... rest of model
+}
+                    ]]></modification>
+                    <rationale>
+                        Single field addition to track deposit confirmation status. Three states cover all necessary scenarios without over-engineering.
+                    </rationale>
+                    <migration_command>npx prisma migrate dev --name add-deposit-status</migration_command>
+                </change>
+
+                <change type="WEBSOCKET_HANDLER">
+                    <file>backend/src/backend/routers/esp32_device_ws.py</file>
+                    <location>WebSocket message processing loop</location>
+                    <functionality>
+                        <item>Parse incoming JSON messages from ESP32 devices</item>
+                        <item>Identify deposit_event message type</item>
+                        <item>Extract event type ("detected" or "timeout")</item>
+                        <item>Call deposit event handler function</item>
+                        <item>Log processing results for debugging</item>
+                    </functionality>
+                    <code_added><![CDATA[
+# Parse and handle deposit events - YAGNI minimal implementation
+try:
+    data = json.loads(msg)
+    if data.get("type") == "deposit_event":
+        event_type = data.get("event")  # "detected" or "timeout"
+        if event_type in ["detected", "timeout"]:
+            await handle_deposit_event(device_id, event_type)
+            logger.info("Processed deposit event: %s from %s", event_type, device_id)
+except (json.JSONDecodeError, KeyError) as e:
+    logger.debug("Non-JSON or invalid message from %s: %s", device_id, e)
+                    ]]></code_added>
+                </change>
+
+                <change type="EVENT_PROCESSOR">
+                    <file>backend/src/backend/routers/esp32_device_ws.py</file>
+                    <location>New handle_deposit_event() function</location>
+                    <algorithm>
+                        <step>Connect to MongoDB database</step>
+                        <step>Find most recent scan with deposit_status="pending" for the device</step>
+                        <step>Update scan record with new deposit_status</step>
+                        <step>Broadcast WebSocket notification to frontend clients</step>
+                        <step>Log success or failure for debugging</step>
+                    </algorithm>
+                    <database_query><![CDATA[
+# Find most recent pending scan for this device
+scan = await db["scans"].find_one(
+    {"device_id": device_id, "deposit_status": "pending"},
+    sort=[("timestamp", -1)]
+)
+                    ]]></database_query>
+                    <error_handling>
+                        Graceful handling of database connection failures, missing scans, and update errors with comprehensive logging.
+                    </error_handling>
+                </change>
+
+                <change type="SCAN_CREATION_UPDATE">
+                    <file>backend/src/backend/routers/scan_new.py</file>
+                    <location>Scan document creation</location>
+                    <modifications>
+                        <item>Add device_id field to link scans to specific ESP32 devices</item>
+                        <item>Set deposit_status to "pending" for new scans</item>
+                        <item>Maintain backward compatibility with existing scan flow</item>
+                    </modifications>
+                    <code_change><![CDATA[
+scan_result = await db["scans"].insert_one({
+    // ... existing fields
+    "device_id": "ESP32-SPARTANS",  // Link scan to device
+    "deposit_status": "pending",    // YAGNI: Start deposit detection
+    // ... rest of fields
+})
+                    ]]></code_change>
+                </change>
+
+                <change type="API_SCHEMA_UPDATE">
+                    <file>backend/src/backend/schemas/scan.py</file>
+                    <location>ScanResponse class</location>
+                    <addition>
+                        <field name="deposit_status" type="Optional[str]" default="pending" />
+                    </addition>
+                    <rationale>
+                        Expose deposit status to frontend API consumers. Optional field maintains backward compatibility.
+                    </rationale>
+                </change>
+
+                <change type="WEBSOCKET_BROADCAST">
+                    <file>backend/src/backend/routers/esp32_device_ws.py</file>
+                    <location>handle_deposit_event() function</location>
+                    <broadcast_payload><![CDATA[
+await manager.broadcast_notification({
+    "type": "deposit_event",
+    "data": {
+        "scan_id": str(scan["_id"]),
+        "device_id": device_id,
+        "event": event_type,
+        "user_email": scan.get("user_email")
+    }
+})
+                    ]]></broadcast_payload>
+                    <purpose>
+                        Enable real-time frontend updates when deposit events occur, allowing immediate user feedback.
+                    </purpose>
+                </change>
+            </technical_changes>
+
+            <data_flow>
+                <flow_diagram>
+                    ESP32 → WebSocket → Backend Parser → Database Update → Frontend Broadcast
+                </flow_diagram>
+                <step_details>
+                    <step id="1">ESP32 sends JSON deposit event via WebSocket connection</step>
+                    <step id="2">Backend WebSocket handler parses message and extracts event type</step>
+                    <step id="3">handle_deposit_event() function finds corresponding scan record</step>
+                    <step id="4">Database update changes deposit_status from "pending" to "detected"/"timeout"</step>
+                    <step id="5">WebSocket broadcast notifies all connected frontend clients</step>
+                    <step id="6">Frontend receives real-time deposit confirmation/timeout notification</step>
+                </step_details>
+            </data_flow>
+
+            <performance_considerations>
+                <database_optimization>
+                    Uses MongoDB sort and limit to find most recent pending scan efficiently. Single document update minimizes database load.
+                </database_optimization>
+                <websocket_efficiency>
+                    Minimal JSON payloads reduce network overhead. Event-driven processing prevents polling-based inefficiencies.
+                </websocket_efficiency>
+                <error_resilience>
+                    Graceful degradation when database unavailable. Comprehensive logging for debugging production issues.
+                </error_resilience>
+            </performance_considerations>
+
+            <deliverables>
+                <deliverable type="DATABASE_SCHEMA" status="COMPLETE">
+                    Prisma schema with deposit_status field addition
+                </deliverable>
+                <deliverable type="WEBSOCKET_HANDLER" status="COMPLETE">
+                    Enhanced ESP32 WebSocket router with deposit event processing
+                </deliverable>
+                <deliverable type="DATABASE_INTEGRATION" status="COMPLETE">
+                    MongoDB queries for scan lookup and status updates  
+                </deliverable>
+                <deliverable type="API_SCHEMA" status="COMPLETE">
+                    Updated ScanResponse model with deposit_status field
+                </deliverable>
+                <deliverable type="WEBSOCKET_BROADCAST" status="COMPLETE">
+                    Real-time notification system for frontend updates
+                </deliverable>
+            </deliverables>
+        </phase>
+
+        <!-- PHASE 2: FRONTEND IMPLEMENTATION -->
+        <phase id="2" status="PLANNED" priority="MEDIUM">
+            <title>Frontend - Basic Status Display</title>
+            <estimated_duration>15 minutes</estimated_duration>
+            
+            <description>
+                Implement minimal frontend UI components to display deposit confirmation status to users in real-time, with basic status indicators and no fancy animations or complex interactions.
+            </description>
+
+            <planned_changes>
+                <change type="STATUS_COMPONENT">
+                    <file>app/scan/page.js (or relevant scan component)</file>
+                    <location>Scan result display section</location>
+                    <component_design><![CDATA[
+const DepositStatus = ({ scanResult }) => {
+  const status = scanResult?.deposit_status;
+  
+  if (status === 'pending') {
+    return <div className="text-yellow-600">🔍 Drop your bottle in the bin</div>;
+  }
+  
+  if (status === 'detected') {
+    return <div className="text-green-600">✅ Bottle confirmed!</div>;
+  }
+  
+  if (status === 'timeout') {
+    return <div className="text-red-600">⏰ No bottle detected</div>;
+  }
+  
+  return null;
+};
+                    ]]></component_design>
+                    <design_rationale>
+                        Minimal text-based status display using Tailwind CSS classes. No animations, progress bars, or complex UI elements - just clear status communication.
+                    </design_rationale>
+                </change>
+
+                <change type="WEBSOCKET_INTEGRATION">
+                    <file>Existing WebSocket context or scan page</file>
+                    <location>WebSocket message handler</location>
+                    <event_handler><![CDATA[
+useEffect(() => {
+  if (websocket && scanId) {
+    const handleMessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'deposit_event') {
+        setScanResult(prev => ({
+          ...prev,
+          deposit_status: data.event
+        }));
+      }
+    };
+    
+    websocket.addEventListener('message', handleMessage);
+    return () => websocket.removeEventListener('message', handleMessage);
+  }
+}, [websocket, scanId]);
+                    ]]></event_handler>
+                    <functionality>
+                        <item>Listen for deposit_event WebSocket messages</item>
+                        <item>Update local scan result state with new deposit status</item>
+                        <item>Trigger re-render of status component</item>
+                        <item>Clean up event listeners on component unmount</item>
+                    </functionality>
+                </change>
+
+                <change type="SCAN_RESULT_INTEGRATION">
+                    <file>app/scan/page.js</file>
+                    <location>Scan result display JSX</location>
+                    <integration><![CDATA[
+<div>
+  {/* existing scan result content */}
+  <div className="measurement-details">
+    {/* diameter, height, volume, points, etc. */}
+  </div>
+  
+  {/* YAGNI: Add deposit status with minimal styling */}
+  <DepositStatus scanResult={scanResult} />
+  
+  {/* existing debug image, payout details, etc. */}
+</div>
+                    ]]></integration>
+                    <positioning>
+                        Deposit status component placed after measurement details but before debug information. Logical flow for user understanding.
+                    </positioning>
+                </change>
+            </planned_changes>
+
+            <user_experience_design>
+                <flow_scenarios>
+                    <scenario name="Successful Deposit">
+                        <step>User scans bottle → "Bottle accepted" message</step>
+                        <step>Lid opens automatically → "🔍 Drop your bottle in the bin"</step>
+                        <step>User drops bottle → "✅ Bottle confirmed!" (immediate update)</step>
+                        <step>Lid closes → Transaction completed</step>
+                    </scenario>
+                    <scenario name="Timeout">
+                        <step>User scans bottle → "Bottle accepted" message</step>
+                        <step>Lid opens automatically → "🔍 Drop your bottle in the bin"</step>
+                        <step>User doesn't drop bottle → 15 seconds pass</step>
+                        <step>Status updates → "⏰ No bottle detected"</step>
+                        <step>Lid closes → No transaction/points awarded</step>
+                    </scenario>
+                </flow_scenarios>
+                
+                <ui_principles>
+                    <principle>Clear, immediate feedback with emoji + text</principle>
+                    <principle>No loading spinners or complex animations</principle>
+                    <principle>Color coding for quick status recognition</principle>
+                    <principle>No user interaction required - purely informational</principle>
+                </ui_principles>
+            </user_experience_design>
+
+            <technical_requirements>
+                <websocket_handling>
+                    <requirement>Real-time message processing without polling</requirement>
+                    <requirement>State synchronization between WebSocket events and local state</requirement>
+                    <requirement>Error handling for WebSocket disconnections</requirement>
+                </websocket_handling>
+                
+                <state_management>
+                    <requirement>Update scanResult state when deposit events received</requirement>
+                    <requirement>Preserve existing scan data while updating deposit status</requirement>
+                    <requirement>Handle rapid status changes gracefully</requirement>
+                </state_management>
+                
+                <ui_rendering>
+                    <requirement>Conditional rendering based on deposit_status value</requirement>
+                    <requirement>Responsive design for mobile and desktop</requirement>
+                    <requirement>Accessibility considerations for status messages</requirement>
+                </ui_rendering>
+            </technical_requirements>
+
+            <testing_strategy>
+                <unit_tests>
+                    <test name="Component Rendering">Test DepositStatus component with different status values</test>
+                    <test name="WebSocket Handler">Mock WebSocket messages and verify state updates</test>
+                    <test name="Status Transitions">Test pending → detected and pending → timeout flows</test>
+                </unit_tests>
+                <integration_tests>
+                    <test name="End-to-End Flow">ESP32 → Backend → Frontend deposit confirmation</test>
+                    <test name="Real-time Updates">Verify immediate UI updates when deposit events occur</test>
+                    <test name="Fallback Handling">Test behavior when WebSocket unavailable</test>
+                </integration_tests>
+            </testing_strategy>
+
+            <deliverables>
+                <deliverable type="UI_COMPONENT" status="PLANNED">
+                    DepositStatus React component with minimal styling
+                </deliverable>
+                <deliverable type="WEBSOCKET_INTEGRATION" status="PLANNED">
+                    Enhanced WebSocket message handling for deposit events
+                </deliverable>
+                <deliverable type="STATE_MANAGEMENT" status="PLANNED">
+                    Updated scan result state management with deposit status
+                </deliverable>
+                <deliverable type="UI_INTEGRATION" status="PLANNED">
+                    Integration of deposit status into existing scan result display
+                </deliverable>
+            </deliverables>
+        </phase>
+
+        <!-- PHASE 3: INTEGRATION & TESTING -->
+        <phase id="3" status="PLANNED" priority="HIGH">
+            <title>Integration & Testing</title>
+            <estimated_duration>60 minutes</estimated_duration>
+            
+            <description>
+                Comprehensive end-to-end testing and integration validation to ensure all components work together reliably in production environment.
+            </description>
+
+            <testing_categories>
+                <category name="Hardware Integration">
+                    <test type="VOLTAGE_PROTECTION">
+                        <objective>Verify voltage divider protection prevents ESP32 damage</objective>
+                        <method>Measure Echo pin voltage with multimeter during operation</method>
+                        <success_criteria>Echo voltage at ESP32 GPIO ≤ 3.3V under all conditions</success_criteria>
+                        <failure_mitigation>Install level shifter module if voltage exceeds safe limits</failure_mitigation>
+                    </test>
+                    
+                    <test type="DISTANCE_ACCURACY">
+                        <objective>Validate ultrasonic sensor accuracy and reliability</objective>
+                        <method>Test with known distances (10cm, 20cm, 30cm, 40cm)</method>
+                        <success_criteria>Readings within ±5cm of actual distance</success_criteria>
+                        <calibration>Adjust DEPOSIT_DETECTION_THRESHOLD if needed</calibration>
+                    </test>
+                    
+                    <test type="EMI_IMMUNITY">
+                        <objective>Verify servo EMI doesn't interfere with sensor readings</objective>
+                        <method>Monitor sensor readings during servo open/close operations</method>
+                        <success_criteria>No false deposits detected during servo movement</success_criteria>
+                        <mitigation>Adjust EMI gating period if interference detected</mitigation>
+                    </test>
+                    
+                    <test type="BASELINE_STABILITY">
+                        <objective>Ensure consistent baseline distance readings</objective>
+                        <method>Take 100 readings over 10 minutes in stable environment</method>
+                        <success_criteria>Standard deviation ≤ 2cm, no drift over time</success_criteria>
+                        <recalibration>Implement periodic baseline updates if needed</recalibration>
+                    </test>
+                </category>
+
+                <category name="Software Integration">
+                    <test type="WEBSOCKET_RELIABILITY">
+                        <objective>Test WebSocket communication under various network conditions</objective>
+                        <scenarios>
+                            <scenario>Normal operation - events delivered immediately</scenario>
+                            <scenario>Network congestion - events delivered with acceptable delay</scenario>
+                            <scenario>Connection drops - automatic reconnection and event retry</scenario>
+                            <scenario>Backend restart - graceful reconnection handling</scenario>
+                        </scenarios>
+                        <monitoring>Track message delivery success rate, reconnection frequency</monitoring>
+                    </test>
+                    
+                    <test type="DATABASE_CONSISTENCY">
+                        <objective>Verify scan records updated correctly with deposit status</objective>
+                        <method>Execute multiple scan flows with database inspection</method>
+                        <validation>
+                            <item>All scans start with deposit_status="pending"</item>
+                            <item>Status updates to "detected" when bottle confirmed</item>
+                            <item>Status updates to "timeout" when 15s timeout expires</item>
+                            <item>No orphaned or duplicate status updates</item>
+                        </validation>
+                    </test>
+                    
+                    <test type="CONCURRENT_USERS">
+                        <objective>Test system behavior with multiple simultaneous users</objective>
+                        <scenarios>
+                            <scenario>Multiple users scanning different bottles</scenario>
+                            <scenario>Rapid successive scans from same user</scenario>
+                            <scenario>Multiple devices reporting deposit events</scenario>
+                        </scenarios>
+                        <race_condition_prevention>Verify proper scan-to-deposit event matching</race_condition_prevention>
+                    </test>
+                </category>
+
+                <category name="End-to-End Workflows">
+                    <test type="SUCCESSFUL_DEPOSIT_FLOW">
+                        <steps>
+                            <step>User opens mobile app and scans bottle</step>
+                            <step>Backend validates scan and sends lid open command</step>
+                            <step>ESP32 opens lid and starts deposit detection</step>
+                            <step>User drops bottle into bin</step>
+                            <step>Ultrasonic sensor detects bottle (distance decrease)</step>
+                            <step>ESP32 sends deposit_event with type="detected"</step>
+                            <step>Backend updates scan record and broadcasts to frontend</step>
+                            <step>Frontend shows "✅ Bottle confirmed!" message</step>
+                            <step>ESP32 closes lid early</step>
+                            <step>Transaction completed and points awarded</step>
+                        </steps>
+                        <timing_requirements>
+                            <item>Lid opens within 2 seconds of scan acceptance</item>
+                            <item>Deposit detection occurs within 1 second of bottle drop</item>
+                            <item>Frontend update appears within 500ms of detection</item>
+                            <item>Lid closes within 3 seconds of confirmation</item>
+                        </timing_requirements>
+                    </test>
+                    
+                    <test type="TIMEOUT_FLOW">
+                        <steps>
+                            <step>User scans bottle but doesn't drop it in bin</step>
+                            <step>ESP32 waits for 15 seconds monitoring distance</step>
+                            <step>No significant distance change detected</step>
+                            <step>ESP32 sends deposit_event with type="timeout"</step>
+                            <step>Backend updates scan record and broadcasts timeout</step>
+                            <step>Frontend shows "⏰ No bottle detected" message</step>
+                            <step>ESP32 closes lid after timeout</step>
+                            <step>No transaction created, no points awarded</step>
+                        </steps>
+                        <timeout_accuracy>15 seconds ± 1 second tolerance</timeout_accuracy>
+                    </test>
+
+                    <test type="NETWORK_FAILURE_RECOVERY">
+                        <scenarios>
+                            <scenario name="WiFi Disconnection">
+                                <condition>ESP32 loses WiFi during deposit detection</condition>
+                                <expected_behavior>Continue local detection, queue events for transmission when reconnected</expected_behavior>
+                            </scenario>
+                            <scenario name="Backend Unavailable">
+                                <condition>WebSocket server unreachable during deposit event</condition>
+                                <expected_behavior>Fall back to HTTP POST, retry on failure</expected_behavior>
+                            </scenario>
+                            <scenario name="Database Down">
+                                <condition>MongoDB unavailable when processing deposit event</condition>
+                                <expected_behavior>Log error gracefully, continue operation</expected_behavior>
+                            </scenario>
+                        </scenarios>
+                    </test>
+                </category>
+
+                <category name="Performance Testing">
+                    <test type="SENSOR_RESPONSE_TIME">
+                        <objective>Measure deposit detection latency</objective>
+                        <method>Drop test objects and time from physical drop to event transmission</method>
+                        <target_latency>≤ 1 second from bottle drop to WebSocket event</target_latency>
+                    </test>
+                    
+                    <test type="MEMORY_USAGE">
+                        <objective>Verify ESP32 memory stability during extended operation</objective>
+                        <method>Monitor heap usage over 24-hour continuous operation</method>
+                        <success_criteria>No memory leaks, stable heap usage</success_criteria>
+                    </test>
+                    
+                    <test type="POWER_CONSUMPTION">
+                        <objective>Measure additional power draw from ultrasonic sensor</objective>
+                        <method>Compare power consumption before/after sensor integration</method>
+                        <acceptable_increase">≤ 20% increase in average power consumption</acceptable_increase>
+                    </test>
+                </category>
+
+                <category name="Edge Case Testing">
+                    <test type="FALSE_POSITIVE_PREVENTION">
+                        <scenarios>
+                            <scenario>Hand waving near sensor</scenario>
+                            <scenario>Ambient lighting changes</scenario>
+                            <scenario>Small insects or debris</scenario>
+                            <scenario>Air currents or temperature changes</scenario>
+                        </scenarios>
+                        <mitigation>Adjust detection threshold or filtering if false positives occur</mitigation>
+                    </test>
+                    
+                    <test type="FALSE_NEGATIVE_PREVENTION">
+                        <scenarios>
+                            <scenario>Very small bottles (≤200ml)</scenario>
+                            <scenario>Transparent or highly reflective bottles</scenario>
+                            <scenario>Bottles dropped at sensor edge (not center)</scenario>
+                            <scenario>Bottles that don't fall straight down</scenario>
+                        </scenarios>
+                        <optimization>Consider sensor positioning or multiple sensor approach if needed</optimization>
+                    </test>
+                </category>
+            </testing_categories>
+
+            <quality_assurance>
+                <code_review>
+                    <focus_areas>
+                        <area>Memory management in ESP32 firmware</area>
+                        <area>Error handling in WebSocket communication</area>
+                        <area>Database transaction consistency</area>
+                        <area>Frontend state synchronization</area>
+                    </focus_areas>
+                </code_review>
+                
+                <documentation_review>
+                    <requirements>
+                        <item>Hardware setup instructions with safety warnings</item>
+                        <item>Calibration procedures for different bin configurations</item>
+                        <item>Troubleshooting guide for common issues</item>
+                        <item>Monitoring and maintenance recommendations</item>
+                    </requirements>
+                </documentation_review>
+                
+                <deployment_checklist>
+                    <item>Database migration executed successfully</item>
+                    <item>Backend services restarted with new code</item>
+                    <item>Frontend deployed with WebSocket integration</item>
+                    <item>ESP32 firmware uploaded and tested</item>
+                    <item>Hardware properly wired with voltage protection</item>
+                    <item>Baseline distance calibrated for production environment</item>
+                </deployment_checklist>
+            </quality_assurance>
+
+            <success_metrics>
+                <metric name="Deposit Detection Accuracy">
+                    <target>≥95% correct detection of bottle deposits</target>
+                    <measurement>Ratio of successful detections to actual bottle drops</measurement>
+                </metric>
+                
+                <metric name="False Positive Rate">
+                    <target">≤5% false positive detections</target>
+                    <measurement>Detections triggered without actual bottle deposits</measurement>
+                </metric>
+                
+                <metric name="System Reliability">
+                    <target>≥99% uptime during normal operation</target>
+                    <measurement>Time system operational vs total time</measurement>
+                </metric>
+                
+                <metric name="User Experience">
+                    <target>≤2 seconds average response time for deposit confirmation</target>
+                    <measurement>Time from bottle drop to frontend status update</measurement>
+                </metric>
+            </success_metrics>
+
+            <deliverables>
+                <deliverable type="TEST_SUITE" status="PLANNED">
+                    Comprehensive test cases for all integration scenarios
+                </deliverable>
+                <deliverable type="HARDWARE_VALIDATION" status="PLANNED">
+                    Voltage protection verification and sensor accuracy validation
+                </deliverable>
+                <deliverable type="PERFORMANCE_REPORT" status="PLANNED">
+                    Latency, memory usage, and power consumption analysis
+                </deliverable>
+                <deliverable type="DEPLOYMENT_GUIDE" status="PLANNED">
+                    Step-by-step production deployment instructions
+                </deliverable>
+                <deliverable type="TROUBLESHOOTING_GUIDE" status="PLANNED">
+                    Common issues and resolution procedures
+                </deliverable>
+            </deliverables>
+        </phase>
+    </implementation_phases>
+
+    <project_summary>
+        <total_implementation_time>
+            <phase_0>45 minutes (ESP32 Firmware)</phase_0>
+            <phase_1>20 minutes (Backend)</phase_1>
+            <phase_2>15 minutes (Frontend)</phase_2>
+            <phase_3>60 minutes (Testing)</phase_3>
+            <total>140 minutes (2.3 hours)</total>
+        </total_implementation_time>
+
+        <code_complexity>
+            <esp32_firmware>~200 lines added to existing 1,736 line codebase</esp32_firmware>
+            <backend>~15 lines of functional code across 3 files</backend>
+            <frontend>~15 lines for status component and WebSocket handling</frontend>
+            <total_new_code>~230 lines total across all components</total_new_code>
+        </code_complexity>
+
+        <yagni_adherence>
+            <implemented_features>
+                <feature>Essential voltage protection for hardware safety</feature>
+                <feature>Basic distance-based deposit detection</feature>
+                <feature>Simple median filtering for noise reduction</feature>
+                <feature>Timeout handling with 15-second limit</feature>
+                <feature>WebSocket event communication</feature>
+                <feature>Minimal database schema extension</feature>
+                <feature>Basic frontend status display</feature>
+            </implemented_features>
+            
+            <avoided_complexity>
+                <avoided>Advanced filtering algorithms (Kalman filters, FFT analysis)</avoided>
+                <avoided>Machine learning for deposit classification</avoided>
+                <avoided>Multiple sensor fusion</avoided>
+                <avoided>Complex calibration interfaces</avoided>
+                <avoided>Retry mechanisms and queue systems</avoided>
+                <avoided>Admin panels and configuration management</avoided>
+                <avoided>Analytics and detailed logging systems</avoided>
+                <avoided>Animation and complex UI components</avoided>
+            </avoided_complexity>
+        </yagni_adherence>
+
+        <business_value>
+            <primary_benefit>
+                Ensures users actually deposit bottles after scanning, preventing gaming of the reward system and maintaining trust in the SmartBin platform.
+            </primary_benefit>
+            
+            <secondary_benefits>
+                <benefit>Improved user experience with immediate deposit confirmation</benefit>
+                <benefit>Reduced operational costs from manual verification</benefit>
+                <benefit>Data integrity for bottle collection analytics</benefit>
+                <benefit>Scalable solution that works across network topologies</benefit>
+            </secondary_benefits>
+            
+            <roi_factors>
+                <factor>Low implementation cost (~2.3 hours development time)</factor>
+                <factor>Minimal hardware cost (~$2 HC-SR04 sensor + resistors)</factor>
+                <factor>High reliability with simple, proven technology</factor>
+                <factor>Immediate operational value with deposit verification</factor>
+            </roi_factors>
+        </business_value>
+
+        <risk_assessment>
+            <low_risks>
+                <risk>False positive/negative detection rates manageable with threshold tuning</risk>
+                <risk>Hardware failure can be quickly replaced with standard components</risk>
+                <risk>Software bugs easily debugged with comprehensive logging</risk>
+            </low_risks>
+            
+            <mitigation_strategies>
+                <strategy>Voltage protection prevents hardware damage</strategy>
+                <strategy>Timeout fallback ensures system never hangs</strategy>
+                <strategy>WebSocket + HTTP fallback provides communication redundancy</strategy>
+                <strategy>YAGNI approach minimizes code complexity and bug surface area</strategy>
+            </mitigation_strategies>
+        </risk_assessment>
+
+        <future_considerations>
+            <potential_enhancements>
+                <enhancement priority="LOW">Multiple sensor support for larger bins</enhancement>
+                <enhancement priority="LOW">Machine learning for bottle type classification</enhancement>
+                <enhancement priority="LOW">Environmental compensation (temperature, humidity)</enhancement>
+                <enhancement priority="MEDIUM">Admin dashboard for monitoring sensor health</enhancement>
+            </potential_enhancements>
+            
+            <scalability_path>
+                Current implementation supports single device with straightforward extension to multiple devices via device_id routing. Database schema and WebSocket architecture designed for horizontal scaling.
+            </scalability_path>
+        </future_considerations>
+    </project_summary>
+
+    <conclusion>
+        <achievement>
+            Successfully implemented a minimal viable ultrasonic deposit detection system that adds physical verification to the SmartBin scanning process while maintaining simplicity and reliability through YAGNI principles.
+        </achievement>
+        
+        <key_success_factors>
+            <factor>Focus on essential safety features (voltage protection)</factor>
+            <factor>Leveraging existing infrastructure (WebSocket, database)</factor>
+            <factor>Simple, proven algorithms over complex solutions</factor>
+            <factor>Comprehensive testing strategy for production reliability</factor>
+        </key_success_factors>
+        
+        <next_steps>
+            <step priority="1">Execute Phase 2 (Frontend Implementation)</step>
+            <step priority="2">Complete Phase 3 (Integration Testing)</step>
+            <step priority="3">Deploy to production environment</step>
+            <step priority="4">Monitor performance and user feedback</step>
+        </next_steps>
+    </conclusion>
+</project_logbook>
