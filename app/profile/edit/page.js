@@ -237,31 +237,6 @@ export default function EditProfilePage() {
             ))}
           </div>
         </Field>
-
-        {/* Connected accounts */}
-        <div className="pt-4">
-          <div className="h-px bg-[var(--color-primary-700)]/30" />
-          <div className="mt-4">
-            <div className="font-inter font-semibold text-sm text-[var(--color-primary-700)]">Hubungkan Akun</div>
-            <div className="mt-3 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center">
-                    <img src="/profile/edit/google.svg" alt="Google"/>
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold text-[var(--color-primary-700)]">Google</div>
-                    <div className="text-xs text-gray-600">{user?.email || "-"}</div>
-                  </div>
-                </div>
-                <button type="button" className="px-3 py-1 rounded-[var(--radius-pill)] border border-[var(--color-primary-700)] text-[var(--color-primary-700)] text-xs">
-                  Terhubung
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Submit */}
         <div className="fixed left-0 right-0 bottom-4">
           <div className="mx-auto max-w-[430px] px-4">
