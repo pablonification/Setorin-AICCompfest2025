@@ -9,7 +9,6 @@
 #include <Preferences.h>
 
 // ============================================================================
-// CONFIGURATION - UPDATE THESE VALUES FOR YOUR SETUP
 // ============================================================================
 
 // WiFi Configuration
@@ -1022,7 +1021,6 @@ void reportLidOperation(const char* action, int duration, const char* status) {
   Serial.println("📤 Reporting lid operation to backend...");
 
   // NOTE: The backend esp32.py doesn't have a /logs POST endpoint
-  // The backend handles logging internally when you call /control
   // So this function is for future use or local logging only
   
   Serial.printf("📝 Local log: %s action %s after %ds\n", action, status, duration);
