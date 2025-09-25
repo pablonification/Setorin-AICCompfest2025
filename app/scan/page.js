@@ -2022,10 +2022,10 @@ export default function ScanPage() {
 
                 {/* Camera control buttons */}
                 {cameraStream && !isScanning && (
-                  <div className="mt-1 w-full max-w-[320px] flex justify-center space-x-2">
+                  <div className="mt-1 w-full max-w-[320px] flex justify-center space-x-4">
                     <div
                       style={{
-                        width: "72px",
+                        width: "48px",
                         height: "36px",
                         backgroundColor: "white",
                         borderRadius: "9999px",
@@ -2035,7 +2035,7 @@ export default function ScanPage() {
                     <button
                       onClick={toggleFlash}
                       aria-label="Toggle flash"
-                      className="px-4 py-2 text-xs text-gray-700 bg-gray-200 rounded-[var(--radius-pill)] active:opacity-80"
+                      className="px-3 mt-6 mb-6 text-xs text-gray-700 bg-gray-200 rounded-[var(--radius-pill)] active:opacity-80"
                     >
                       <img
                         src={isTorchOn ? "/flash-on.svg" : "/flash-off.svg"}
