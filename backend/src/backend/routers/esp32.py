@@ -10,7 +10,11 @@ import asyncio
 from ..db.mongo import ensure_connection
 from ..services.ws_manager import manager
 from ..services.iot_client import SmartBinClient
-from bson import ObjectId
+try:
+    from bson import ObjectId
+except Exception:  # pragma: no cover - environment without bson during static analysis
+    ObjectId = None  # type: ignore
+from ..services.esp32_deposit_service import ESP32DepositEvent, handle_deposit_event
 
 router = APIRouter(prefix="/api/esp32", tags=["esp32"])
 logger = logging.getLogger(__name__)
@@ -37,6 +41,9 @@ class LidControlRequest(BaseModel):
     device_id: str
     action: str  # "open", "close", "status"
     duration_seconds: Optional[int] = 2  # Default 3 seconds for open
+    # Who requested this action (for rewarding when deposit detected)
+    requested_by_user_id: Optional[str] = None
+    requested_by_user_email: Optional[str] = None
 
 class ActionLog(BaseModel):
     device_id: str
@@ -45,6 +52,27 @@ class ActionLog(BaseModel):
     status: str  # "success", "error", "pending"
     details: Optional[Dict[str, Any]] = None
     error_message: Optional[str] = None
+
+
+@router.post("/deposit-event", status_code=status.HTTP_200_OK)
+async def receive_deposit_event(event: ESP32DepositEvent):
+    """Receive deposit detection events from ESP32 (HTTP fallback path)."""
+    try:
+        # Trust but normalize event type
+        if event.type != "deposit_event":
+            logger.info("Normalizing event.type to 'deposit_event' from %s", event.type)
+            event.type = "deposit_event"  # type: ignore
+
+        result = await handle_deposit_event(event)
+        if result.get("status") == "ok":
+            return {"message": "deposit event processed", **result}
+        raise HTTPException(status_code=500, detail=result.get("error", "failed to handle deposit event"))
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Failed to process deposit event: %s", exc)
+        raise HTTPException(status_code=500, detail="Failed to process deposit event")
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register_esp32_device(registration: ESP32Registration):
@@ -167,7 +195,10 @@ async def control_lid(request: LidControlRequest, background_tasks: BackgroundTa
             "status": "pending",
             "details": {
                 "duration_seconds": request.duration_seconds,
-                "communication_method": "websocket" if is_websocket_connected else "http_polling"
+                "communication_method": "websocket" if is_websocket_connected else "http_polling",
+                # carry requester for later reward correlation
+                "requested_by_user_id": request.requested_by_user_id,
+                "requested_by_user_email": request.requested_by_user_email,
             }
         }
 
@@ -447,7 +478,7 @@ async def handle_lid_open_sequence(device_id: str, action: str, duration_seconds
             if device_id in websocket_clients:
                 logger.info("ESP32 %s: Using WebSocket communication", device_id)
                 import json
-                message = json.dumps({"action": action, "duration_seconds": duration_seconds})
+                message = json.dumps({"action": action, "duration_seconds": duration_seconds, "action_id": action_id})
                 await websocket_clients[device_id].send_text(message)
                 events = [{"event": "websocket_command_sent", "status": "success"}]
                 logger.info("WebSocket command sent successfully for %s", device_id)

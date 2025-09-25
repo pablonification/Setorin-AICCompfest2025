@@ -32,8 +32,25 @@ async def _device_ws_handler(websocket: WebSocket, device_id: str):
         while True:
             # Keep connection alive and allow receiving messages from device
             msg = await websocket.receive_text()
-            # You may parse status updates here; for now, log.
             logger.debug("From %s: %s", device_id, msg)
+
+            # Try to parse known messages
+            try:
+                payload = json.loads(msg)
+            except json.JSONDecodeError:
+                continue
+
+            # Normalize device id if not set in payload
+            if isinstance(payload, dict):
+                if payload.get("type") == "deposit_event":
+                    try:
+                        from ..services.esp32_deposit_service import ESP32DepositEvent, handle_deposit_event
+                        # Ensure device_id present
+                        payload.setdefault("device_id", device_id)
+                        event = ESP32DepositEvent(**payload)
+                        await handle_deposit_event(event)
+                    except Exception as e:  # noqa: BLE001
+                        logger.exception("Failed handling deposit_event from %s: %s", device_id, e)
     except WebSocketDisconnect:
         logger.info("ESP32 device disconnected: %s", device_id)
     except Exception as e:  # noqa: BLE001
