@@ -1980,92 +1980,97 @@ export default function ScanPage() {
                       : "Taruh botol diatas kotak hitam"}
                   </p>
                 </div>
-                <div className="mt-1 w-full max-w-[320px] flex items-center justify-center space-x-3">
-                  <button
-                    onClick={captureAndScan}
-                    disabled={
-                      isScanning ||
-                      (orientationPermission === "granted" &&
-                        orientationSupported === true &&
-                        !isPhoneAligned)
-                    }
-                    aria-label="Capture image"
-                    className={`flex items-center justify-center w-24 h-24 rounded-full [box-shadow:var(--shadow-fab)] active:scale-95 transition-all duration-300 ${
-                      isScanning ||
-                      (orientationPermission === "granted" &&
-                        orientationSupported === true &&
-                        !isPhoneAligned)
-                        ? "opacity-50 cursor-not-allowed"
-                        : "opacity-100"
-                    } ${
+                <button
+                  onClick={captureAndScan}
+                  disabled={
+                    isScanning ||
+                    (orientationPermission === "granted" &&
+                      orientationSupported === true &&
+                      !isPhoneAligned)
+                  }
+                  aria-label="Capture image"
+                  className={`flex items-center justify-center w-24 h-24 rounded-full [box-shadow:var(--shadow-fab)] active:scale-95 transition-all duration-300 ${
+                    isScanning ||
+                    (orientationPermission === "granted" &&
+                      orientationSupported === true &&
+                      !isPhoneAligned)
+                      ? "opacity-50 cursor-not-allowed"
+                      : "opacity-100"
+                  } ${
+                    orientationPermission === "granted" &&
+                    orientationSupported === true &&
+                    isPhoneAligned
+                      ? "animate-pulse"
+                      : ""
+                  }`}
+                  style={{
+                    background:
                       orientationPermission === "granted" &&
                       orientationSupported === true &&
                       isPhoneAligned
-                        ? "animate-pulse"
-                        : ""
-                    }`}
-                    style={{
-                      background:
-                        orientationPermission === "granted" &&
-                        orientationSupported === true &&
-                        isPhoneAligned
-                          ? "var(--color-success)"
-                          : "var(--color-primary-700)",
-                    }}
-                  >
-                    <img
-                      src="/shutter.svg"
-                      alt="Shutter"
-                      className="w-12 h-12 select-none"
-                      draggable="false"
-                    />
-                  </button>
+                        ? "var(--color-success)"
+                        : "var(--color-primary-700)",
+                  }}
+                >
+                  <img
+                    src="/shutter.svg"
+                    alt="Shutter"
+                    className="w-12 h-12 select-none"
+                    draggable="false"
+                  />
+                </button>
 
-                  {/* Right-aligned camera control group */}
-                  {cameraStream && !isScanning && (
-                    <div className="flex items-center space-x-2">
+                {/* Camera control buttons */}
+                {cameraStream && !isScanning && (
+                  <div className="mt-1 w-full max-w-[320px] flex justify-center space-x-2">
+                    <div
+                      style={{
+                        width: "72px",
+                        height: "36px",
+                        backgroundColor: "white",
+                        borderRadius: "9999px",
+                        visibility: "hidden",
+                      }}
+                    ></div>
+                    <button
+                      onClick={toggleFlash}
+                      aria-label="Toggle flash"
+                      className="px-4 py-2 text-xs text-gray-700 bg-gray-200 rounded-[var(--radius-pill)] active:opacity-80"
+                    >
+                      <img
+                        src={isTorchOn ? "/flash-on.svg" : "/flash-off.svg"}
+                        alt="Flash"
+                        className="w-5 h-5"
+                      />
+                    </button>
+                    {/* Manual reset button for stuck states */}
+                    {(isLoadingAfterQR || qrValidationInProgress) && (
                       <button
-                        onClick={toggleFlash}
-                        aria-label="Toggle flash"
-                        className="px-4 py-2 text-xs text-gray-700 bg-gray-200 rounded-[var(--radius-pill)] active:opacity-80"
+                        onClick={() => {
+                          console.log("🔄 Manual reset triggered");
+                          setIsLoadingAfterQR(false);
+                          setQrValidationInProgress(false);
+                          setStatus("Ready to scan");
+                        }}
+                        className="px-4 py-2 text-xs text-red-600 bg-red-100 rounded-[var(--radius-pill)] active:opacity-80"
                       >
-                        <img
-                          src={isTorchOn ? "/flash-on.svg" : "/flash-off.svg"}
-                          alt="Flash"
-                          className="w-5 h-5"
-                        />
+                        Reset
                       </button>
-
-                      {/* Manual reset button for stuck states */}
-                      {(isLoadingAfterQR || qrValidationInProgress) && (
-                        <button
-                          onClick={() => {
-                            console.log("🔄 Manual reset triggered");
-                            setIsLoadingAfterQR(false);
-                            setQrValidationInProgress(false);
-                            setStatus("Ready to scan");
-                          }}
-                          className="px-4 py-2 text-xs text-red-600 bg-red-100 rounded-[var(--radius-pill)] active:opacity-80"
-                        >
-                          Reset
-                        </button>
-                      )}
-
-                      {/* Force navigation button when we have a result */}
-                      {result && (
-                        <button
-                          onClick={() => {
-                            console.log("🚀 Force navigation triggered");
-                            router.push("/scan/result");
-                          }}
-                          className="px-4 py-2 text-xs text-green-600 bg-green-100 rounded-[var(--radius-pill)] active:opacity-80"
-                        >
-                          Lihat Hasil
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
+                    )}
+                    {/* Force navigation button when we have a result */}
+                    {result && (
+                      <button
+                        onClick={() => {
+                          console.log("🚀 Force navigation triggered");
+                          router.push("/scan/result");
+                        }}
+                        className="px-4 py-2 text-xs text-green-600 bg-green-100 rounded-[var(--radius-pill)] active:opacity-80"
+                      >
+                        Lihat Hasil
+                      </button>
+                    )}
+                  </div>
+                )}
 
                 {/* Alignment help text */}
                 {orientationPermission === "granted" &&
