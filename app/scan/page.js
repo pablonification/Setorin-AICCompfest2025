@@ -2024,12 +2024,6 @@ export default function ScanPage() {
                 {cameraStream && !isScanning && (
                   <div className="mt-1 w-full max-w-[320px] flex justify-center space-x-2">
                     <button
-                      onClick={stopCamera}
-                      className="px-4 py-2 text-xs text-gray-700 bg-gray-200 rounded-[var(--radius-pill)] active:opacity-80"
-                    >
-                      Stop Camera
-                    </button>
-                    <button
                       onClick={toggleFlash}
                       aria-label="Toggle flash"
                       className="px-4 py-2 text-xs text-gray-700 bg-gray-200 rounded-[var(--radius-pill)] active:opacity-80"
