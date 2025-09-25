@@ -1980,45 +1980,6 @@ export default function ScanPage() {
                       : "Taruh botol diatas kotak hitam"}
                   </p>
                 </div>
-                <button
-                  onClick={captureAndScan}
-                  disabled={
-                    isScanning ||
-                    (orientationPermission === "granted" &&
-                      orientationSupported === true &&
-                      !isPhoneAligned)
-                  }
-                  aria-label="Capture image"
-                  className={`flex items-center justify-center w-24 h-24 rounded-full [box-shadow:var(--shadow-fab)] active:scale-95 transition-all duration-300 ${
-                    isScanning ||
-                    (orientationPermission === "granted" &&
-                      orientationSupported === true &&
-                      !isPhoneAligned)
-                      ? "opacity-50 cursor-not-allowed"
-                      : "opacity-100"
-                  } ${
-                    orientationPermission === "granted" &&
-                    orientationSupported === true &&
-                    isPhoneAligned
-                      ? "animate-pulse"
-                      : ""
-                  }`}
-                  style={{
-                    background:
-                      orientationPermission === "granted" &&
-                      orientationSupported === true &&
-                      isPhoneAligned
-                        ? "var(--color-success)"
-                        : "var(--color-primary-700)",
-                  }}
-                >
-                  <img
-                    src="/shutter.svg"
-                    alt="Shutter"
-                    className="w-12 h-12 select-none"
-                    draggable="false"
-                  />
-                </button>
 
                 {/* Camera control buttons */}
                 {cameraStream && !isScanning && (
@@ -2032,6 +1993,45 @@ export default function ScanPage() {
                         visibility: "hidden",
                       }}
                     ></div>
+                    <button
+                      onClick={captureAndScan}
+                      disabled={
+                        isScanning ||
+                        (orientationPermission === "granted" &&
+                          orientationSupported === true &&
+                          !isPhoneAligned)
+                      }
+                      aria-label="Capture image"
+                      className={`flex items-center justify-center w-24 h-24 rounded-full [box-shadow:var(--shadow-fab)] active:scale-95 transition-all duration-300 ${
+                        isScanning ||
+                        (orientationPermission === "granted" &&
+                          orientationSupported === true &&
+                          !isPhoneAligned)
+                          ? "opacity-50 cursor-not-allowed"
+                          : "opacity-100"
+                      } ${
+                        orientationPermission === "granted" &&
+                        orientationSupported === true &&
+                        isPhoneAligned
+                          ? "animate-pulse"
+                          : ""
+                      }`}
+                      style={{
+                        background:
+                          orientationPermission === "granted" &&
+                          orientationSupported === true &&
+                          isPhoneAligned
+                            ? "var(--color-success)"
+                            : "var(--color-primary-700)",
+                      }}
+                    >
+                      <img
+                        src="/shutter.svg"
+                        alt="Shutter"
+                        className="w-12 h-12 select-none"
+                        draggable="false"
+                      />
+                    </button>
                     <button
                       onClick={toggleFlash}
                       aria-label="Toggle flash"
