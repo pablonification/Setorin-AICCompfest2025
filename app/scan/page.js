@@ -1980,18 +1980,6 @@ export default function ScanPage() {
                       : "Taruh botol diatas kotak hitam"}
                   </p>
                 </div>
-                <div className="w-full max-w-[400px] flex items-center justify-center space-x-4 mt-1">
-                {/* Stop Camera - Left */}
-                {cameraStream && !isScanning && (
-                  <button
-                    onClick={stopCamera}
-                    className="px-4 py-2 text-xs text-gray-700 bg-gray-200 rounded-[var(--radius-pill)] active:opacity-80"
-                  >
-                    Stop Camera
-                  </button>
-                )}
-
-                {/* Shutter Button - Center */}
                 <button
                   onClick={captureAndScan}
                   disabled={
@@ -2032,54 +2020,54 @@ export default function ScanPage() {
                   />
                 </button>
 
-                {/* Flash Toggle - Right, only if cameraStream and not scanning */}
+                {/* Camera control buttons */}
                 {cameraStream && !isScanning && (
-                  <button
-                    onClick={toggleFlash}
-                    aria-label="Toggle flash"
-                    className="px-4 py-2 text-xs text-gray-700 bg-gray-200 rounded-[var(--radius-pill)] active:opacity-80"
-                  >
-                    <img
-                      src={isTorchOn ? "/flash-on.svg" : "/flash-off.svg"}
-                      alt="Flash"
-                      className="w-5 h-5"
-                    />
-                  </button>
+                  <div className="mt-1 w-full max-w-[320px] flex justify-center space-x-2">
+                    <button
+                      onClick={stopCamera}
+                      className="px-4 py-2 text-xs text-gray-700 bg-gray-200 rounded-[var(--radius-pill)] active:opacity-80"
+                    >
+                      Stop Camera
+                    </button>
+                    <button
+                      onClick={toggleFlash}
+                      aria-label="Toggle flash"
+                      className="px-4 py-2 text-xs text-gray-700 bg-gray-200 rounded-[var(--radius-pill)] active:opacity-80"
+                    >
+                      <img
+                        src={isTorchOn ? "/flash-on.svg" : "/flash-off.svg"}
+                        alt="Flash"
+                        className="w-5 h-5"
+                      />
+                    </button>
+                    {/* Manual reset button for stuck states */}
+                    {(isLoadingAfterQR || qrValidationInProgress) && (
+                      <button
+                        onClick={() => {
+                          console.log("🔄 Manual reset triggered");
+                          setIsLoadingAfterQR(false);
+                          setQrValidationInProgress(false);
+                          setStatus("Ready to scan");
+                        }}
+                        className="px-4 py-2 text-xs text-red-600 bg-red-100 rounded-[var(--radius-pill)] active:opacity-80"
+                      >
+                        Reset
+                      </button>
+                    )}
+                    {/* Force navigation button when we have a result */}
+                    {result && (
+                      <button
+                        onClick={() => {
+                          console.log("🚀 Force navigation triggered");
+                          router.push("/scan/result");
+                        }}
+                        className="px-4 py-2 text-xs text-green-600 bg-green-100 rounded-[var(--radius-pill)] active:opacity-80"
+                      >
+                        Lihat Hasil
+                      </button>
+                    )}
+                  </div>
                 )}
-              </div>
-
-              {/* secondary controls below, preserve all conditionals */}
-              {cameraStream && !isScanning && (
-                <div className="mt-2 w-full max-w-[320px] flex justify-center space-x-2">
-                  {/* Manual reset button for stuck states */}
-                  {(isLoadingAfterQR || qrValidationInProgress) && (
-                    <button
-                      onClick={() => {
-                        console.log("🔄 Manual reset triggered");
-                        setIsLoadingAfterQR(false);
-                        setQrValidationInProgress(false);
-                        setStatus("Ready to scan");
-                      }}
-                      className="px-4 py-2 text-xs text-red-600 bg-red-100 rounded-[var(--radius-pill)] active:opacity-80"
-                    >
-                      Reset
-                    </button>
-                  )}
-                  {/* Force navigation button when we have a result */}
-                  {result && (
-                    <button
-                      onClick={() => {
-                        console.log("🚀 Force navigation triggered");
-                        router.push("/scan/result");
-                      }}
-                      className="px-4 py-2 text-xs text-green-600 bg-green-100 rounded-[var(--radius-pill)] active:opacity-80"
-                    >
-                      Lihat Hasil
-                    </button>
-                  )}
-                </div>
-              )}
-
 
                 {/* Alignment help text */}
                 {orientationPermission === "granted" &&
