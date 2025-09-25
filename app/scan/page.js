@@ -244,13 +244,44 @@ export default function ScanPage() {
       retryTimeoutRef.current = null;
     }
 
-    // Stop all tracks
+    // Ensure torch is turned off before stopping tracks (some devices keep
+    // torch active until explicitly disabled)
     if (streamRef.current) {
+      try {
+        const videoTracks = streamRef.current.getVideoTracks();
+        for (const track of videoTracks) {
+          try {
+            const caps = track.getCapabilities && track.getCapabilities();
+            if (caps && caps.torch) {
+              // Best-effort: try to disable torch before stopping
+              // eslint-disable-next-line no-await-in-loop
+              track.applyConstraints({ advanced: [{ torch: false }] }).catch(() => {});
+            }
+          } catch (e) {
+            // ignore per-track errors
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      // Stop all tracks
       streamRef.current.getTracks().forEach((track) => {
         console.log("Stopping track:", track.kind, track.label);
-        track.stop();
+        try {
+          track.stop();
+        } catch (e) {
+          // ignore
+        }
       });
       streamRef.current = null;
+    }
+
+    // Reset torch UI state
+    try {
+      setIsTorchOn(false);
+    } catch (e) {
+      // ignore
     }
 
     // Clean video element

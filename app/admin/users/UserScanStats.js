@@ -46,6 +46,15 @@ export default function UserScanStats({ email, token }) {
 
   if (!email) return null;
 
+  const formatTimestamp = (ts) => {
+    if (!ts) return '—';
+    try {
+      return new Date(ts).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+    } catch (e) {
+      return String(ts);
+    }
+  };
+
   return (
     <div className="mt-4">
       <h4 className="text-sm font-medium text-gray-700 mb-2">Scan Statistics</h4>
@@ -107,7 +116,7 @@ export default function UserScanStats({ email, token }) {
                     <li key={s.id} className="flex items-center justify-between text-sm bg-white p-2 rounded-md border">
                       <div>
                         <div className="font-medium">{s.size_label || (s.volume_ml ? `${s.volume_ml}ml` : 'Unknown')}</div>
-                        <div className="text-gray-500 text-xs">{s.timestamp ? new Date(s.timestamp).toLocaleString() : '—'}</div>
+                        <div className="text-gray-500 text-xs">{formatTimestamp(s.timestamp)}</div>
                       </div>
                       <div className="text-right">
                         <div className="text-sm">{s.points?.toLocaleString() || 0} pts</div>
