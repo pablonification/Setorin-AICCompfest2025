@@ -2022,7 +2022,7 @@ export default function ScanPage() {
 
                 {/* Camera control buttons */}
                 {cameraStream && !isScanning && (
-                  <div className="mt-1 w-full max-w-[320px] flex justify-center space-x-2">
+                  <div className="mt-1 w-full max-w-[320px] flex flex-row items-center justify-center space-x-2">
                     <button
                       onClick={toggleFlash}
                       aria-label="Toggle flash"
