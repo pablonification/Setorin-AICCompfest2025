@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from ..db.mongo import ensure_connection
 from ..services.ws_manager import manager
 from ..services.reward_service import add_points
+from .deposit_waiter import notify as notify_waiter
 
 logger = logging.getLogger(__name__)
 
@@ -104,9 +105,35 @@ async def handle_deposit_event(event: ESP32DepositEvent) -> Dict[str, Any]:
             },
         })
 
-        # Award points for detected events if a requester user can be identified
+        # Notify in-memory waiter to unblock scan flow without DB polling
+        try:
+            await notify_waiter(event.action_id, {
+                "action_id": event.action_id,
+                "event": event.event,
+                "baseline_distance": event.baseline_distance,
+                "current_distance": event.current_distance,
+                "delta_cm": event.delta_cm,
+                "timestamp": event.timestamp.isoformat(),
+                "device_id": event.device_id,
+            })
+        except Exception:
+            # Non-fatal: scanning route still has DB polling fallback
+            pass
+
+        # Award points for detected events if a requester user can be identified,
+        # unless reward strategy is explicitly managed by scan flow
         awarded_points: Optional[int] = None
-        if event.event == "detected":
+        skip_award = False
+        if event.action_id:
+            try:
+                from bson import ObjectId
+                log = await db["esp32_logs"].find_one({"_id": ObjectId(event.action_id)})
+                details = (log or {}).get("details", {})
+                if details.get("reward_strategy") == "scan_flow":
+                    skip_award = True
+            except Exception:
+                pass
+        if event.event == "detected" and not skip_award:
             email_for_reward: Optional[str] = requester_email
             if not email_for_reward and requester_user_id:
                 email_for_reward = await _find_user_email_by_id(requester_user_id)

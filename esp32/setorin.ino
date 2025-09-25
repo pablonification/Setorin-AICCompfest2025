@@ -61,6 +61,8 @@ const unsigned long WS_RECONNECT_BACKOFF_MIN = 2000;
 const unsigned long WS_RECONNECT_BACKOFF_MAX = 30000;
 unsigned long wsBackoff = WS_RECONNECT_BACKOFF_MIN;
 bool wsInitialized = false;
+// Current action correlation id for deposit events
+String currentActionId = "";
 
 // Forward declarations (WebSocket)
 void setupWebSocket();
@@ -287,9 +289,16 @@ void onWsMessage(WebsocketsMessage message) {
   String cmd = doc["cmd"] | "";
   int duration = doc["duration_seconds"] | 3;
   if (duration < 1 || duration > 30) duration = 3;
+  String actionId = doc["action_id"] | ""; // Initialize actionId
 
   if (action == "open" || cmd == "open") {
     Serial.println("🚪 [WS] Open command received");
+    if (actionId.length() > 0) {
+      currentActionId = actionId;
+      if (debugMode) Serial.println("🔗 [WS] action_id set: " + currentActionId);
+    } else {
+      currentActionId = ""; // avoid mis-correlation
+    }
     openLid(duration);
   } else if (action == "close" || cmd == "close") {
     Serial.println("🔒 [WS] Close command received");
@@ -490,6 +499,11 @@ void handleDepositDetection() {
           Serial.println("⏰ Deposit timeout - no bottle detected");
           sendDepositEvent("timeout");
           depositState = IDLE;
+          // Clear action id after timeout event
+          if (currentActionId.length() > 0 && debugMode) {
+            Serial.println("🧹 Clearing action_id after timeout: " + currentActionId);
+          }
+          currentActionId = "";
           break;
         }
         
@@ -548,6 +562,9 @@ void sendDepositEvent(const char* eventType) {
   doc["event"] = eventType;
   doc["timestamp"] = getCurrentTimestamp();
   doc["baseline_distance"] = baselineDistance;
+  if (currentActionId.length() > 0) {
+    doc["action_id"] = currentActionId;
+  }
   
   String payload;
   serializeJson(doc, payload);
@@ -987,6 +1004,11 @@ void openLid(int durationSeconds) {
   delay(100); // Give servo time to move
   lidOpen = false;
   depositState = IDLE; // Reset deposit detection state
+  // Clear current action id after sequence completes
+  if (currentActionId.length() > 0 && debugMode) {
+    Serial.println("🧹 Clearing action_id after lid close: " + currentActionId);
+  }
+  currentActionId = "";
   Serial.println("✅ Lid closed");
 
   Serial.println("🎉 Lid sequence completed!");
@@ -1006,6 +1028,11 @@ void closeLid() {
   lidServo.write(SERVO_CLOSED_POSITION);
   lidOpen = false;
   depositState = IDLE; // Reset deposit detection state
+  // Clear action id on manual/remote close
+  if (currentActionId.length() > 0 && debugMode) {
+    Serial.println("🧹 Clearing action_id on close: " + currentActionId);
+  }
+  currentActionId = "";
   Serial.println("✅ Lid closed");
   
   // Report completion to backend
@@ -1364,6 +1391,7 @@ void handleControlRequest() {
 
   String action = doc["action"];
   int durationSeconds = doc["duration_seconds"] | 3;
+  String actionId = doc["action_id"] | "";
   
   // Input validation
   if (durationSeconds < 1 || durationSeconds > 30) {
@@ -1380,6 +1408,12 @@ void handleControlRequest() {
     }
     
     Serial.printf("🚪 [DIRECT] Opening lid for %d seconds...\n", durationSeconds);
+    if (actionId.length() > 0) {
+      currentActionId = actionId;
+      if (debugMode) Serial.println("🔗 [DIRECT] action_id set: " + currentActionId);
+    } else {
+      currentActionId = "";
+    }
     
     // Execute lid opening sequence
     lidServo.write(SERVO_OPEN_POSITION);
@@ -1429,6 +1463,11 @@ void handleControlRequest() {
     delay(100); // Give servo time to move
     lidOpen = false;
     depositState = IDLE; // Reset deposit detection state
+    // Clear current action id after sequence completes
+    if (currentActionId.length() > 0 && debugMode) {
+      Serial.println("🧹 [DIRECT] Clearing action_id after lid close: " + currentActionId);
+    }
+    currentActionId = "";
     Serial.println("✅ [DIRECT] Lid closed");
     Serial.println("🎉 [DIRECT] Lid sequence completed!");
 
@@ -1445,6 +1484,11 @@ void handleControlRequest() {
     delay(100); // Give servo time to move
     lidOpen = false;
     depositState = IDLE; // Reset deposit detection state
+    // Clear action id on direct close
+    if (currentActionId.length() > 0 && debugMode) {
+      Serial.println("🧹 [DIRECT] Clearing action_id on close: " + currentActionId);
+    }
+    currentActionId = "";
     Serial.println("✅ [DIRECT] Lid closed");
     
     server.send(200, "application/json", "{\"status\":\"lid_closed\",\"message\":\"Lid closed successfully\"}");

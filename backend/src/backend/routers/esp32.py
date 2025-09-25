@@ -488,7 +488,7 @@ async def handle_lid_open_sequence(device_id: str, action: str, duration_seconds
                 if device_ip:
                     logger.info("ESP32 %s found at IP: %s - attempting direct communication", device_id, device_ip)
                     iot_client = SmartBinClient(esp32_ip=device_ip)
-                    events = await iot_client.open_bin(device_id=device_id, duration_seconds=duration_seconds)
+                    events = await iot_client.open_bin(device_id=device_id, duration_seconds=duration_seconds, action_id=action_id)
                 else:
                     # No IP available, use command queuing
                     logger.info("No IP address available for %s, using command queuing", device_id)
