@@ -1147,7 +1147,33 @@ export default function ScanPage() {
 
       if (!mountedRef.current) return;
 
+      // Immediately turn off torch (best-effort) so it doesn't remain on
+      // after the user presses the shutter. Some devices keep the torch
+      // active until explicitly disabled.
+      try {
+        if (streamRef.current) {
+          const videoTracks = streamRef.current.getVideoTracks();
+          for (const track of videoTracks) {
+            try {
+              const caps = track.getCapabilities && track.getCapabilities();
+              if (caps && caps.torch) {
+                await track.applyConstraints({ advanced: [{ torch: false }] }).catch(() => {});
+              }
+            } catch (e) {
+              // ignore per-track errors
+            }
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+
       setCapturedImage(blob);
+      try {
+        setIsTorchOn(false);
+      } catch (e) {
+        // ignore
+      }
 
       // Store processing state
       try {

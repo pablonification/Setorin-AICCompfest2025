@@ -49,6 +49,13 @@ export default function UserScanStats({ email, token }) {
   const formatTimestamp = (ts) => {
     if (!ts) return '—';
     try {
+      // Some timestamps from the backend may be ISO strings without timezone
+      // (e.g. "2024-09-25T10:00:00"). Parsing that in the browser may be
+      // interpreted as local time, causing a timezone shift. Treat
+      // timezone-less ISO strings as UTC by appending 'Z' before parsing.
+      if (typeof ts === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?$/.test(ts)) {
+        return new Date(ts + 'Z').toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+      }
       return new Date(ts).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
     } catch (e) {
       return String(ts);
