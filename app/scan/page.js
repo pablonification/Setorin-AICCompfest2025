@@ -1980,55 +1980,59 @@ export default function ScanPage() {
                       : "Taruh botol diatas kotak hitam"}
                   </p>
                 </div>
-                <button
-                  onClick={captureAndScan}
-                  disabled={
-                    isScanning ||
-                    (orientationPermission === "granted" &&
-                      orientationSupported === true &&
-                      !isPhoneAligned)
-                  }
-                  aria-label="Capture image"
-                  className={`flex items-center justify-center w-24 h-24 rounded-full [box-shadow:var(--shadow-fab)] active:scale-95 transition-all duration-300 ${
-                    isScanning ||
-                    (orientationPermission === "granted" &&
-                      orientationSupported === true &&
-                      !isPhoneAligned)
-                      ? "opacity-50 cursor-not-allowed"
-                      : "opacity-100"
-                  } ${
-                    orientationPermission === "granted" &&
-                    orientationSupported === true &&
-                    isPhoneAligned
-                      ? "animate-pulse"
-                      : ""
-                  }`}
-                  style={{
-                    background:
-                      orientationPermission === "granted" &&
-                      orientationSupported === true &&
-                      isPhoneAligned
-                        ? "var(--color-success)"
-                        : "var(--color-primary-700)",
-                  }}
-                >
-                  <img
-                    src="/shutter.svg"
-                    alt="Shutter"
-                    className="w-12 h-12 select-none"
-                    draggable="false"
-                  />
-                </button>
-
-                {/* Camera control buttons */}
+                {/* Camera control buttons - single row layout */}
                 {cameraStream && !isScanning && (
-                  <div className="mt-1 w-full max-w-[320px] flex justify-center space-x-2">
+                  <div className="w-full max-w-[400px] flex items-center justify-center space-x-4">
+                    {/* Stop Camera - Left */}
                     <button
                       onClick={stopCamera}
                       className="px-4 py-2 text-xs text-gray-700 bg-gray-200 rounded-[var(--radius-pill)] active:opacity-80"
                     >
                       Stop Camera
                     </button>
+
+                    {/* Shutter Button - Center */}
+                    <button
+                      onClick={captureAndScan}
+                      disabled={
+                        isScanning ||
+                        (orientationPermission === "granted" &&
+                          orientationSupported === true &&
+                          !isPhoneAligned)
+                      }
+                      aria-label="Capture image"
+                      className={`flex items-center justify-center w-24 h-24 rounded-full [box-shadow:var(--shadow-fab)] active:scale-95 transition-all duration-300 ${
+                        isScanning ||
+                        (orientationPermission === "granted" &&
+                          orientationSupported === true &&
+                          !isPhoneAligned)
+                          ? "opacity-50 cursor-not-allowed"
+                          : "opacity-100"
+                      } ${
+                        orientationPermission === "granted" &&
+                        orientationSupported === true &&
+                        isPhoneAligned
+                          ? "animate-pulse"
+                          : ""
+                      }`}
+                      style={{
+                        background:
+                          orientationPermission === "granted" &&
+                          orientationSupported === true &&
+                          isPhoneAligned
+                            ? "var(--color-success)"
+                            : "var(--color-primary-700)",
+                      }}
+                    >
+                      <img
+                        src="/shutter.svg"
+                        alt="Shutter"
+                        className="w-12 h-12 select-none"
+                        draggable="false"
+                      />
+                    </button>
+
+                    {/* Flash Toggle - Right */}
                     <button
                       onClick={toggleFlash}
                       aria-label="Toggle flash"
@@ -2040,6 +2044,12 @@ export default function ScanPage() {
                         className="w-5 h-5"
                       />
                     </button>
+                  </div>
+                )}
+
+                {/* Additional control buttons - separate row below if needed */}
+                {cameraStream && !isScanning && (
+                  <div className="mt-2 w-full max-w-[320px] flex justify-center space-x-2">
                     {/* Manual reset button for stuck states */}
                     {(isLoadingAfterQR || qrValidationInProgress) && (
                       <button
