@@ -1980,8 +1980,7 @@ export default function ScanPage() {
                       : "Taruh botol diatas kotak hitam"}
                   </p>
                 </div>
-
-                <div classname="flex flex-col-1 items-center space-y-2 w-full">
+                <div className="mt-1 w-full max-w-[320px] flex items-center justify-center space-x-3">
                   <button
                     onClick={captureAndScan}
                     disabled={
@@ -2022,9 +2021,9 @@ export default function ScanPage() {
                     />
                   </button>
 
-                  {/* Camera control buttons */}
+                  {/* Right-aligned camera control group */}
                   {cameraStream && !isScanning && (
-                    <div className="mt-1 w-full max-w-[320px] flex flex-row items-center justify-center space-x-2">
+                    <div className="flex items-center space-x-2">
                       <button
                         onClick={toggleFlash}
                         aria-label="Toggle flash"
@@ -2036,6 +2035,7 @@ export default function ScanPage() {
                           className="w-5 h-5"
                         />
                       </button>
+
                       {/* Manual reset button for stuck states */}
                       {(isLoadingAfterQR || qrValidationInProgress) && (
                         <button
@@ -2050,6 +2050,7 @@ export default function ScanPage() {
                           Reset
                         </button>
                       )}
+
                       {/* Force navigation button when we have a result */}
                       {result && (
                         <button
