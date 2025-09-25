@@ -1971,7 +1971,7 @@ export default function ScanPage() {
                       Enable Motion Sensors for Better Accuracy
                     </button>
                   )}
-                  <p className="mb-4 text-sm text-[var(--color-muted)]">
+                  <p className="mb-1 text-sm text-[var(--color-muted)]">
                     {orientationPermission === "granted" &&
                     orientationSupported === true
                       ? isPhoneAligned
@@ -2022,7 +2022,7 @@ export default function ScanPage() {
 
                 {/* Camera control buttons */}
                 {cameraStream && !isScanning && (
-                  <div className="mt-3 w-full max-w-[320px] flex justify-center space-x-2">
+                  <div className="mt-1 w-full max-w-[320px] flex justify-center space-x-2">
                     <button
                       onClick={stopCamera}
                       className="px-4 py-2 text-xs text-gray-700 bg-gray-200 rounded-[var(--radius-pill)] active:opacity-80"
