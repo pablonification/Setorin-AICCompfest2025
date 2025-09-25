@@ -747,10 +747,13 @@ class BottleMeasurer:
             _, buf = cv2.imencode('.jpg', debug)
             debug_img_bytes = buf.tobytes()
 
+        # Use quantized volume for downstream systems (payout, admin, FE).
+        # Keep raw estimate in `raw_volume_ml` for debug/transparency.
         result = MeasurementResult(
             diameter_mm=round(diameter_mm, 2),
             height_mm=round(height_mm, 2),
-            volume_ml=round(volume_ml, 2),
+            volume_ml=float(quantized_volume_ml),
+            raw_volume_ml=round(raw_volume_ml, 2),
             classification=classification,
             confidence_percent=confidence,
         )
