@@ -76,16 +76,60 @@ class SimpleRAGApp:
 
     def _is_related_to_domain(self, query: str) -> bool:
         """Check if query is related to recycling, waste, environment, or Setorin."""
+        # First-pass: cheap keyword match (case-insensitive)
         related_keywords = [
             'sampah', 'daur ulang', 'recycling', 'waste', 'environment', 'lingkungan',
-            'plastik', 'botol', '3r', '5r', 'Setorin', 'setorin', 'tukar', 'poin',
+            'plastik', 'botol', '3r', '5r', 'setorin', 'tukar', 'poin',
             'kebersihan', 'pemilahan', 'organik', 'anorganik', 'sustainability',
             'green', 'eco', 'bumi', 'planet', 'polusi', 'polution', 'karbon',
-            'emisi', 'energy', 'energi', 'conservation', 'pelestarian', 'robin', 'Robin'
+            'emisi', 'energy', 'energi', 'conservation', 'pelestarian', 'robin'
         ]
-        
+
         query_lower = query.lower()
-        return any(keyword in query_lower for keyword in related_keywords)
+        if any(keyword in query_lower for keyword in related_keywords):
+            return True
+
+        # If no obvious keywords, use an LLM-based relevance check as a second pass.
+        # This helps when user phrasing is semantic but does not include the keywords.
+        try:
+            is_related = self._llm_relevance_check(query)
+            return bool(is_related)
+        except Exception:
+            # Be permissive on classifier failures to avoid false negatives.
+            return True
+
+    def _llm_relevance_check(self, query: str) -> bool:
+        """Ask the LLM whether the query is related to our domain.
+
+        Returns True if the LLM indicates the query is related, False otherwise.
+        The LLM is instructed to reply with a short YES/NO and an optional explanation.
+        We do a lightweight parsing of the response to decide.
+        """
+        # Build a focused prompt for binary classification
+        prompt = (
+            "Anda adalah classifier yang bertugas menentukan apakah sebuah pertanyaan terkait dengan topik "
+            "sampah, daur ulang, lingkungan, atau fitur aplikasi Setorin. \n"
+            "Jawab hanya dengan satu kata: 'YES' jika terkait, atau 'NO' jika tidak. Jangan berikan penjelasan.\n\n"
+            f"Pertanyaan: {query}\n"
+        )
+
+        try:
+            resp = self.llm.invoke([
+                SystemMessage(content=SYSTEM_PROMPT),
+                HumanMessage(content=prompt),
+            ])
+            text = getattr(resp, "content", str(resp)).strip().lower()
+            # Only consider the very first token to be token-efficient
+            first_token = text.split()[:1]
+            if first_token and (first_token[0].startswith('yes') or first_token[0].startswith('ya')):
+                return True
+            if first_token and (first_token[0].startswith('no') or first_token[0].startswith('tidak')):
+                return False
+            # Conservative default: treat ambiguous output as related
+            return True
+        except Exception:
+            # If LLM fails for any reason, raise to caller so caller can decide fallback
+            raise
 
     def invoke(self, state: Dict[str, Any], config: Dict[str, Any] | None = None) -> Dict[str, Any]:
         messages: List[Any] = state.get("messages", [])
@@ -102,8 +146,14 @@ class SimpleRAGApp:
         if not user_query:
             user_query = "Jelaskan ringkas tentang Setorin dan 3R."
 
-        # Check if query is related to our domain
-        if not self._is_related_to_domain(user_query):
+        # First: determine if query is related using the chained classifier (keyword + LLM fallback)
+        try:
+            is_related = self._is_related_to_domain(user_query)
+        except Exception:
+            # If the classifier fails, be permissive to avoid blocking related questions
+            is_related = True
+
+        if not is_related:
             rejection_message = (
                 "Maaf, saya adalah asisten khusus untuk topik sampah, daur ulang, lingkungan, dan fitur Setorin. "
                 "Untuk pertanyaan di luar topik tersebut, saya tidak bisa membantu. "
@@ -112,15 +162,32 @@ class SimpleRAGApp:
             out_messages = list(messages) + [AIMessage(content=rejection_message)]
             return {"messages": out_messages}
 
-        # Retrieve context for Setorin-specific questions
-        contexts = []
+        # Second: retrieve context documents (if any) to augment answer generation
+        contexts: List[str] = []
         try:
             docs = self.retriever.get_relevant_documents(user_query)
             contexts = [d.page_content for d in docs]
         except Exception:
             contexts = []
 
-        # Build context-aware prompt
+        # Third: generate final answer using a dedicated answer generator (LLM) that consumes contexts
+        try:
+            answer_text = self._generate_answer(user_query, contexts)
+        except Exception:
+            # If generation fails, fall back to a safe generic response
+            answer_text = (
+                "Maaf, terjadi kesalahan saat menghasilkan jawaban. Silakan coba lagi nanti atau tanyakan dengan kata-kata yang lebih sederhana."
+            )
+
+        out_messages = list(messages) + [AIMessage(content=answer_text)]
+        return {"messages": out_messages}
+
+    def _generate_answer(self, user_query: str, contexts: List[str]) -> str:
+        """Generate a full answer using the LLM, optionally with retrieved contexts.
+
+        This is the second agent in the chain: it assumes the query is related and focuses on
+        producing a helpful, context-aware response.
+        """
         if contexts:
             context_block = "\n\n".join(contexts[:4])
             prompt = (
@@ -130,22 +197,18 @@ class SimpleRAGApp:
                 "Jawab dengan informasi dari konteks jika tersedia, atau gunakan pengetahuan umum tentang daur ulang dan waste management."
             )
         else:
-            # No specific context, but still answer using general knowledge
             prompt = (
                 f"Pertanyaan: {user_query}\n"
                 "Jawab menggunakan pengetahuan umum tentang daur ulang, waste management, dan best practices lingkungan. "
                 "Meskipun tidak ada konteks spesifik Setorin, berikan jawaban yang bermanfaat dan edukatif."
             )
 
-        # Call LLM
-        ai_msg = self.llm.invoke([
+        resp = self.llm.invoke([
             SystemMessage(content=SYSTEM_PROMPT),
             HumanMessage(content=prompt),
         ])
 
-        # Return message list as expected
-        out_messages = list(messages) + [AIMessage(content=getattr(ai_msg, "content", str(ai_msg)))]
-        return {"messages": out_messages}
+        return getattr(resp, "content", str(resp))
 
 
 # Public app instance
