@@ -37,8 +37,8 @@ const char* location = "Main Entrance";
 #define STATUS_LED_PIN 2  // Built-in LED on most ESP32 boards
 
 // Ultrasonic Sensor Configuration (HC-SR04)
-#define ULTRASONIC_TRIG_PIN 4
-#define ULTRASONIC_ECHO_PIN 5  // Use voltage divider: Echo -> 2.2kΩ -> Pin5 -> 1kΩ -> GND
+#define ULTRASONIC_TRIG_PIN 19
+#define ULTRASONIC_ECHO_PIN 21  // Use voltage divider: Echo -> 2.2kΩ -> Pin21 -> 1kΩ -> GND
 #define ULTRASONIC_MAX_DISTANCE 400  // Maximum distance in cm
 #define DEPOSIT_TIMEOUT_MS 15000     // 15 seconds timeout for deposit
 #define DEPOSIT_DETECTION_THRESHOLD 10  // cm - distance change to detect deposit
