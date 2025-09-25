@@ -118,10 +118,34 @@ async def get_users(
 
 
 @router.get("/users/{email}/stats")
-async def get_user_scan_stats(email: str, payload: dict = Depends(require_admin)):
-    """Return per-user scan statistics: counts per quantized size, totals and recent scans."""
+async def get_user_scan_stats(
+    email: str,
+    limit: int = Query(10, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    sort_by: str = Query("timestamp", regex="^(timestamp|volume_ml|points)$"),
+    sort_order: str = Query("desc", regex="^(asc|desc)$"),
+    size_filter: str | None = Query(None, description="Filter by size label e.g. '600ml'"),
+    payload: dict = Depends(require_admin),
+):
+    """Return per-user scan statistics and paginated/filtered recent scans.
+
+    Supports:
+    - Pagination via `limit` and `offset`.
+    - Sorting by `timestamp`, `volume_ml`, or `points`.
+    - Optional `size_filter` like '600ml' to only return scans of that quantized size.
+    """
     try:
         db = await ensure_connection()
+
+        match = {"user_email": email}
+        if size_filter:
+            # Expect size_filter like '600ml' -> numeric 600.0
+            try:
+                numeric = float(size_filter.replace("ml", ""))
+                match["measurement.volume_ml"] = numeric
+            except Exception:
+                # If parse fails, no scans will match
+                match["measurement.volume_ml"] = None
 
         # Aggregate counts per measurement.volume_ml (quantized volumes)
         pipeline = [
@@ -142,9 +166,18 @@ async def get_user_scan_stats(email: str, payload: dict = Depends(require_admin)
             counts[label] = int(item.get("count", 0))
             total_scans += int(item.get("count", 0))
 
-        # Recent scans (latest 10)
-        recent_cursor = db["scans"].find({"user_email": email}).sort("timestamp", -1).limit(10)
-        recent = await recent_cursor.to_list(length=10)
+        # Prepare sort
+        sort_dir = -1 if sort_order == "desc" else 1
+        if sort_by == "timestamp":
+            sort_field = ("timestamp", sort_dir)
+        elif sort_by == "volume_ml":
+            sort_field = ("measurement.volume_ml", sort_dir)
+        else:
+            sort_field = ("points", sort_dir)
+
+        # Fetch paginated recent scans with optional filter
+        cursor = db["scans"].find(match if match else {}).sort([sort_field]).skip(offset).limit(limit)
+        recent = await cursor.to_list(length=limit)
         recent_serialized = []
         for s in recent:
             recent_serialized.append({
@@ -167,6 +200,11 @@ async def get_user_scan_stats(email: str, payload: dict = Depends(require_admin)
             "total_scans": total_scans,
             "recent_scans": recent_serialized,
             "total_points": total_points,
+            "limit": limit,
+            "offset": offset,
+            "sort_by": sort_by,
+            "sort_order": sort_order,
+            "size_filter": size_filter,
         }
     except Exception as e:
         logger = __import__("logging").getLogger(__name__)
