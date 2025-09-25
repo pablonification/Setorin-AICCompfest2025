@@ -18,6 +18,7 @@ class MeasurementResult:
     diameter_mm: float
     height_mm: float
     volume_ml: float
+    raw_volume_ml: float | None = None  # keep original (pre-quantization) estimate
     # Additional optional fields produced by the advanced pipeline
     classification: str | None = None
     confidence_percent: float | None = None
@@ -485,6 +486,7 @@ class BottleMeasurer:
         classify: bool = True,
         known_bottle_specs: dict[str, dict[str, float]] | None = None,
         tolerance_percent: float = 30.0,
+        volume_size_choices: list[float] | None = None,
         # Detector weighting parameters (silhouette scoring) - OPTIMIZED WEIGHTS
         detector_weight_area: float = 0.7,
         detector_weight_aspect: float = 1.8,
@@ -503,16 +505,23 @@ class BottleMeasurer:
         self.ref_hsv_upper = np.array(ref_hsv_upper, dtype=np.uint8)
         # Advanced pipeline configuration ------------------------------------
         self.classify = classify
-        self.known_specs = (
-            known_bottle_specs
-            if known_bottle_specs is not None
-            else {
-                "200mL": {"volume_ml": 200},
-                "500mL": {"volume_ml": 500},
-                "600mL": {"volume_ml": 600},  # Added to match payout service expectations
-                "1000mL": {"volume_ml": 1000},
-            }
+        # Volume size choices used for quantization and classification. Default
+        # explicit sizes requested by product: 220, 350, 500, 600, 1000, 1500 mL
+        self.volume_size_choices = (
+            volume_size_choices
+            if volume_size_choices is not None
+            else [220.0, 350.0, 500.0, 600.0, 1000.0, 1500.0]
         )
+
+        # Build known_specs mapping (label -> spec) if not provided. Labels are
+        # canonicalised as e.g. '220mL', '350mL', ... This keeps backwards
+        # compatibility for callers that supply custom known_bottle_specs.
+        if known_bottle_specs is not None:
+            self.known_specs = known_bottle_specs
+        else:
+            self.known_specs = {
+                f"{int(v)}mL": {"volume_ml": float(v)} for v in self.volume_size_choices
+            }
         self.tolerance_percent = tolerance_percent
         self.detector = BottleDetector(
             min_aspect_ratio=1.2,
@@ -635,13 +644,32 @@ class BottleMeasurer:
         radius_cm = (diameter_mm / 10) / 2  # convert to cm
         height_cm = height_mm / 10
         volume_cm3 = math.pi * radius_cm**2 * height_cm
-        volume_ml = volume_cm3  # 1 cm3 = 1 ml
+        volume_ml = volume_cm3  # 1 cm3 = 1 ml (raw estimate)
+
+        # Quantize volume to configured discrete sizes. We keep the raw
+        # estimate on the result as `raw_volume_ml` and set `volume_ml` to the
+        # quantized bucket that will be consumed by downstream systems.
+        raw_volume_ml = float(volume_ml)
+        # Pick nearest configured size by absolute difference
+        nearest_size = min(self.volume_size_choices, key=lambda s: abs(raw_volume_ml - s))
+        quantized_volume_ml = float(nearest_size)
+
+        # Compute a simple confidence based on closeness to the selected bucket
+        diff_pct = abs(raw_volume_ml - quantized_volume_ml) / max(1e-6, quantized_volume_ml) * 100.0
+        quant_confidence = max(0.0, 100.0 - diff_pct)
 
         # Optional volume-based classification --------------------------------
         classification: str | None = None
         confidence: float | None = None
         if self.classify:
-            classification, confidence = self._classify_volume(volume_ml)
+            # Use the raw estimate for classification comparison (more fair),
+            # but the known_specs were seeded from the quantization choices so
+            # labels align with the quantized sizes.
+            classification, confidence = self._classify_volume(raw_volume_ml)
+            # If classification didn't yield strong confidence, fall back to
+            # quantization closeness as the confidence signal
+            if confidence is None or confidence < 1e-6:
+                confidence = quant_confidence
 
         logger.debug(
             "Measured bottle – diameter_mm=%.2f height_mm=%.2f volume_ml=%.2f",

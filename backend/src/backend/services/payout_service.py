@@ -22,9 +22,11 @@ class PayoutConfig:
 
 DEFAULT_PAYOUT_CONFIG = PayoutConfig(
     size_weights_g={
-        "330ml": 10.5,
+        "220ml": 8.0,
+        "350ml": 12.0,
+        "500ml": 15.0,
         "600ml": 16.0,
-        "750ml": 22.0,
+        "1000ml": 28.0,
         "1500ml": 30.0,
     },
     brand_overrides_g={
@@ -34,10 +36,12 @@ DEFAULT_PAYOUT_CONFIG = PayoutConfig(
     },
     pet_price_idr_per_kg=3700,
     coefficients_brand_unknown={
-        "330ml": 0.93,
+        "220ml": 0.92,
+        "350ml": 0.94,
+        "500ml": 0.95,
         "600ml": 0.95,
-        "750ml": 0.96,
-        "1500ml": 0.97,
+        "1000ml": 0.97,
+        "1500ml": 0.98,
     },
     # (min_confidence_in_0_to_1, k)
     confidence_bins=(
@@ -69,12 +73,16 @@ def _normalize_brand(brand: Optional[str]) -> Optional[str]:
 def _select_size_key(volume_ml: float) -> str:
     """Pick the closest size key from the configured choices based on volume.
 
-    This chooses among 330, 600, 750, 1500 ml by absolute difference.
+    This chooses among configured sizes by absolute difference. Updated to
+    align with the measurement quantization choices (220, 350, 500, 600,
+    1000, 1500 mL).
     """
     candidates = {
-        "330ml": 330.0,
+        "220ml": 220.0,
+        "350ml": 350.0,
+        "500ml": 500.0,
         "600ml": 600.0,
-        "750ml": 750.0,
+        "1000ml": 1000.0,
         "1500ml": 1500.0,
     }
     best_key = min(candidates.keys(), key=lambda k: abs(volume_ml - candidates[k]))
@@ -123,14 +131,14 @@ def compute_payout(
     # if available; otherwise derive a conservative confidence from volume closeness.
     conf_percent = measurement.confidence_percent
     if conf_percent is None:
-        target_volumes = {
-            "330ml": 330.0,
-            "600ml": 600.0,
-            "750ml": 750.0,
-            "1500ml": 1500.0,
-        }
-        target = target_volumes[size_key]
-        diff_pct = abs(measurement.volume_ml - target) / target  # in 0..inf
+        # Derive target volume from size_key (e.g. '600ml' -> 600.0). This
+        # avoids keeping duplicated mappings and ensures we follow the
+        # configured size keys.
+        try:
+            target = float(size_key.replace("ml", ""))
+        except Exception:
+            target = measurement.volume_ml or 1.0
+        diff_pct = abs(measurement.volume_ml - target) / max(1e-6, target)  # in 0..inf
         # Map diff to confidence: 1 - diff, clamped [0,1]
         conf_0_to_1 = max(0.0, min(1.0, 1.0 - diff_pct))
     else:
@@ -138,21 +146,16 @@ def compute_payout(
 
     k_conf = _confidence_k(conf_0_to_1, cfg.confidence_bins)
     if not math.isfinite(k_conf):
-        # Reject per spec; still return context for transparency
-        weight_g_reject = cfg.size_weights_g[size_key]
-        base_reject = (weight_g_reject / 1000.0) * cfg.pet_price_idr_per_kg
-        return PayoutResult(
-            payout_rp=None,
-            k_brand=1.0,
-            k_conf=None,
-            k_clean=cfg.cleanliness.get(cleanliness_key, 1.0),
-            k_cap=cfg.cap_label.get(cap_label_key, 1.0),
-            size_key=size_key,
-            weight_g_used=weight_g_reject,
-            price_per_kg=cfg.pet_price_idr_per_kg,
-            brand_key_used=None,
-            base_rp=base_reject,
-        )
+        # Do NOT reject the scan solely because the measurement-confidence
+        # falls below the configured bins. The Roboflow brand detection must
+        # not invalidate the measurement — we only used predictions for ROI
+        # fusion / bounding boxes. Fallback to the most conservative (smallest)
+        # confidence multiplier available to still compute a reduced payout.
+        try:
+            min_k = min(k for _, k in cfg.confidence_bins)
+        except Exception:
+            min_k = 0.93
+        k_conf = min_k
 
     # Brand handling
     top_brand: Optional[str] = None

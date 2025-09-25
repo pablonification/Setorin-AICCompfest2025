@@ -117,6 +117,63 @@ async def get_users(
         raise HTTPException(status_code=500, detail=f"Failed to get users: {str(e)}")
 
 
+@router.get("/users/{email}/stats")
+async def get_user_scan_stats(email: str, payload: dict = Depends(require_admin)):
+    """Return per-user scan statistics: counts per quantized size, totals and recent scans."""
+    try:
+        db = await ensure_connection()
+
+        # Aggregate counts per measurement.volume_ml (quantized volumes)
+        pipeline = [
+            {"$match": {"user_email": email}},
+            {"$group": {"_id": "$measurement.volume_ml", "count": {"$sum": 1}}},
+        ]
+        agg = await db["scans"].aggregate(pipeline).to_list(length=100)
+        counts = {}
+        total_scans = 0
+        for item in agg:
+            key = item.get("_id")
+            if key is None:
+                continue
+            try:
+                label = f"{int(float(key))}ml"
+            except Exception:
+                label = str(key)
+            counts[label] = int(item.get("count", 0))
+            total_scans += int(item.get("count", 0))
+
+        # Recent scans (latest 10)
+        recent_cursor = db["scans"].find({"user_email": email}).sort("timestamp", -1).limit(10)
+        recent = await recent_cursor.to_list(length=10)
+        recent_serialized = []
+        for s in recent:
+            recent_serialized.append({
+                "id": str(s.get("_id")),
+                "timestamp": s.get("timestamp"),
+                "volume_ml": s.get("measurement", {}).get("volume_ml"),
+                "size_label": (f"{int(s.get('measurement', {}).get('volume_ml'))}ml" if s.get('measurement', {}).get('volume_ml') is not None else None),
+                "points": s.get("points", 0),
+                "valid": s.get("valid", True),
+                "debug_url": s.get("debug_url"),
+            })
+
+        # Total points awarded to user (from users collection)
+        user_doc = await db["users"].find_one({"email": email})
+        total_points = user_doc.get("points", 0) if user_doc else 0
+
+        return {
+            "email": email,
+            "counts_per_size": counts,
+            "total_scans": total_scans,
+            "recent_scans": recent_serialized,
+            "total_points": total_points,
+        }
+    except Exception as e:
+        logger = __import__("logging").getLogger(__name__)
+        logger.error("Failed to get user scan stats: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get user stats: {str(e)}")
+
+
 @router.get("/users/export.csv")
 async def export_users_csv(payload: dict = Depends(require_admin)):
     """Export users data as CSV."""

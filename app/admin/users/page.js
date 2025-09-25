@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { FiArrowLeft, FiSearch, FiDownload, FiEye, FiRefreshCw, FiFilter } from 'react-icons/fi';
 import AdminRoute from '../../components/AdminRoute';
+import UserScanStats from './UserScanStats';
 
 export default function AdminUsers() {
   const { token, user } = useAuth();
@@ -348,6 +349,8 @@ export default function AdminUsers() {
                     </div>
                   </div>
                 )}
+
+                <UserScanStats email={selectedUser.email} token={token} />
               </div>
             </div>
           </div>
