@@ -2,7 +2,10 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useAuth } from "@/app/auth/context"; // adjust path if different
+// NOTE: Jangan gunakan path '@/app/auth/context' karena folder tsb tidak ada dan alias '@' saat ini menunjuk ke 'src/'.
+// File context yang benar berada di 'app/contexts/AuthContext.js'.
+// Di lingkungan Linux (image Docker) path bersifat case-sensitive sehingga perbedaan 'auth' vs 'contexts' & kapitalisasi akan gagal.
+import { useAuth } from "../../contexts/AuthContext";
 
 export const dynamic = "force-dynamic";
 
