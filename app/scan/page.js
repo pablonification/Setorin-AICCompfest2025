@@ -364,6 +364,22 @@ export default function ScanPage() {
     });
   }, [isScanning, result]);
 
+  // Helper function to determine navigation destination
+  const getNavigationDestination = useCallback((scanResult) => {
+    // If scan is invalid, go directly to result page
+    if (!scanResult.is_valid && !scanResult.valid) {
+      return '/scan/result';
+    }
+
+    // If scan is valid but already has deposit info, go to result page
+    if (scanResult.deposit) {
+      return '/scan/result';
+    }
+
+    // If scan is valid and no deposit info yet, go to deposit detection
+    return '/scan/deposit';
+  }, []);
+
   // Monitor result state and ensure navigation
   useEffect(() => {
     if (result && mountedRef.current) {
@@ -387,17 +403,27 @@ export default function ScanPage() {
         console.warn("LocalStorage not available:", e);
       }
 
-      // Navigate to result page immediately
-      console.log("🚀 Immediate navigation to result page...");
+      // Determine navigation destination
+      const destination = getNavigationDestination(result);
+      console.log("🚀 Navigating to:", destination);
 
-      // Check if we're already on the result page
-      if (window.location.pathname === "/scan/result") {
+      // Check if we're already on the destination page
+      if (window.location.pathname === destination) {
         console.log(
-          "🔄 Already on result page, refreshing to show new data..."
+          "🔄 Already on destination page, refreshing to show new data..."
         );
         window.location.reload();
       } else {
-        router.push("/scan/result");
+        if (destination === '/scan/deposit') {
+          // Pass scan data and duration to deposit page
+          const searchParams = new URLSearchParams({
+            scanData: encodeURIComponent(JSON.stringify(result)),
+            duration: '8' // Default 8 seconds
+          });
+          router.push(`/scan/deposit?${searchParams.toString()}`);
+        } else {
+          router.push(destination);
+        }
       }
     }
   }, [result, router]);
@@ -1052,19 +1078,29 @@ export default function ScanPage() {
               console.warn("LocalStorage not available:", e);
             }
 
-            // Navigate to result page after successful scan with proper delay
+            // Navigate to appropriate page after successful scan with proper delay
             setTimeout(() => {
               if (mountedRef.current) {
-                console.log("🚀 Navigating to result page from WebSocket...");
+                const destination = getNavigationDestination(msg.data);
+                console.log("🚀 Navigating from WebSocket to:", destination);
 
-                // Check if we're already on the result page
-                if (window.location.pathname === "/scan/result") {
+                // Check if we're already on the destination page
+                if (window.location.pathname === destination) {
                   console.log(
-                    "🔄 Already on result page, refreshing to show new data..."
+                    "🔄 Already on destination page, refreshing to show new data..."
                   );
                   window.location.reload();
                 } else {
-                  router.push("/scan/result");
+                  if (destination === '/scan/deposit') {
+                    // Pass scan data and duration to deposit page
+                    const searchParams = new URLSearchParams({
+                      scanData: encodeURIComponent(JSON.stringify(msg.data)),
+                      duration: '8' // Default 8 seconds
+                    });
+                    router.push(`/scan/deposit?${searchParams.toString()}`);
+                  } else {
+                    router.push(destination);
+                  }
                 }
               }
             }, 1000); // Increased delay to ensure state is properly updated
@@ -1098,7 +1134,7 @@ export default function ScanPage() {
         ws.close();
       }
     };
-  }, [token, updateUser, user, router, result]);
+  }, [token, updateUser, user, router, result, getNavigationDestination]);
 
   const stopCamera = useCallback(() => {
     cleanupCamera();
@@ -1268,17 +1304,27 @@ export default function ScanPage() {
         }
       }
 
-      // Force navigation to result page immediately
-      console.log("🚀 Navigating to result page immediately...");
+      // Navigate to appropriate page immediately
+      const destination = getNavigationDestination(data);
+      console.log("🚀 Manual scan navigating to:", destination);
 
-      // Check if we're already on the result page
-      if (window.location.pathname === "/scan/result") {
+      // Check if we're already on the destination page
+      if (window.location.pathname === destination) {
         console.log(
-          "🔄 Already on result page, refreshing to show new data..."
+          "🔄 Already on destination page, refreshing to show new data..."
         );
         window.location.reload();
       } else {
-        router.push("/scan/result");
+        if (destination === '/scan/deposit') {
+          // Pass scan data and duration to deposit page
+          const searchParams = new URLSearchParams({
+            scanData: encodeURIComponent(JSON.stringify(data)),
+            duration: '8' // Default 8 seconds
+          });
+          router.push(`/scan/deposit?${searchParams.toString()}`);
+        } else {
+          router.push(destination);
+        }
       }
     } catch (error) {
       console.error("Scan error:", error);
@@ -1469,14 +1515,15 @@ export default function ScanPage() {
               setIsScanning(false);
               setStatus("Scan completed (fallback)");
 
-              // Navigate to result page
+              // Navigate to appropriate page
               setTimeout(() => {
                 if (
                   mountedRef.current &&
                   window.location.pathname === "/scan"
                 ) {
-                  console.log("🚀 Fallback navigation to result page...");
-                  router.push("/scan/result");
+                  const destination = getNavigationDestination(parsedResult, false);
+                  console.log(`🚀 Fallback navigation to ${destination}...`);
+                  router.push(destination);
                 }
               }, 500);
             } else {
@@ -1496,7 +1543,7 @@ export default function ScanPage() {
 
       return () => clearTimeout(fallbackTimeout);
     }
-  }, [isScanning, router]);
+  }, [isScanning, router, getNavigationDestination]);
 
   // Aggressive navigation check to prevent getting stuck
   useEffect(() => {
@@ -1507,17 +1554,28 @@ export default function ScanPage() {
           window.location.pathname === "/scan" &&
           result
         ) {
+          const destination = getNavigationDestination(result);
           console.log(
-            "🔄 Navigation check: Still on scan page with result, forcing navigation..."
+            "🔄 Navigation check: Still on scan page with result, forcing navigation to:", destination
           );
-          router.push("/scan/result");
+          
+          if (destination === '/scan/deposit') {
+            // Pass scan data and duration to deposit page
+            const searchParams = new URLSearchParams({
+              scanData: encodeURIComponent(JSON.stringify(result)),
+              duration: '8' // Default 8 seconds
+            });
+            router.push(`/scan/deposit?${searchParams.toString()}`);
+          } else {
+            router.push(destination);
+          }
           clearInterval(navigationCheck);
         }
       }, 2000); // Check every 2 seconds
 
       return () => clearInterval(navigationCheck);
     }
-  }, [result, router]);
+  }, [result, router, getNavigationDestination]);
 
   // Toggle guide visibility based on qrValidated
   useEffect(() => {
