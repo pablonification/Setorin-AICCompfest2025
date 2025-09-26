@@ -133,7 +133,8 @@ async def scan_bottle(
     image: UploadFile = File(...),
     payload: dict = Depends(verify_token),
     device_id: str = Query("ESP32-SPARTANS", description="ESP32 device ID to control"),
-    duration_seconds: int = Query(8, ge=1, le=15, description="Max time to keep lid open waiting for deposit (seconds)"),
+    duration_seconds: int = Query(12, ge=5, le=20, description="Duration lid open & deposit wait (seconds)"),
+    return_early: bool = Query(True, description="Return immediately after validation & lid open; finalize via WS"),
 ) -> Any:  # noqa: WPS110
     """Handle bottle scanning.
 
@@ -219,11 +220,85 @@ async def scan_bottle(
         validation_result.is_valid, validation_result.brand, validation_result.confidence, validation_result.reason,
     )
 
-    # 5. If the bottle is valid, command ESP32 to open and wait for deposit confirmation
+    # 5. If the bottle is valid, command ESP32 to open (optionally wait or early-return)
     iot_events: list = []
     deposit_ok = False
     deposit_info: dict | None = None
     action_id: str | None = None
+
+    async def finalize_async(scan_id: str | None, base_reason: str):  # background finalize when early-return
+        nonlocal deposit_ok, deposit_info, action_id
+        try:
+            if action_id:
+                deposit_info = await wait_for_deposit_event(action_id, timeout_seconds=duration_seconds)
+                if deposit_info and deposit_info.get("event") == "detected":
+                    deposit_ok = True
+        except Exception as wait_exc:  # noqa: BLE001
+            logger.error("Deposit wait failed (async): %s", wait_exc)
+        user_total_points: Optional[int] = None
+        transaction_id: Optional[str] = None
+        if deposit_ok:
+            try:
+                user_total_points = await add_points(user_email, validation_result.points_awarded)
+            except Exception as award_exc:  # noqa: BLE001
+                logger.error("Failed to award points (async) to %s: %s", user_email, award_exc)
+        # Update scan document (best-effort)
+        try:
+            db_u = await ensure_connection()
+            update_doc = {
+                "$set": {
+                    "points": (validation_result.points_awarded if deposit_ok else 0),
+                    "valid": (validation_result.is_valid and deposit_ok),
+                    "reason": (validation_result.reason if deposit_ok else base_reason),
+                    "deposit_event": (deposit_info or {"event": "timeout"}),
+                    "updated_at": datetime.now(timezone(timedelta(hours=7)))
+                }
+            }
+            if scan_id:
+                await db_u["scans"].update_one({"_id": ObjectId(scan_id)}, update_doc)
+        except Exception as upd_exc:  # noqa: BLE001
+            logger.warning("Failed to update scan %s after finalize: %s", scan_id, upd_exc)
+        # Create transaction if success
+        if deposit_ok and validation_result.points_awarded > 0 and scan_id:
+            try:
+                user_doc = await db["users"].find_one({"email": user_email})
+                user_id = str(user_doc["_id"]) if user_doc else None
+                if user_id:
+                    created_transaction = await transaction_service.create_transaction_after_scan(
+                        user_id=user_id,
+                        scan_id=scan_id,
+                        points_awarded=validation_result.points_awarded
+                    )
+                    if created_transaction:
+                        transaction_id_local = str(created_transaction.id)
+                        transaction_id = transaction_id_local
+            except Exception as tx_exc:  # noqa: BLE001
+                logger.error("Async transaction creation failed: %s", tx_exc)
+        # Broadcast final state
+        final_state = "deposit_success" if deposit_ok else "deposit_timeout"
+        await manager.broadcast_notification({
+            "type": "scan_result",
+            "data": {
+                "scan_id": scan_id,
+                "transaction_id": transaction_id,
+                "action_id": action_id,
+                "brand": validation_result.brand,
+                "confidence": validation_result.confidence,
+                "diameter_mm": validation_result.measurement.diameter_mm,
+                "height_mm": validation_result.measurement.height_mm,
+                "volume_ml": validation_result.measurement.volume_ml,
+                "points": (validation_result.points_awarded if deposit_ok else 0),
+                "total_points": (user_total_points if deposit_ok else None),
+                "valid": (validation_result.is_valid and deposit_ok),
+                "validation_valid": validation_result.is_valid,
+                "state": final_state,
+                "events": iot_events,
+                "email": user_email,
+                "debug_url": debug_url,
+                "debug_image": preview_b64,
+                "deposit": (deposit_info or {"event": "timeout"}),
+            }
+        })
 
     if validation_result.is_valid:
         try:
@@ -238,108 +313,155 @@ async def scan_bottle(
             logger.error("Failed to start ESP32 lid sequence: %s", e)
             iot_events.append({"event": "error", "message": str(e)})
 
-        # Tag the action log to indicate scan-managed rewards (optional metadata)
+        # Tag action log (best-effort)
         try:
             if action_id:
-                db_tag = await ensure_connection()
-                await db_tag["esp32_logs"].update_one(
+                await db["esp32_logs"].update_one(
                     {"_id": ObjectId(action_id)},
                     {"$set": {
-                        "details.reward_strategy": "scan_flow",
+                        "details.reward_strategy": "scan_flow_async" if return_early else "scan_flow_blocking",
                         "details.scan_expected_points": validation_result.points_awarded,
                     }}
                 )
         except Exception as tag_exc:  # noqa: BLE001
             logger.warning("Failed to tag action log %s: %s", action_id, tag_exc)
 
-        # Wait up to duration_seconds for deposit event
-        if action_id:
+        if not return_early and action_id:
+            # legacy blocking mode
             deposit_info = await wait_for_deposit_event(action_id, timeout_seconds=duration_seconds)
             if deposit_info and deposit_info.get("event") == "detected":
                 deposit_ok = True
 
-    # Award points only if deposit confirmed
+    # Award points only if deposit confirmed (blocking mode)
     user_total_points: Optional[int] = None
-    if deposit_ok and user_email:
+    if not return_early and deposit_ok and user_email:
         try:
             user_total_points = await add_points(user_email, validation_result.points_awarded)
         except Exception as award_exc:  # noqa: BLE001
             logger.error("Failed to award points to %s: %s", user_email, award_exc)
 
-    # 6. Store to MongoDB (best-effort)
+    # 6. Store to MongoDB (best-effort) initial record
     scan_id = None
+    initial_reason = "Waiting for deposit" if (validation_result.is_valid and return_early) else (
+        validation_result.reason if deposit_ok else "No deposit detected"
+    )
     try:
-        scan_result = await db["scans"].insert_one({
+        doc = {
             "brand": validation_result.brand,
             "confidence": validation_result.confidence,
             "measurement": validation_result.measurement.__dict__,
-            "points": (validation_result.points_awarded if deposit_ok else 0),
-            "valid": (validation_result.is_valid and deposit_ok),
-            "reason": (validation_result.reason if deposit_ok else "No deposit detected"),
+            "points": (validation_result.points_awarded if (deposit_ok and not return_early) else 0),
+            "valid": (validation_result.is_valid and deposit_ok and not return_early),
+            "reason": initial_reason,
             "iot_events": iot_events,
-            "deposit_event": (deposit_info or None),
+            "deposit_event": (deposit_info if (deposit_info and not return_early) else None),
             "esp32_action_id": action_id,
             "user_email": user_email,
             "timestamp": datetime.now(timezone(timedelta(hours=7))),
-        })
+            "async_mode": return_early,
+        }
+        scan_result = await db["scans"].insert_one(doc)
         scan_id = str(scan_result.inserted_id)
         logger.info("Scan saved successfully with ID: %s", scan_id)
     except Exception as exc:  # noqa: BLE001
         logger.error("Failed to save scan to DB: %s", exc)
 
-    # 6.5. Create transaction record if scan was successful and valid
+    # 6.5. Create transaction record only in blocking mode
     transaction_id = None
-    if scan_id and deposit_ok and user_email and validation_result.points_awarded > 0:
+    if not return_early and scan_id and deposit_ok and user_email and validation_result.points_awarded > 0:
         try:
-            # Resolve user's ObjectId by email for transactions
             user_doc = await db["users"].find_one({"email": user_email})
             user_id = str(user_doc["_id"]) if user_doc else None
-            if not user_id:
-                logger.warning("Could not resolve user_id for email %s; skipping transaction creation", user_email)
-                raise RuntimeError("User not found for transaction creation")
-
-            created_transaction = await transaction_service.create_transaction_after_scan(
-                user_id=user_id,
-                scan_id=scan_id,
-                points_awarded=validation_result.points_awarded
-            )
-            if created_transaction:
-                transaction_id = str(created_transaction.id)
-                logger.info("Transaction created successfully with ID: %s for scan: %s", transaction_id, scan_id)
-            else:
-                logger.warning("Failed to create transaction for scan: %s", scan_id)
-        except Exception as exc:
+            if user_id:
+                created_transaction = await transaction_service.create_transaction_after_scan(
+                    user_id=user_id,
+                    scan_id=scan_id,
+                    points_awarded=validation_result.points_awarded
+                )
+                if created_transaction:
+                    transaction_id = str(created_transaction.id)
+                    logger.info("Transaction created successfully with ID: %s for scan: %s", transaction_id, scan_id)
+        except Exception as exc:  # noqa: BLE001
             logger.error("Failed to create transaction for scan %s: %s", scan_id, exc)
-            # Don't fail the scan if transaction creation fails
 
-    # 7. Broadcast to connected WS clients
-    await manager.broadcast_notification({
-        "type": "scan_result",
-        "data": {
-            "scan_id": scan_id,
-            "transaction_id": transaction_id,
-            "brand": validation_result.brand,
-            "confidence": validation_result.confidence,
-            "diameter_mm": validation_result.measurement.diameter_mm,
-            "height_mm": validation_result.measurement.height_mm,
-            "volume_ml": validation_result.measurement.volume_ml,
-            "points": (validation_result.points_awarded if deposit_ok else 0),
-            "total_points": user_total_points,
-            "valid": (validation_result.is_valid and deposit_ok),
-            "events": iot_events,
-            "email": user_email,
-            "debug_url": debug_url,
-            "debug_image": preview_b64,
-            "deposit": (deposit_info or {"event": "timeout"}),
-        }
-    })
+    # 7. Broadcast initial state (different for async vs blocking)
+    if return_early and validation_result.is_valid:
+        await manager.broadcast_notification({
+            "type": "scan_result",
+            "data": {
+                "scan_id": scan_id,
+                "transaction_id": None,
+                "action_id": action_id,
+                "brand": validation_result.brand,
+                "confidence": validation_result.confidence,
+                "diameter_mm": validation_result.measurement.diameter_mm,
+                "height_mm": validation_result.measurement.height_mm,
+                "volume_ml": validation_result.measurement.volume_ml,
+                "points": 0,
+                "total_points": None,
+                "valid": False,  # not finalized yet
+                "validation_valid": True,
+                "state": "waiting_for_deposit",
+                "events": iot_events,
+                "email": user_email,
+                "debug_url": debug_url,
+                "debug_image": preview_b64,
+                "deposit": {"event": "pending"},
+            }
+        })
+    elif not return_early:
+        await manager.broadcast_notification({
+            "type": "scan_result",
+            "data": {
+                "scan_id": scan_id,
+                "transaction_id": transaction_id,
+                "action_id": action_id,
+                "brand": validation_result.brand,
+                "confidence": validation_result.confidence,
+                "diameter_mm": validation_result.measurement.diameter_mm,
+                "height_mm": validation_result.measurement.height_mm,
+                "volume_ml": validation_result.measurement.volume_ml,
+                "points": (validation_result.points_awarded if deposit_ok else 0),
+                "total_points": user_total_points,
+                "valid": (validation_result.is_valid and deposit_ok),
+                "validation_valid": validation_result.is_valid,
+                "state": ("deposit_success" if deposit_ok else "deposit_timeout" if validation_result.is_valid else "invalid"),
+                "events": iot_events,
+                "email": user_email,
+                "debug_url": debug_url,
+                "debug_image": preview_b64,
+                "deposit": (deposit_info or {"event": "timeout"}),
+            }
+        })
 
     # 8. Return response
+    if return_early and validation_result.is_valid:
+        # Launch finalize task
+        asyncio.create_task(finalize_async(scan_id, base_reason="No deposit detected"))
+        # Return provisional response (points 0) still using ScanResponse shape
+        resp = ScanResponse(
+            scan_id=scan_id,
+            transaction_id=None,
+            is_valid=False,
+            reason="Waiting for deposit",
+            brand=validation_result.brand,
+            confidence=validation_result.confidence,
+            diameter_mm=validation_result.measurement.diameter_mm,
+            height_mm=validation_result.measurement.height_mm,
+            volume_ml=validation_result.measurement.volume_ml,
+            points_awarded=0,
+            total_points=None,
+            debug_image=preview_b64,
+            debug_url=debug_url,
+        )
+        return resp
+
+    # blocking mode or invalid bottle
     resp = ScanResponse(
         scan_id=scan_id,
         transaction_id=transaction_id,
         is_valid=(validation_result.is_valid and deposit_ok),
-        reason=(validation_result.reason if deposit_ok else "No deposit detected"),
+        reason=(validation_result.reason if (validation_result.is_valid and deposit_ok) else ("No deposit detected" if validation_result.is_valid else validation_result.reason)),
         brand=validation_result.brand,
         confidence=validation_result.confidence,
         diameter_mm=validation_result.measurement.diameter_mm,
@@ -376,11 +498,12 @@ async def scan_bottle_no_slash(
     image: UploadFile = File(...),
     payload: dict = Depends(verify_token),
     device_id: str = Query("ESP32-SPARTANS", description="ESP32 device ID to control"),
-    duration_seconds: int = Query(8, ge=1, le=15, description="Max time to keep lid open waiting for deposit (seconds)"),
+    duration_seconds: int = Query(12, ge=5, le=20, description="Duration lid open & deposit wait (seconds)"),
+    return_early: bool = Query(True, description="Return immediately after validation & lid open; finalize via WS"),
 ) -> Any:
     """Alias for scan_bottle to handle calls without trailing slash."""
     logger.info("Scan request (no-slash) received from user: %s", payload.get("email", "unknown"))
-    return await scan_bottle(image=image, payload=payload, device_id=device_id, duration_seconds=duration_seconds)
+    return await scan_bottle(image=image, payload=payload, device_id=device_id, duration_seconds=duration_seconds, return_early=return_early)
 
 
 @router.get("/transactions", response_model=List[dict])

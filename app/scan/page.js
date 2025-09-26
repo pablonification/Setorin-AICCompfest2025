@@ -1212,7 +1212,7 @@ export default function ScanPage() {
       const response = await fetch(
         `${
           process.env.NEXT_PUBLIC_BROWSER_API_URL || "http://localhost:8000"
-        }/api/scan`,
+        }/api/scan?return_early=1&duration_seconds=12`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
@@ -1229,56 +1229,41 @@ export default function ScanPage() {
 
       if (!mountedRef.current) return;
 
-      // Always update result and clear loading states
+      // Async early-return path: reason == 'Waiting for deposit' & is_valid false but we have brand etc.
+      const isWaitingEarly = !data.is_valid && data.reason === 'Waiting for deposit' && data.brand;
+      if (isWaitingEarly) {
+        setIsScanning(false);
+        setStatus('Waiting for deposit...');
+        // DO NOT treat as final result; redirect to deposit guidance page
+        try { localStorage.setItem('smartbin_pending_scan', JSON.stringify(data)); } catch {}
+        const search = new URLSearchParams({ scan_id: data.scan_id || '', action_id: data.action_id || '', duration: '12' });
+        router.push(`/scan/deposit?${search.toString()}`);
+        return; // exit early
+      }
+
+      // Legacy/blocking path (final result)
       setResult(data);
       setIsScanning(false);
       setStatus("Scan completed successfully!");
-
       try {
         localStorage.setItem("smartbin_last_scan", JSON.stringify(data));
         localStorage.setItem("smartbin_scan_processing", "0");
-      } catch (e) {
-        console.warn("LocalStorage not available:", e);
-      }
+      } catch (e) { console.warn("LocalStorage not available:", e); }
 
-      // Update user points if available
       if (data && user) {
         const current = user?.points ?? 0;
-        const totalFromServer =
-          typeof data.total_points === "number" ? data.total_points : null;
-        const awarded =
-          typeof data.points === "number"
-            ? data.points
-            : typeof data.points_awarded === "number"
-            ? data.points_awarded
-            : null;
+        const totalFromServer = typeof data.total_points === 'number' ? data.total_points : null;
+        const awarded = typeof data.points === 'number' ? data.points : (typeof data.points_awarded === 'number' ? data.points_awarded : null);
         let candidate = current;
-        if (totalFromServer !== null)
-          candidate = Math.max(candidate, totalFromServer);
-        if (awarded !== null)
-          candidate = Math.max(candidate, current + awarded);
-        if (candidate > current) {
-          console.log("Manual scan points update:", {
-            current,
-            totalFromServer,
-            awarded,
-            candidate,
-          });
-          updateUser({ ...user, points: candidate });
-        }
+        if (totalFromServer !== null) candidate = Math.max(candidate, totalFromServer);
+        if (awarded !== null) candidate = Math.max(candidate, current + awarded);
+        if (candidate > current) updateUser({ ...user, points: candidate });
       }
 
-      // Force navigation to result page immediately
-      console.log("🚀 Navigating to result page immediately...");
-
-      // Check if we're already on the result page
-      if (window.location.pathname === "/scan/result") {
-        console.log(
-          "🔄 Already on result page, refreshing to show new data..."
-        );
+      if (window.location.pathname === '/scan/result') {
         window.location.reload();
       } else {
-        router.push("/scan/result");
+        router.push('/scan/result');
       }
     } catch (error) {
       console.error("Scan error:", error);
