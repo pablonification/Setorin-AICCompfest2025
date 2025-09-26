@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import MobileScanResult from '../../components/MobileScanResult';
@@ -14,35 +14,88 @@ function ScanResultContent() {
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    console.log('📡 Checking localStorage for scan results...');
+    console.log('📡 Checking for scan results...');
     
-    // Check localStorage for scan results
-    const interval = setInterval(() => {
+    const fetchData = async () => {
       try {
-        const processing = localStorage.getItem('smartbin_scan_processing');
-        const raw = localStorage.getItem('smartbin_last_scan');
+        // Check for scan_id in URL parameters first
+        const urlParams = new URLSearchParams(window.location.search);
+        const scanId = urlParams.get('scan_id');
         
-        console.log('📡 localStorage check:', { 
-          processing, 
-          hasData: !!raw,
-          rawData: raw ? 'exists' : 'none',
-          currentTime: new Date().toISOString()
-        });
-        
-        if (processing === '0' && raw) {
-          console.log('📡 Found completed scan data:', raw);
-          const parsed = JSON.parse(raw);
-          setData(parsed);
-          setLoading(false);
-          clearInterval(interval);
+        if (scanId) {
+          console.log('🔍 Found scan_id in URL, fetching scan result:', scanId);
+          
+          const token = localStorage.getItem('smartbin_auth_token');
+          if (!token) {
+            console.error('No auth token found');
+            router.push('/login');
+            return;
+          }
+
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_BROWSER_API_URL || "http://localhost:8000"}/api/scan/${scanId}`,
+            {
+              headers: { 
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+          
+          if (response.ok) {
+            const scanData = await response.json();
+            console.log('✅ Fetched scan result by ID:', scanData);
+            setData(scanData);
+            setLoading(false);
+            return;
+          } else {
+            console.error('Failed to fetch scan result:', response.status);
+          }
         }
-      } catch (e) {
-        console.error('LocalStorage error:', e);
+      } catch (err) {
+        console.error('Error fetching scan result:', err);
       }
-    }, 300);
+      
+      // Fallback to localStorage checking
+      checkLocalStorageForResults();
+    };
+
+    const checkLocalStorageForResults = () => {
+      console.log('📡 Checking localStorage for scan results...');
+      
+      const interval = setInterval(() => {
+        try {
+          const processing = localStorage.getItem('smartbin_scan_processing');
+          const raw = localStorage.getItem('smartbin_last_scan');
+          
+          console.log('📡 localStorage check:', { 
+            processing, 
+            hasData: !!raw,
+            currentTime: new Date().toISOString()
+          });
+          
+          if (processing === '0' && raw) {
+            console.log('📡 Found completed scan data');
+            const parsed = JSON.parse(raw);
+            setData(parsed);
+            setLoading(false);
+            clearInterval(interval);
+          }
+        } catch (e) {
+          console.error('LocalStorage error:', e);
+        }
+      }, 300);
+      
+      // Clean up interval after 10 seconds to prevent infinite polling
+      const timeout = setTimeout(() => {
+        clearInterval(interval);
+        setLoading(false);
+        console.warn('⚠️ Timeout - no data received');
+      }, 10000);
+    };
     
-    return () => clearInterval(interval);
-  }, []);
+    fetchData();
+  }, [router]);
 
   // If still loading after 10 seconds, show error
   useEffect(() => {

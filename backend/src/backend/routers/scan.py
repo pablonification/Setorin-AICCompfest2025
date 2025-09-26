@@ -11,7 +11,7 @@ from ..services.roboflow_service import RoboflowClient
 from ..services.validation_service import validate_scan
 from ..services.transaction_service import get_transaction_service
 from ..db.mongo import ensure_connection
-from ..schemas.scan import ScanResponse
+from ..schemas.scan import ScanResponse, DepositConfirmationRequest, DepositConfirmationResponse
 from ..services.iot_client import SmartBinClient
 from ..services.ws_manager import manager
 from ..services.reward_service import add_points
@@ -135,15 +135,15 @@ async def scan_bottle(
     device_id: str = Query("ESP32-SPARTANS", description="ESP32 device ID to control"),
     duration_seconds: int = Query(8, ge=1, le=15, description="Max time to keep lid open waiting for deposit (seconds)"),
 ) -> Any:  # noqa: WPS110
-    """Handle bottle scanning.
+    """Handle bottle scanning with async 2-phase deposit confirmation.
 
     1. Read image bytes.
     2. Run OpenCV measurement.
     3. Call Roboflow for brand prediction.
     4. Validate and compute reward.
-    5. Open ESP32 bin lid if valid and wait for deposit.
-    6. Store result in MongoDB.
-    7. Return validation payload.
+    5. If valid, open ESP32 bin lid and return immediately with PENDING_DEPOSIT status.
+    6. Store scan with PENDING_DEPOSIT status in MongoDB.
+    7. Return validation payload with scan_id for deposit confirmation page.
     """
     logger.info("Scan request received from user: %s", payload.get("email", "unknown"))
 
@@ -219,10 +219,8 @@ async def scan_bottle(
         validation_result.is_valid, validation_result.brand, validation_result.confidence, validation_result.reason,
     )
 
-    # 5. If the bottle is valid, command ESP32 to open and wait for deposit confirmation
+    # 5. If the bottle is valid, command ESP32 to open lid and return immediately
     iot_events: list = []
-    deposit_ok = False
-    deposit_info: dict | None = None
     action_id: str | None = None
 
     if validation_result.is_valid:
@@ -235,141 +233,79 @@ async def scan_bottle(
             iot_events = resp.get("events", [])
             action_id = resp.get("action_id")
         except Exception as e:
-            logger.error("Failed to start ESP32 lid sequence: %s", e)
+            logger.error("Failed to open ESP32 lid: %s", e)
             iot_events.append({"event": "error", "message": str(e)})
 
-        # Tag the action log to indicate scan-managed rewards (optional metadata)
-        try:
-            if action_id:
-                db_tag = await ensure_connection()
-                await db_tag["esp32_logs"].update_one(
-                    {"_id": ObjectId(action_id)},
-                    {"$set": {
-                        "details.reward_strategy": "scan_flow",
-                        "details.scan_expected_points": validation_result.points_awarded,
-                    }}
-                )
-        except Exception as tag_exc:  # noqa: BLE001
-            logger.warning("Failed to tag action log %s: %s", action_id, tag_exc)
-
-        # Wait up to duration_seconds for deposit event
-        if action_id:
-            deposit_info = await wait_for_deposit_event(action_id, timeout_seconds=duration_seconds)
-            if deposit_info and deposit_info.get("event") == "detected":
-                deposit_ok = True
-
-    # Award points only if deposit confirmed
-    user_total_points: Optional[int] = None
-    if deposit_ok and user_email:
-        try:
-            user_total_points = await add_points(user_email, validation_result.points_awarded)
-        except Exception as award_exc:  # noqa: BLE001
-            logger.error("Failed to award points to %s: %s", user_email, award_exc)
-
-    # 6. Store to MongoDB (best-effort)
+    # 6. Store scan with PENDING_DEPOSIT status for valid scans
     scan_id = None
     try:
         scan_result = await db["scans"].insert_one({
             "brand": validation_result.brand,
             "confidence": validation_result.confidence,
             "measurement": validation_result.measurement.__dict__,
-            "points": (validation_result.points_awarded if deposit_ok else 0),
-            "valid": (validation_result.is_valid and deposit_ok),
-            "reason": (validation_result.reason if deposit_ok else "No deposit detected"),
+            "points": validation_result.points_awarded if validation_result.is_valid else 0,
+            "valid": False,  # Will be updated after deposit confirmation
+            "status": "PENDING_DEPOSIT" if validation_result.is_valid else "INVALID_BOTTLE",
+            "reason": validation_result.reason,
             "iot_events": iot_events,
-            "deposit_event": (deposit_info or None),
             "esp32_action_id": action_id,
             "user_email": user_email,
             "timestamp": datetime.now(timezone(timedelta(hours=7))),
+            "deposit_timeout": datetime.now(timezone(timedelta(hours=7))) + timedelta(seconds=duration_seconds) if validation_result.is_valid else None,
         })
         scan_id = str(scan_result.inserted_id)
-        logger.info("Scan saved successfully with ID: %s", scan_id)
+        logger.info("Scan saved successfully with ID: %s, status: %s", scan_id, "PENDING_DEPOSIT" if validation_result.is_valid else "INVALID_BOTTLE")
     except Exception as exc:  # noqa: BLE001
         logger.error("Failed to save scan to DB: %s", exc)
 
-    # 6.5. Create transaction record if scan was successful and valid
-    transaction_id = None
-    if scan_id and deposit_ok and user_email and validation_result.points_awarded > 0:
+    # 7. Return response immediately
+    user_total_points: Optional[int] = None
+    if user_email:
         try:
-            # Resolve user's ObjectId by email for transactions
             user_doc = await db["users"].find_one({"email": user_email})
-            user_id = str(user_doc["_id"]) if user_doc else None
-            if not user_id:
-                logger.warning("Could not resolve user_id for email %s; skipping transaction creation", user_email)
-                raise RuntimeError("User not found for transaction creation")
-
-            created_transaction = await transaction_service.create_transaction_after_scan(
-                user_id=user_id,
-                scan_id=scan_id,
-                points_awarded=validation_result.points_awarded
-            )
-            if created_transaction:
-                transaction_id = str(created_transaction.id)
-                logger.info("Transaction created successfully with ID: %s for scan: %s", transaction_id, scan_id)
-            else:
-                logger.warning("Failed to create transaction for scan: %s", scan_id)
+            user_total_points = user_doc.get("points", 0) if user_doc else 0
         except Exception as exc:
-            logger.error("Failed to create transaction for scan %s: %s", scan_id, exc)
-            # Don't fail the scan if transaction creation fails
+            logger.warning("Failed to fetch user points: %s", exc)
 
-    # 7. Broadcast to connected WS clients
-    await manager.broadcast_notification({
-        "type": "scan_result",
-        "data": {
-            "scan_id": scan_id,
-            "transaction_id": transaction_id,
-            "brand": validation_result.brand,
-            "confidence": validation_result.confidence,
-            "diameter_mm": validation_result.measurement.diameter_mm,
-            "height_mm": validation_result.measurement.height_mm,
-            "volume_ml": validation_result.measurement.volume_ml,
-            "points": (validation_result.points_awarded if deposit_ok else 0),
-            "total_points": user_total_points,
-            "valid": (validation_result.is_valid and deposit_ok),
-            "events": iot_events,
-            "email": user_email,
-            "debug_url": debug_url,
-            "debug_image": preview_b64,
-            "deposit": (deposit_info or {"event": "timeout"}),
-        }
-    })
-
-    # 8. Return response
     resp = ScanResponse(
         scan_id=scan_id,
-        transaction_id=transaction_id,
-        is_valid=(validation_result.is_valid and deposit_ok),
-        reason=(validation_result.reason if deposit_ok else "No deposit detected"),
+        transaction_id=None,  # Will be created after deposit confirmation
+        is_valid=False,  # Will be updated after deposit confirmation
+        reason="Waiting for deposit confirmation" if validation_result.is_valid else validation_result.reason,
         brand=validation_result.brand,
         confidence=validation_result.confidence,
         diameter_mm=validation_result.measurement.diameter_mm,
         height_mm=validation_result.measurement.height_mm,
         volume_ml=validation_result.measurement.volume_ml,
-        points_awarded=(validation_result.points_awarded if deposit_ok else 0),
+        points_awarded=0,  # Will be updated after deposit confirmation
         total_points=user_total_points,
+        status="PENDING_DEPOSIT" if validation_result.is_valid else "INVALID_BOTTLE",
+        action_id=action_id,
+        deposit_timeout_seconds=duration_seconds if validation_result.is_valid else None,
         debug_image=preview_b64,
         debug_url=debug_url,
     )
-    # Optionally populate payout transparency
-    try:
-        from ..services.payout_service import compute_payout
-        payout_ctx = compute_payout(
-            validation_result.measurement, predictions, cleanliness_key="clean_dry", cap_label_key="mixed"
-        )
-        if payout_ctx.payout_rp is not None:
-            resp.size_key = payout_ctx.size_key
-            resp.weight_g_used = payout_ctx.weight_g_used
-            resp.price_per_kg = payout_ctx.price_per_kg
-            resp.k_brand = payout_ctx.k_brand
-            resp.k_conf = payout_ctx.k_conf if payout_ctx.k_conf is not None else None
-            resp.k_clean = payout_ctx.k_clean
-            resp.k_cap = payout_ctx.k_cap
-            resp.base_rp = payout_ctx.base_rp
-    except Exception:
-        pass
+
+    # Optionally populate payout transparency for invalid bottles
+    if not validation_result.is_valid:
+        try:
+            from ..services.payout_service import compute_payout
+            payout_ctx = compute_payout(
+                validation_result.measurement, predictions, cleanliness_key="clean_dry", cap_label_key="mixed"
+            )
+            if payout_ctx.payout_rp is not None:
+                resp.size_key = payout_ctx.size_key
+                resp.weight_g_used = payout_ctx.weight_g_used
+                resp.price_per_kg = payout_ctx.price_per_kg
+                resp.k_brand = payout_ctx.k_brand
+                resp.k_conf = payout_ctx.k_conf if payout_ctx.k_conf is not None else None
+                resp.k_clean = payout_ctx.k_clean
+                resp.k_cap = payout_ctx.k_cap
+                resp.base_rp = payout_ctx.base_rp
+        except Exception:
+            pass
+
     return resp
-
-
 # Add route without trailing slash to prevent 307 redirects
 @router.post("", response_model=ScanResponse, status_code=status.HTTP_200_OK)
 async def scan_bottle_no_slash(
@@ -554,3 +490,151 @@ async def get_user_transaction_summary(payload: dict = Depends(verify_token)):
     except Exception as exc:
         logger.error("Failed to fetch transaction summary for user %s: %s", payload.get("email", "unknown"), str(exc), exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to fetch transaction summary")
+
+
+@router.post("/{scan_id}/confirm-deposit", response_model=DepositConfirmationResponse)
+async def confirm_deposit(
+    scan_id: str,
+    request: DepositConfirmationRequest,
+    payload: dict = Depends(verify_token),
+):
+    """Confirm deposit for a scan - called by deposit page or ESP32"""
+    user_email = payload.get("email")
+    if not user_email:
+        raise HTTPException(status_code=401, detail="Invalid user token")
+    
+    db = await ensure_connection()
+    
+    # Find scan
+    try:
+        scan_doc = await db["scans"].find_one({
+            "_id": ObjectId(scan_id),
+            "user_email": user_email,
+            "status": "PENDING_DEPOSIT"
+        })
+    except Exception as exc:
+        logger.error("Error finding scan %s: %s", scan_id, exc)
+        raise HTTPException(status_code=400, detail="Invalid scan ID")
+    
+    if not scan_doc:
+        raise HTTPException(status_code=404, detail="Scan not found or already processed")
+    
+    # Check if still within timeout
+    now = datetime.now(timezone(timedelta(hours=7)))
+    deposit_timeout = scan_doc.get("deposit_timeout")
+    if deposit_timeout and now > deposit_timeout:
+        # Mark as timeout
+        await db["scans"].update_one(
+            {"_id": ObjectId(scan_id)},
+            {
+                "$set": {
+                    "status": "DEPOSIT_TIMEOUT",
+                    "valid": False,
+                    "reason": "Deposit timeout exceeded",
+                }
+            }
+        )
+        raise HTTPException(status_code=408, detail="Deposit timeout exceeded")
+    
+    # Award points
+    points_awarded = scan_doc.get("points", 0)
+    user_total_points = 0
+    
+    if points_awarded > 0:
+        try:
+            user_total_points = await add_points(user_email, points_awarded)
+            logger.info("Awarded %d points to %s, new total: %d", points_awarded, user_email, user_total_points)
+        except Exception as exc:
+            logger.error("Failed to award points to %s: %s", user_email, exc)
+    
+    # Update scan status
+    await db["scans"].update_one(
+        {"_id": ObjectId(scan_id)},
+        {
+            "$set": {
+                "status": "DEPOSIT_CONFIRMED",
+                "valid": True,
+                "deposit_confirmed_at": now,
+                "manual_confirmation": request.manual_confirmation,
+            }
+        }
+    )
+    
+    # Create transaction
+    transaction_id = None
+    if points_awarded > 0:
+        try:
+            user_doc = await db["users"].find_one({"email": user_email})
+            if user_doc:
+                transaction_service = get_transaction_service()
+                created_transaction = await transaction_service.create_transaction_after_scan(
+                    user_id=str(user_doc["_id"]),
+                    scan_id=scan_id,
+                    points_awarded=points_awarded
+                )
+                if created_transaction:
+                    transaction_id = str(created_transaction.id)
+                    logger.info("Transaction created with ID: %s for scan: %s", transaction_id, scan_id)
+        except Exception as exc:
+            logger.error("Failed to create transaction for scan %s: %s", scan_id, exc)
+    
+    # Broadcast result via WebSocket
+    await manager.broadcast_notification({
+        "type": "deposit_confirmed",
+        "data": {
+            "scan_id": scan_id,
+            "transaction_id": transaction_id,
+            "user_email": user_email,
+            "points_awarded": points_awarded,
+            "total_points": user_total_points,
+            "manual_confirmation": request.manual_confirmation,
+        }
+    })
+    
+    return DepositConfirmationResponse(
+        status="success",
+        points_awarded=points_awarded,
+        total_points=user_total_points,
+    )
+
+
+@router.get("/{scan_id}")
+async def get_scan_result(
+    scan_id: str,
+    payload: dict = Depends(verify_token),
+):
+    """Get scan result by ID for result page"""
+    user_email = payload.get("email")
+    if not user_email:
+        raise HTTPException(status_code=401, detail="Invalid user token")
+    
+    db = await ensure_connection()
+    
+    try:
+        scan_doc = await db["scans"].find_one({
+            "_id": ObjectId(scan_id),
+            "user_email": user_email,
+        })
+    except Exception as exc:
+        logger.error("Error finding scan %s: %s", scan_id, exc)
+        raise HTTPException(status_code=400, detail="Invalid scan ID")
+    
+    if not scan_doc:
+        raise HTTPException(status_code=404, detail="Scan not found")
+    
+    # Convert scan document to response format
+    measurement = scan_doc.get("measurement", {})
+    
+    return {
+        "scan_id": scan_id,
+        "is_valid": scan_doc.get("valid", False),
+        "reason": scan_doc.get("reason", ""),
+        "brand": scan_doc.get("brand"),
+        "confidence": scan_doc.get("confidence"),
+        "diameter_mm": measurement.get("diameter_mm", 0),
+        "height_mm": measurement.get("height_mm", 0),
+        "volume_ml": measurement.get("volume_ml", 0),
+        "points_awarded": scan_doc.get("points", 0) if scan_doc.get("valid", False) else 0,
+        "status": scan_doc.get("status", "UNKNOWN"),
+        "timestamp": scan_doc.get("timestamp"),
+    }

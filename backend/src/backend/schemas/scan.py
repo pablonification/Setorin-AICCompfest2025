@@ -18,6 +18,12 @@ class ScanResponse(BaseModel):
 
     points_awarded: int
     total_points: Optional[int] = None
+    
+    # New fields for async 2-phase scan
+    status: Optional[str] = None  # PENDING_DEPOSIT, DEPOSIT_CONFIRMED, DEPOSIT_TIMEOUT
+    action_id: Optional[str] = None
+    deposit_timeout_seconds: Optional[int] = None
+    
     # Transparency fields (optional)
     size_key: Optional[str] = None
     weight_g_used: Optional[float] = None
@@ -29,3 +35,13 @@ class ScanResponse(BaseModel):
     base_rp: Optional[float] = None
     debug_image: str | None = None  # base64 JPEG with reference/bboxes
     debug_url: str | None = None
+
+
+class DepositConfirmationRequest(BaseModel):
+    manual_confirmation: Optional[bool] = False
+
+
+class DepositConfirmationResponse(BaseModel):
+    status: str
+    points_awarded: int
+    total_points: Optional[int] = None

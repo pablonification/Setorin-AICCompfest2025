@@ -1229,7 +1229,27 @@ export default function ScanPage() {
 
       if (!mountedRef.current) return;
 
-      // Always update result and clear loading states
+      // Check if scan is pending deposit confirmation
+      if (data.status === "PENDING_DEPOSIT") {
+        console.log("🔄 Scan pending deposit, navigating to deposit confirmation page...");
+        // Clear loading states
+        setIsScanning(false);
+        setStatus("Redirect to deposit confirmation...");
+        
+        // Store scan data for potential fallback
+        try {
+          localStorage.setItem("smartbin_last_scan", JSON.stringify(data));
+          localStorage.setItem("smartbin_scan_processing", "0");
+        } catch (e) {
+          console.warn("LocalStorage not available:", e);
+        }
+        
+        // Navigate to deposit confirmation page
+        router.push(`/scan/deposit/${data.scan_id}`);
+        return;
+      }
+
+      // Handle immediate result (invalid bottle or already processed)
       setResult(data);
       setIsScanning(false);
       setStatus("Scan completed successfully!");

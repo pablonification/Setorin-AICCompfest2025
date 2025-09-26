@@ -12,6 +12,7 @@ from .routers.admin import router as admin_router
 from pathlib import Path
 from .db.mongo import connect_to_mongo, close_mongo_connection
 from .services.ws_manager import start_websocket_manager, stop_websocket_manager
+from .services.deposit_detection_service import start_deposit_service, stop_deposit_service
 from .services.educational_service import EducationalService
 
 
@@ -20,6 +21,7 @@ async def lifespan(app: FastAPI):
     # Startup
     await connect_to_mongo()
     await start_websocket_manager()
+    await start_deposit_service()  # Start deposit detection service
     # Seed initial infoin contents (idempotent)
     try:
         await EducationalService().seed_initial_education_contents()
@@ -28,6 +30,7 @@ async def lifespan(app: FastAPI):
         pass
     yield
     # Shutdown
+    await stop_deposit_service()  # Stop deposit detection service
     await stop_websocket_manager()
     await close_mongo_connection()
 
