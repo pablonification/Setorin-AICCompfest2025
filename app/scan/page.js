@@ -987,96 +987,77 @@ export default function ScanPage() {
       if (mountedRef.current) {
         setStatus("WebSocket connected");
       }
+      try { window.__smartbin_ws = ws; } catch (_) { /* ignore */ }
     };
 
     ws.onmessage = (e) => {
       if (!mountedRef.current) return;
+      let msg;
+      try { msg = JSON.parse(e.data); } catch (err) { return; }
+      if (!msg || msg.type !== 'scan_result') return;
+      const data = msg.data || {};
 
-      try {
-        const msg = JSON.parse(e.data);
-        console.log("WebSocket message received:", msg);
-        if (msg.type === "scan_result") {
-          console.log("✅ Scan result received via WebSocket:", msg.data);
-
-          // Only process WebSocket result if we don't already have a manual result
-          if (!result) {
-            // Clear all loading and scanning states immediately
-            setIsScanning(false);
-            setIsScanningQR(false);
-            setQrValidated(false);
-            setIsLoadingAfterQR(false);
-
-            // Set the result
-            setResult(msg.data);
-
-            // Update user points if available
-            if (msg.data && user) {
-              const current = user?.points ?? 0;
-              const totalFromServer =
-                typeof msg.data.total_points === "number"
-                  ? msg.data.total_points
-                  : null;
-              const awarded =
-                typeof msg.data.points === "number"
-                  ? msg.data.points
-                  : typeof msg.data.points_awarded === "number"
-                  ? msg.data.points_awarded
-                  : null;
-              let candidate = current;
-              if (totalFromServer !== null)
-                candidate = Math.max(candidate, totalFromServer);
-              if (awarded !== null)
-                candidate = Math.max(candidate, current + awarded);
-              if (candidate > current) {
-                console.log("Optimistic WS points update:", {
-                  current,
-                  totalFromServer,
-                  awarded,
-                  candidate,
-                });
-                updateUser({ ...user, points: candidate });
-              }
-            }
-
-            // Set completion status
-            setStatus("Scan completed successfully!");
-
-            // Persist result for result page to read
-            try {
-              localStorage.setItem(
-                "smartbin_last_scan",
-                JSON.stringify(msg.data)
-              );
-              localStorage.setItem("smartbin_scan_processing", "0");
-            } catch (e) {
-              console.warn("LocalStorage not available:", e);
-            }
-
-            // Navigate to result page after successful scan with proper delay
-            setTimeout(() => {
-              if (mountedRef.current) {
-                console.log("🚀 Navigating to result page from WebSocket...");
-
-                // Check if we're already on the result page
-                if (window.location.pathname === "/scan/result") {
-                  console.log(
-                    "🔄 Already on result page, refreshing to show new data..."
-                  );
-                  window.location.reload();
-                } else {
-                  router.push("/scan/result");
-                }
-              }
-            }, 1000); // Increased delay to ensure state is properly updated
-          } else {
-            console.log(
-              "⚠️ WebSocket result received but manual result already exists, skipping..."
-            );
-          }
-        }
-      } catch (error) {
-        console.error("Error parsing WebSocket message:", error);
+      // If this is an early provisional event (waiting_for_deposit), redirect to deposit page and do NOT treat as final
+      const isProvisional = data.state === 'waiting_for_deposit' && data.validation_valid && !data.valid;
+      if (isProvisional) {
+        // Avoid double redirect if already on deposit page
+        if (window.location.pathname.startsWith('/scan/deposit')) return;
+        // Persist minimal pending info
+        try { localStorage.setItem('smartbin_pending_scan', JSON.stringify(data)); } catch {}
+        const qp = new URLSearchParams({
+          scan_id: data.scan_id || '',
+          action_id: data.action_id || '',
+          duration: '12'
+        });
+        console.log('➡️ Redirecting to deposit guidance (provisional scan)...');
+        router.push(`/scan/deposit?${qp.toString()}`);
+        return; // do not proceed to final result logic
       }
+
+      // Ignore if we already stored a final result
+      if (result) {
+        console.log('⚠️ Final result already present; ignoring additional WS result');
+        return;
+      }
+
+      // For invalid OR final deposit states treat as final
+      const isFinal = ['deposit_success','deposit_timeout','invalid'].includes(data.state) || data.valid || data.points > 0 || data.points_awarded > 0;
+      if (!isFinal) return; // safety
+
+      // Clear any scanning UI states
+      setIsScanning(false);
+      setIsScanningQR(false);
+      setQrValidated(false);
+      setIsLoadingAfterQR(false);
+
+      // Save final result
+      setResult(data);
+
+      // Update user points optimistically
+      if (data && user) {
+        const current = user?.points ?? 0;
+        const totalFromServer = typeof data.total_points === 'number' ? data.total_points : null;
+        const awarded = typeof data.points === 'number' ? data.points : (typeof data.points_awarded === 'number' ? data.points_awarded : null);
+        let candidate = current;
+        if (totalFromServer !== null) candidate = Math.max(candidate, totalFromServer);
+        if (awarded !== null) candidate = Math.max(candidate, current + awarded);
+        if (candidate > current) updateUser({ ...user, points: candidate });
+      }
+
+      setStatus('Scan completed successfully!');
+      try {
+        localStorage.setItem('smartbin_last_scan', JSON.stringify(data));
+        localStorage.setItem('smartbin_scan_processing', '0');
+      } catch (e2) { /* ignore */ }
+
+      setTimeout(() => {
+        if (!mountedRef.current) return;
+        if (window.location.pathname === '/scan/result') {
+          window.location.reload();
+        } else {
+          router.push('/scan/result');
+        }
+      }, 600);
     };
 
     ws.onerror = (error) => {
