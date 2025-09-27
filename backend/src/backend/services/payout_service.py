@@ -25,7 +25,7 @@ DEFAULT_PAYOUT_CONFIG = PayoutConfig(
         "220ml": 8.0,
         "350ml": 12.0,
         "500ml": 15.0,
-        "600ml": 16.0,
+       #  "600ml": 16.0,
         "1000ml": 28.0,
         "1500ml": 30.0,
     },
@@ -36,12 +36,12 @@ DEFAULT_PAYOUT_CONFIG = PayoutConfig(
     },
     pet_price_idr_per_kg=3700,
     coefficients_brand_unknown={
-        "220ml": 0.92,
-        "350ml": 0.94,
-        "500ml": 0.95,
-        "600ml": 0.95,
-        "1000ml": 0.97,
-        "1500ml": 0.98,
+        "220ml": 1.00,
+        "350ml": 1.00,
+        "500ml": 1.00,
+        # "600ml": 0.95,
+        "1000ml": 1.00,
+        "1500ml": 1.00,
     },
     # (min_confidence_in_0_to_1, k)
     confidence_bins=(
@@ -81,7 +81,7 @@ def _select_size_key(volume_ml: float) -> str:
         "220ml": 220.0,
         "350ml": 350.0,
         "500ml": 500.0,
-        "600ml": 600.0,
+        # "600ml": 600.0,
         "1000ml": 1000.0,
         "1500ml": 1500.0,
     }
@@ -175,11 +175,8 @@ def compute_payout(
 
     weight_kg = weight_g / 1000.0
 
-    # K_brand
-    if brand_key is None:
-        k_brand = cfg.coefficients_brand_unknown[size_key]
-    else:
-        k_brand = 1.0
+    # K_brand - make brand neutral: always 1.0 regardless of detection
+    k_brand = 1.0
 
     k_clean = cfg.cleanliness.get(cleanliness_key, 1.0)
     k_cap = cfg.cap_label.get(cap_label_key, 1.0)

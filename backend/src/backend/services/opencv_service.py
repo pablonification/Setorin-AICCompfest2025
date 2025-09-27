@@ -510,7 +510,7 @@ class BottleMeasurer:
         self.volume_size_choices = (
             volume_size_choices
             if volume_size_choices is not None
-            else [220.0, 350.0, 500.0, 600.0, 1000.0, 1500.0]
+            else [220.0, 350.0, 600.0, 1000.0, 1500.0]
         )
 
         # Build known_specs mapping (label -> spec) if not provided. Labels are
