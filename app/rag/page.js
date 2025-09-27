@@ -269,7 +269,7 @@ function RagChat() {
             disabled={loading}
           />
           <button 
-            onClick={send} 
+            onClick={() => send()} 
             disabled={loading || !input.trim()}
             className="w-12 h-12 rounded-full bg-[var(--color-primary-700)] text-white flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed active:opacity-80"
           >
