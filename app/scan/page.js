@@ -20,7 +20,6 @@ export default function ScanPage() {
   const [capturedImage, setCapturedImage] = useState(null);
   const [cameraError, setCameraError] = useState(null);
   const [isTorchOn, setIsTorchOn] = useState(false);
-  const [showInsertPage, setShowInsertPage] = useState(false);
 
   // Device orientation states
   const [orientation, setOrientation] = useState({
@@ -321,7 +320,6 @@ export default function ScanPage() {
       setQrValidationInProgress(false);
       setShowBottleGuide(false);
       setShowInstructions(false);
-      setShowInsertPage(false);
       setOrientationSupported(null);
     };
   }, [cleanupCamera]);
@@ -416,7 +414,6 @@ export default function ScanPage() {
         setQrValidationInProgress(false);
         setShowBottleGuide(false);
         setShowInstructions(false);
-        setShowInsertPage(false);
         setStatus("Ready");
       }
     };
@@ -1232,7 +1229,11 @@ export default function ScanPage() {
 
       if (!mountedRef.current) return;
 
-      // Store scan data for result page
+      // Always update result and clear loading states
+      setResult(data);
+      setIsScanning(false);
+      setStatus("Scan completed successfully!");
+
       try {
         localStorage.setItem("smartbin_last_scan", JSON.stringify(data));
         localStorage.setItem("smartbin_scan_processing", "0");
@@ -1267,20 +1268,18 @@ export default function ScanPage() {
         }
       }
 
-      // Clear scanning states
-      setIsScanning(false);
-      setStatus("Image captured successfully!");
+      // Force navigation to result page immediately
+      console.log("🚀 Navigating to result page immediately...");
 
-      // Navigate to insert bottle page instead of result page
-      console.log("🚀 Navigating to insert bottle page...");
-      setShowInsertPage(true);
-
-      // Use setTimeout to allow state update and then navigate
-      setTimeout(() => {
-        if (mountedRef.current) {
-          router.push("/scan/insert");
-        }
-      }, 500);
+      // Check if we're already on the result page
+      if (window.location.pathname === "/scan/result") {
+        console.log(
+          "🔄 Already on result page, refreshing to show new data..."
+        );
+        window.location.reload();
+      } else {
+        router.push("/scan/result");
+      }
     } catch (error) {
       console.error("Scan error:", error);
       if (mountedRef.current) {
@@ -1701,36 +1700,18 @@ export default function ScanPage() {
       <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
         <TopBar title="Setorin" right={topBarRightButton} />
 
-        {/* Instructions Popup - Now with 3 steps */}
+        {/* Instructions Popup - Now with just 2 steps */}
         {showInstructions && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-            <div className="bg-white rounded-lg max-w-sm w-full mx-4 p-5 relative">
+            <div className="bg-white rounded-lg max-w-xs w-full mx-4 p-5 relative">
               <h3 className="text-lg font-bold mb-3 text-center">
                 Panduan Scan Botol
               </h3>
               <div className="space-y-4 text-sm">
-                {/* Step 1 - Empty bottle */}
+                {/* Step 1 */}
                 <div className="flex gap-3">
                   <div className="shrink-0 w-8 h-8 rounded-full bg-[var(--color-primary-700)] text-white flex items-center justify-center font-bold">
                     1
-                  </div>
-                  <div>
-                    <p>Kosongkan botol jika masih ada isi air</p>
-                    <div className="mt-2 rounded bg-gray-50 p-1">
-                      <img
-                        src="/kosongin.svg"
-                        alt="Kosongkan botol"
-                        className="h-20 w-full object-contain"
-                        onError={(e) => (e.target.src = "/scan.svg")}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Step 2 - Position bottle */}
-                <div className="flex gap-3">
-                  <div className="shrink-0 w-8 h-8 rounded-full bg-[var(--color-primary-700)] text-white flex items-center justify-center font-bold">
-                    2
                   </div>
                   <div>
                     <p>Posisikan botol di atas kotak referensi</p>
@@ -1745,10 +1726,10 @@ export default function ScanPage() {
                   </div>
                 </div>
 
-                {/* Step 3 - Lighting and hand position */}
+                {/* Step 2 (combined) */}
                 <div className="flex gap-3">
                   <div className="shrink-0 w-8 h-8 rounded-full bg-[var(--color-primary-700)] text-white flex items-center justify-center font-bold">
-                    3
+                    2
                   </div>
                   <div>
                     <p>
