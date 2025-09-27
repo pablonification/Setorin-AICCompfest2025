@@ -24,8 +24,8 @@ DEFAULT_PAYOUT_CONFIG = PayoutConfig(
     size_weights_g={
         "220ml": 8.0,
         "350ml": 12.0,
-        "500ml": 15.0,
-       #  "600ml": 16.0,
+        # "500ml": 15.0,
+        "600ml": 16.0,
         "1000ml": 28.0,
         "1500ml": 30.0,
     },
@@ -38,8 +38,8 @@ DEFAULT_PAYOUT_CONFIG = PayoutConfig(
     coefficients_brand_unknown={
         "220ml": 1.00,
         "350ml": 1.00,
-        "500ml": 1.00,
-        # "600ml": 0.95,
+        # "500ml": 1.00,
+        "600ml": 0.95,
         "1000ml": 1.00,
         "1500ml": 1.00,
     },
@@ -80,8 +80,8 @@ def _select_size_key(volume_ml: float) -> str:
     candidates = {
         "220ml": 220.0,
         "350ml": 350.0,
-        "500ml": 500.0,
-        # "600ml": 600.0,
+        # "500ml": 500.0,
+        "600ml": 600.0,
         "1000ml": 1000.0,
         "1500ml": 1500.0,
     }
