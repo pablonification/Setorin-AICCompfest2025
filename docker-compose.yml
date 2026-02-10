@@ -9,6 +9,8 @@ services:
       - "8000:8000"
     volumes:
       - ./docs:/app/docs:ro
+      - ./testing:/app/testing:ro
+      - ./eval_out:/app/eval_out
     environment:
       - MONGODB_URI=${MONGODB_URI}
       - MONGODB_DB_NAME=${MONGODB_DB_NAME}

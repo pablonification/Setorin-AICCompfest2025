@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from typing import Any, Optional, List
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from fastapi import APIRouter, File, UploadFile, HTTPException, status, Header, Depends, Query
 
@@ -25,7 +25,15 @@ from bson import ObjectId
 router = APIRouter(prefix="/api/scan", tags=["scan"])
 logger = logging.getLogger(__name__)
 
-bottle_measurer = BottleMeasurer()
+# Initialize with optimized parameters from Colab testing (0.7, 1.8, 1.6, 0.9, 1.4)
+bottle_measurer = BottleMeasurer(
+    detector_weight_area=0.7,
+    detector_weight_aspect=1.8,
+    detector_weight_vertical=1.6,
+    detector_weight_solidity=0.9,
+    detector_weight_border=1.4,
+    classify=True
+)
 roboflow_client = RoboflowClient()
 smartbin_client = SmartBinClient()
 transaction_service = get_transaction_service()
@@ -147,46 +155,58 @@ async def scan_bottle(
     if not user_email:
         raise HTTPException(status_code=401, detail="Invalid user token")
 
-    # ----------------------------------------------------------------------
-    # 2. OpenCV measurement (with debug preview)
-    # ----------------------------------------------------------------------
+    # 2-3. Predictions and measurement (order depends on feature flag)
+    from ..core.config import get_settings
+    settings = get_settings()
+    predictions = []
+
     preview_b64: str | None = None  # ensure always defined
     debug_url: str | None = None
 
-    try:
-        measurement, preview_bytes = bottle_measurer.measure(content, return_debug=True)
-        preview_b64 = base64.b64encode(preview_bytes).decode()
-        # Save debug preview image to disk
-        debug_dir = Path("debug_images")
-        debug_dir.mkdir(exist_ok=True)
-        filename = f"{uuid4().hex}.jpg"
-        (debug_dir / filename).write_bytes(preview_bytes)
-        debug_url = f"/debug/{filename}"
-    except MeasurementError as exc:
-        # Instead of aborting the entire scan, log the error and continue with
-        # a placeholder measurement so that the frontend receives a response
-        # explaining what went wrong. This prevents generic "Scan failed"
-        # messages on the UI and allows the user to see the specific reason.
-        logger.warning("Measurement failed – continuing with fallback measurement: %s", exc)
+    if settings.USE_DETECTION_ROI_FUSION:
+        # Fetch predictions first to allow ROI fusion
+        try:
+            predictions = await roboflow_client.predict(content)
+            logger.info("Roboflow predictions received: %s", predictions)
+        except Exception as exc:  # noqa: BLE001
+            logger.error("Roboflow error (continuing without boxes): %s", exc)
+            predictions = []
 
-        # Use more realistic fallback values instead of all zeros
-        # This gives validation a chance to pass while still indicating measurement failure
-        measurement = MeasurementResult(
-            diameter_mm=65.0,  # Typical bottle diameter
-            height_mm=180.0,   # Typical bottle height (within valid range)
-            volume_ml=600.0    # Typical bottle volume
-        )
-        # Reason will be added later by the validation step if needed
-        preview_b64 = None
-        debug_url = None
+        try:
+            measurement, preview_bytes = bottle_measurer.measure(content, predictions=predictions, return_debug=True)
+            preview_b64 = base64.b64encode(preview_bytes).decode()
+            debug_dir = Path("debug_images")
+            debug_dir.mkdir(exist_ok=True)
+            filename = f"{uuid4().hex}.jpg"
+            (debug_dir / filename).write_bytes(preview_bytes)
+            debug_url = f"/debug/{filename}"
+        except MeasurementError as exc:
+            logger.warning("Measurement failed – continuing with fallback measurement: %s", exc)
+            measurement = MeasurementResult(diameter_mm=65.0, height_mm=180.0, volume_ml=600.0)
+            preview_b64 = None
+            debug_url = None
+    else:
+        # Original order: measure first, predictions second
+        try:
+            measurement, preview_bytes = bottle_measurer.measure(content, return_debug=True)
+            preview_b64 = base64.b64encode(preview_bytes).decode()
+            debug_dir = Path("debug_images")
+            debug_dir.mkdir(exist_ok=True)
+            filename = f"{uuid4().hex}.jpg"
+            (debug_dir / filename).write_bytes(preview_bytes)
+            debug_url = f"/debug/{filename}"
+        except MeasurementError as exc:
+            logger.warning("Measurement failed – continuing with fallback measurement: %s", exc)
+            measurement = MeasurementResult(diameter_mm=65.0, height_mm=180.0, volume_ml=600.0)
+            preview_b64 = None
+            debug_url = None
 
-    # 3. Roboflow predictions
-    try:
-        predictions = await roboflow_client.predict(content)
-        logger.info("Roboflow predictions received: %s", predictions)
-    except Exception as exc:  # noqa: BLE001
-        logger.error("Roboflow error: %s", exc)
-        raise HTTPException(status_code=502, detail="Error contacting AI service") from exc
+        try:
+            predictions = await roboflow_client.predict(content)
+            logger.info("Roboflow predictions received: %s", predictions)
+        except Exception as exc:  # noqa: BLE001
+            logger.error("Roboflow error: %s", exc)
+            raise HTTPException(status_code=502, detail="Error contacting AI service") from exc
 
     # 4. Validation
     validation_result = validate_scan(measurement, predictions)
@@ -348,7 +368,8 @@ async def get_user_transactions(
                 "confidence": scan.get("confidence", 0.0),
                 "valid": scan.get("valid", False),
                 "points": scan.get("points", 0),
-                "timestamp": scan.get("timestamp", datetime.now(timezone.utc)).isoformat(),
+                "timestamp": scan.get("timestamp", datetime.now(timezone.utc))
+                    .astimezone(timezone(timedelta(hours=7))).isoformat(),
                 "measurement": scan.get("measurement", {
                     "volume_ml": 0.0,
                     "diameter_mm": 0.0,

@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '../components/ProtectedRoute';
@@ -19,6 +19,30 @@ export default function ScanPage() {
   const [cameraStream, setCameraStream] = useState(null);
   const [capturedImage, setCapturedImage] = useState(null);
   const [cameraError, setCameraError] = useState(null);
+  const [isTorchOn, setIsTorchOn] = useState(false);
+  
+  // Device orientation states
+  const [orientation, setOrientation] = useState({ alpha: 0, beta: 0, gamma: 0 });
+  const [orientationPermission, setOrientationPermission] = useState('unknown');
+  const [orientationSupported, setOrientationSupported] = useState(null);
+  const [isPhoneAligned, setIsPhoneAligned] = useState(false);
+  
+  const toggleFlash = useCallback(async () => {
+    if (streamRef.current) {
+      const [track] = streamRef.current.getVideoTracks();
+      const capabilities = track.getCapabilities();
+      if (!capabilities.torch) {
+        console.warn('Torch not supported on this device');
+        return;
+      }
+      try {
+        await track.applyConstraints({ advanced: [{ torch: !isTorchOn }] });
+        setIsTorchOn(prev => !prev);
+      } catch (error) {
+        console.error('Torch toggle failed:', error);
+      }
+    }
+  }, [isTorchOn]);
 
   // QR code related states
   const [isScanningQR, setIsScanningQR] = useState(true);
@@ -26,6 +50,12 @@ export default function ScanPage() {
   const [isLoadingAfterQR, setIsLoadingAfterQR] = useState(false);
   const [qrScanInterval, setQrScanInterval] = useState(null);
   const [qrValidationInProgress, setQrValidationInProgress] = useState(false);
+
+  // Bottle guide shows only after a QR has been validated
+  const [showBottleGuide, setShowBottleGuide] = useState(false);
+
+  // Instructions popup state
+  const [showInstructions, setShowInstructions] = useState(false);
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -40,6 +70,123 @@ export default function ScanPage() {
     console.log('User state changed:', user);
     console.log('User points:', user?.points);
   }, [user]);
+
+  // Handle device orientation changes
+  const handleOrientation = useCallback((event) => {
+    if (!mountedRef.current) return;
+
+    const { alpha, beta, gamma } = event;
+
+    // Some browsers fire orientation events with null values when unsupported
+    if (beta === null || gamma === null || beta === undefined || gamma === undefined) {
+      // Mark as unsupported once and clean up listener
+      if (orientationSupported !== false) {
+        setOrientationSupported(false);
+        window.removeEventListener('deviceorientation', handleOrientation);
+      }
+      return;
+    }
+
+    // Mark as supported on first valid event
+    if (orientationSupported === null) {
+      setOrientationSupported(true);
+    }
+
+    setOrientation({
+      alpha: alpha || 0,
+      beta: beta || 0,
+      gamma: gamma || 0
+    });
+
+    // Check if phone is properly aligned (ideal conditions)
+    // Beta: front-to-back tilt (should be 90-100° for vertical)
+    // Gamma: left-to-right tilt (should be within a moderate range for level)
+    const betaTarget = 95; // Ideal vertical angle
+    const betaTolerance = 15; // allow 80-110° range
+    const gammaTolerance = 30; // allow 0-30° side tilt
+    
+    const wasAligned = isPhoneAligned;
+    const isAligned = orientationSupported !== false &&
+      Math.abs((beta || 0) - betaTarget) <= betaTolerance && 
+      Math.abs(gamma || 0) <= gammaTolerance;
+    
+    // Haptic feedback when alignment changes
+    if (isAligned && !wasAligned && 'navigator' in window && 'vibrate' in navigator) {
+      navigator.vibrate(100); // Short vibration when aligned
+    }
+    
+    setIsPhoneAligned(isAligned);
+  }, [isPhoneAligned, orientationSupported]);
+
+  // Request device orientation permission and set up listeners
+  const requestOrientationPermission = useCallback(async () => {
+    if (typeof DeviceOrientationEvent === 'undefined') {
+      console.warn('DeviceOrientationEvent not supported');
+      setOrientationSupported(false);
+      setOrientationPermission('denied');
+      return false;
+    }
+
+    // Some browsers expose DeviceOrientationEvent but without actual sensor data
+    setOrientationSupported(true);
+
+    // Check if permission is required (iOS 13+)
+    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+      try {
+        const permission = await DeviceOrientationEvent.requestPermission();
+        setOrientationPermission(permission);
+        
+        // Immediately set up listener after permission is granted (fix for iPhone)
+        if (permission === 'granted' && mountedRef.current) {
+          console.log('📱 Setting up orientation listener immediately after iOS permission');
+          window.addEventListener('deviceorientation', handleOrientation);
+        }
+        
+        return permission === 'granted';
+      } catch (error) {
+        console.error('Permission request failed:', error);
+        setOrientationPermission('denied');
+        return false;
+      }
+    } else {
+      // Android or older iOS - no permission needed
+      setOrientationPermission('granted');
+      return true;
+    }
+  }, [handleOrientation]);
+
+  // Set up device orientation monitoring
+  useEffect(() => {
+    if (!mountedRef.current) return;
+
+    const setupOrientation = async () => {
+      // Skip if permission already granted and listener might already be attached (iOS fix)
+      if (orientationPermission === 'granted') {
+        // Remove any existing listener first
+        window.removeEventListener('deviceorientation', handleOrientation);
+        window.addEventListener('deviceorientation', handleOrientation);
+        console.log('📱 Device orientation monitoring started (permission already granted)');
+        return;
+      }
+      
+      const hasPermission = await requestOrientationPermission();
+      
+      // For non-iOS devices, manually add listener
+      if (hasPermission && mountedRef.current && typeof DeviceOrientationEvent.requestPermission !== 'function') {
+        window.addEventListener('deviceorientation', handleOrientation);
+        console.log('📱 Device orientation monitoring started (Android/older iOS)');
+      }
+    };
+
+    // Only set up if we're on the bottle scanning phase
+    if (qrValidated && cameraStream && orientationPermission !== 'denied' && orientationSupported !== false) {
+      setupOrientation();
+    }
+
+    return () => {
+      window.removeEventListener('deviceorientation', handleOrientation);
+    };
+  }, [qrValidated, cameraStream, orientationPermission, requestOrientationPermission, handleOrientation, orientationSupported]);
 
   // Cleanup function - removed qrScanInterval dependency to prevent infinite loop
   const cleanupCamera = useCallback(() => {
@@ -79,6 +226,7 @@ export default function ScanPage() {
     // Reset states
     setCameraStream(null);
     setCameraError(null);
+    setOrientationSupported(null); // Reset orientationSupported on cleanup
   }, []); // Empty dependency array to prevent infinite loop
 
   // Component unmount cleanup
@@ -99,6 +247,9 @@ export default function ScanPage() {
       setQrValidated(false);
       setIsLoadingAfterQR(false);
       setQrValidationInProgress(false);
+      setShowBottleGuide(false);
+      setShowInstructions(false);
+      setOrientationSupported(null);
     };
   }, [cleanupCamera]);
 
@@ -181,6 +332,8 @@ export default function ScanPage() {
         setQrValidated(false);
         setIsLoadingAfterQR(false);
         setQrValidationInProgress(false);
+        setShowBottleGuide(false);
+        setShowInstructions(false);
         setStatus('Ready');
       }
     };
@@ -500,6 +653,26 @@ export default function ScanPage() {
       clearTimeout(timer);
     };
   }, []);
+
+  // Show instructions on first visit (with a delay to let camera start)
+  useEffect(() => {
+    if (!mountedRef.current) return;
+
+    // Check if user has seen instructions before
+    const hasSeenInstructions = localStorage.getItem('setorin_instructions_seen');
+
+    if (!hasSeenInstructions) {
+      // Show instructions after camera starts and a brief delay
+      const showInstructionsTimer = setTimeout(() => {
+        if (mountedRef.current && cameraStream && !showInstructions && !showBottleGuide) {
+          console.log('🎯 First visit detected, showing instructions...');
+          setShowInstructions(true);
+        }
+      }, 2000); // 2 second delay after camera starts
+
+      return () => clearTimeout(showInstructionsTimer);
+    }
+  }, [cameraStream, showInstructions, showBottleGuide]);
 
   // CTA handler to start the camera via explicit user gesture (fallback)
   const handleStartScan = async () => {
@@ -928,6 +1101,18 @@ export default function ScanPage() {
     }
   };
 
+  // Handle logo tap – allow hiding manually if desired
+  const handleLogoTap = () => {
+    // allow hiding manually if needed
+    if (qrValidated) setShowBottleGuide(prev=>!prev);
+  };
+
+  // Show instructions popup
+  const showInstructionsPopup = () => {
+    console.log('📖 Showing instructions popup...');
+    setShowInstructions(true);
+  };
+
   // Retry camera function with simplified approach
   const retryCamera = async () => {
     setCameraError(null);
@@ -1078,10 +1263,183 @@ export default function ScanPage() {
     }
   }, [result, router]);
 
+  // Toggle guide visibility based on qrValidated
+  useEffect(() => {
+    if (qrValidated) {
+      setShowBottleGuide(true);
+    } else {
+      setShowBottleGuide(false);
+    }
+  }, [qrValidated]);
+
+  // Memoize TopBar right button to prevent re-renders
+  const topBarRightButton = useMemo(() => (
+    <button
+      onClick={showInstructionsPopup}
+      aria-label="Panduan"
+      className="w-9 h-9 flex items-center justify-center hover:opacity-80 transition-opacity"
+    >
+      <img src="/help.svg" alt="Panduan" className="w-6 h-6" />
+    </button>
+  ), []);
+
+  // Memoize orientation guidance components to prevent re-renders
+  const orientationGuidance = useMemo(() => {
+    if (orientationPermission !== 'granted' || orientationSupported === false) return null;
+
+    const betaTarget = 95;
+    const betaTolerance = 5;
+    const gammaTolerance = 10;
+    
+    const betaDeviation = (orientation.beta || 0) - betaTarget;
+    const gammaDeviation = orientation.gamma || 0;
+    
+    const needsTiltCorrection = Math.abs(gammaDeviation) > gammaTolerance;
+    const needsAngleCorrection = Math.abs(betaDeviation) > betaTolerance;
+
+    return (
+      <div className="absolute top-4 left-4 right-4 z-20">
+        <div className={`p-3 rounded-lg transition-all duration-300 ${
+          isPhoneAligned 
+            ? 'bg-green-500/80 text-white' 
+            : 'bg-red-500/80 text-white'
+        }`}>
+          <div className="flex items-center justify-center space-x-2">
+            {isPhoneAligned ? (
+              <>
+                <div className="w-4 h-4 rounded-full bg-white flex items-center justify-center">
+                  <svg className="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <span className="text-sm font-medium">Perfect! Ready to scan</span>
+              </>
+            ) : (
+              <>
+                <div className="w-4 h-4 rounded-full bg-white flex items-center justify-center">
+                  <svg className="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <span className="text-sm font-medium">Align your phone</span>
+              </>
+            )}
+          </div>
+          
+          {/* Intuitive directional guidance */}
+          {!isPhoneAligned && (
+            <div className="mt-3 flex items-center justify-center space-x-6">
+              {/* Left-right tilt guidance */}
+              {needsTiltCorrection && (
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center space-x-2">
+                    {gammaDeviation > 0 ? (
+                      // Tilt left
+                      <svg className="w-8 h-8 animate-bounce text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.59 5.58L20 12l-8-8-8 8z" transform="rotate(-45 12 12)"/>
+                      </svg>
+                    ) : (
+                      // Tilt right  
+                      <svg className="w-8 h-8 animate-bounce text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.59 5.58L20 12l-8-8-8 8z" transform="rotate(45 12 12)"/>
+                      </svg>
+                    )}
+                  </div>
+                  <span className="text-xs mt-1">
+                    Tilt {gammaDeviation > 0 ? 'Left' : 'Right'}
+                  </span>
+                  <span className="text-xs opacity-75">{Math.abs(gammaDeviation).toFixed(0)}°</span>
+                </div>
+              )}
+              
+              {/* Forward-back angle guidance */}
+              {needsAngleCorrection && (
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center space-x-2">
+                    {betaDeviation > 0 ? (
+                      // Tilt phone forward (toward you)
+                      <svg className="w-8 h-8 animate-pulse text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.59 5.58L20 12l-8-8-8 8z" transform="rotate(180 12 12)"/>
+                      </svg>
+                    ) : (
+                      // Tilt phone back (away from you)
+                      <svg className="w-8 h-8 animate-pulse text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.59 5.58L20 12l-8-8-8 8z"/>
+                      </svg>
+                    )}
+                  </div>
+                  <span className="text-xs mt-1">
+                    Tilt {betaDeviation > 0 ? 'Forward' : 'Back'}
+                  </span>
+                  <span className="text-xs opacity-75">{Math.abs(betaDeviation).toFixed(0)}°</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }, [orientation, isPhoneAligned, orientationPermission, orientationSupported]);
+
   return (
     <ProtectedRoute userOnly={true}>
       <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
-        <TopBar title="Duitin" />
+        <TopBar
+          title="Duitin"
+          right={topBarRightButton}
+        />
+
+        {/* Instructions Popup - Now with just 2 steps */}
+        {showInstructions && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+            <div className="bg-white rounded-lg max-w-xs w-full mx-4 p-5 relative">
+              <h3 className="text-lg font-bold mb-3 text-center">Panduan Scan Botol</h3>
+              <div className="space-y-4 text-sm">
+                {/* Step 1 */}
+                <div className="flex gap-3">
+                  <div className="shrink-0 w-8 h-8 rounded-full bg-[var(--color-primary-700)] text-white flex items-center justify-center font-bold">1</div>
+                  <div>
+                    <p>Posisikan botol di atas kotak referensi</p>
+                    <div className="mt-2 rounded bg-gray-50 p-1">
+                      <img
+                        src="/scan-guide/step1.svg"
+                        alt="Posisikan botol"
+                        className="h-24 w-full object-contain"
+                        onError={(e) => e.target.src = '/scan.svg'}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Step 2 (combined) */}
+                <div className="flex gap-3">
+                  <div className="shrink-0 w-8 h-8 rounded-full bg-[var(--color-primary-700)] text-white flex items-center justify-center font-bold">2</div>
+                  <div>
+                    <p>Pastikan pencahayaan cukup terang dan jangan menutupi botol dengan tangan</p>
+                    <div className="mt-2 rounded bg-gray-50 p-1">
+                      <img
+                        src="/scan-guide/step2.svg"
+                        alt="Tips scan"
+                        className="h-24 w-full object-contain"
+                        onError={(e) => e.target.src = '/scan.svg'}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowInstructions(false);
+                  // Mark that user has seen instructions
+                  localStorage.setItem('setorin_instructions_seen', 'true');
+                }}
+                className="mt-5 w-full py-3 rounded-full bg-[var(--color-primary-700)] text-white font-medium"
+              >
+                Saya Mengerti
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Camera preview */}
         <div className="flex flex-col items-center pt-6 pb-24 px-4">
@@ -1115,21 +1473,70 @@ export default function ScanPage() {
                 />
                 <div className="absolute inset-0 border-4 border-white/60 rounded-[var(--radius-md)] pointer-events-none" />
                 
-                {/* Debug overlay with more info */}
-                {(videoRef.current?.videoWidth === 0) && !userGestureBoundRef.current && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none z-10">
-                    <img
-                      src="/logo-white.svg"
-                      alt="Setorin Logo"
-                      className="w-32 h-32 opacity-90"
-                      style={{ maxWidth: '80%', maxHeight: '80%' }}
-                      draggable={false}
-                    />
-                    <div className="mt-4 text-center text-white font-semibold text-base drop-shadow">
-                      Tap Setorin logo to start
+                {/* Logo (always) & bottle guide (after QR validated) overlay */}
+                {(() => {
+                  const isInitial = (videoRef.current?.videoWidth === 0 && !userGestureBoundRef.current);
+                  const shouldShow = isInitial || (showBottleGuide && qrValidated);
+                  if (!shouldShow) return null;
+                  return (
+                    <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center select-none z-10">
+                      {/* Logo visible only in initial phase */}
+                      {isInitial && (
+                        <div className="flex flex-col items-center">
+                          <img
+                            src="/logo-white.svg"
+                            alt="Setorin Logo"
+                            className="w-32 h-32 opacity-90 cursor-pointer"
+                            style={{ maxWidth: '80%', maxHeight: '80%' }}
+                            draggable={false}
+                            onClick={handleLogoTap}
+                          />
+                          <div className="mt-4 text-center text-white font-semibold text-base drop-shadow">
+                            Tap Setorin logo to start
+                          </div>
+                        </div>
+                      )}
+
+                        {/* Bottle placement guide overlay */}
+                        {showBottleGuide && qrValidated && orientationSupported !== false && (
+                          <div className="absolute inset-0 pointer-events-none">
+                            {/* Phone alignment guidance - using memoized component */}
+                            {orientationGuidance}
+
+                            {orientationSupported !== false && (
+                              <>
+                                {/* Bottle silhouette guide - positioned with pixel precision */}
+                                <div className="absolute w-32 h-64" style={{ 
+                                  top: '46%', 
+                                  left: '54%', 
+                                  transform: 'translate(-50%, -50%)' 
+                                }}>
+                                  <svg width="80%" height="80%" viewBox="0 0 100 200" fill="none" xmlns="http://www.w3.org/2000/svg" className={`transition-opacity duration-300 ${isPhoneAligned ? 'opacity-60' : 'opacity-20'}`}>
+                                    <path d="M30 40 L30 10 L70 10 L70 40 L85 70 L85 180 L15 180 L15 70 Z" stroke="white" strokeWidth="3" strokeDasharray="5,5" />
+                                    <rect x="38" y="170" width="24" height="4" fill="white" fillOpacity="0.6" />
+                                    <text x="50" y="150" textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="bold">Botol</text>
+                                  </svg>
+                                </div>
+                                
+                                {/* Reference object guide - positioned separately */}
+                                <div className="absolute w-24 h-36" style={{ 
+                                  bottom: '6%', 
+                                  left: '50%', 
+                                  transform: 'translateX(-50%)' 
+                                }}>
+                                  <svg width="100%" height="100%" viewBox="0 0 40 60" fill="none" xmlns="http://www.w3.org/2000/svg" className={`transition-opacity duration-300 ${isPhoneAligned ? 'opacity-70' : 'opacity-30'}`}>
+                                    <rect x="2" y="2" width="36" height="56" stroke="#00ff00" strokeWidth="2" strokeDasharray="4,2" />
+                                    <text x="20" y="45" textAnchor="middle" fill="#00ff00" fontSize="5" fontWeight="bold">Referensi</text>
+                                    <text x="20" y="50" textAnchor="middle" fill="#00ff00" fontSize="5">10×15 cm</text>
+                                  </svg>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        )}
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </>
             ) : (
               <div className="flex flex-col items-center justify-center">
@@ -1198,15 +1605,62 @@ export default function ScanPage() {
                 </div>
               </div>
             ) : qrValidated ? (
-              <button
-                onClick={captureAndScan}
-                disabled={isScanning}
-                aria-label="Capture image"
-                className="flex items-center justify-center w-24 h-24 rounded-full [box-shadow:var(--shadow-fab)] active:scale-95 disabled:opacity-60"
-                style={{ background: 'var(--color-primary-700)' }}
-              >
-                <img src="/shutter.svg" alt="Shutter" className="w-12 h-12 select-none" draggable="false" />
-              </button>
+              <div className="flex flex-col items-center space-y-4 w-full">
+                <div className="text-center">
+                  {orientationPermission === 'denied' && (
+                    <button
+                      onClick={requestOrientationPermission}
+                      className="mb-3 px-4 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                    >
+                      Enable Motion Sensors for Better Accuracy
+                    </button>
+                  )}
+                  <p className="mb-4 text-sm text-[var(--color-muted)]">
+                    {orientationPermission === 'granted' && orientationSupported === true ? (
+                      isPhoneAligned ? 
+                        'Perfect alignment! Tap to capture' : 
+                        'Align your phone level and straight'
+                    ) : (
+                      'Taruh botol diatas kotak hitam'
+                    )}
+                  </p>
+                </div>
+                <button
+                  onClick={captureAndScan}
+                  disabled={isScanning || (orientationPermission === 'granted' && orientationSupported === true && !isPhoneAligned)}
+                  aria-label="Capture image"
+                  className={`flex items-center justify-center w-24 h-24 rounded-full [box-shadow:var(--shadow-fab)] active:scale-95 transition-all duration-300 ${
+                    isScanning || (orientationPermission === 'granted' && orientationSupported === true && !isPhoneAligned) 
+                      ? 'opacity-50 cursor-not-allowed' 
+                      : 'opacity-100'
+                  } ${
+                    orientationPermission === 'granted' && orientationSupported === true && isPhoneAligned 
+                      ? 'animate-pulse' 
+                      : ''
+                  }`}
+                  style={{ 
+                    background: orientationPermission === 'granted' && orientationSupported === true && isPhoneAligned 
+                      ? 'var(--color-success)' 
+                      : 'var(--color-primary-700)' 
+                  }}
+                >
+                  <img src="/shutter.svg" alt="Shutter" className="w-12 h-12 select-none" draggable="false" />
+                </button>
+                
+                {/* Alignment help text */}
+                {orientationPermission === 'granted' && orientationSupported === true && !isPhoneAligned && (
+                  <div className="text-center text-xs text-[var(--color-muted)] max-w-[280px]">
+                    <p>Hold your phone steady and vertical for accurate measurements</p>
+                    <p className="mt-1">Target: Tilt ≤15° | Vertical 90-105°</p>
+                    <p className="text-[var(--color-warning)]">Current: Tilt {Math.abs(orientation.gamma).toFixed(0)}° | Vertical {Math.abs(orientation.beta).toFixed(0)}°</p>
+                  </div>
+                )}
+                {orientationSupported === false && (
+                  <div className="text-center text-xs text-[var(--color-muted)] max-w-[280px]">
+                    <p>Device motion sensors not available. You can still capture manually.</p>
+                  </div>
+                )}
+              </div>
             ) : (
               // If realtime scanning hasn't validated yet, allow manual single-shot scan
               <button
@@ -1227,6 +1681,13 @@ export default function ScanPage() {
                 className="px-4 py-2 text-xs text-gray-700 bg-gray-200 rounded-[var(--radius-pill)] active:opacity-80"
               >
                 Stop Camera
+              </button>
+              <button
+                onClick={toggleFlash}
+                aria-label="Toggle flash"
+                className="px-4 py-2 text-xs text-gray-700 bg-gray-200 rounded-[var(--radius-pill)] active:opacity-80"
+              >
+                <img src={isTorchOn ? '/flash-on.svg' : '/flash-off.svg'} alt="Flash" className="w-5 h-5" />
               </button>
               {/* Manual reset button for stuck states */}
               {(isLoadingAfterQR || qrValidationInProgress) && (

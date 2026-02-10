@@ -32,16 +32,20 @@ export default function TentangKamiPage() {
         <section className="mt-6 grid grid-cols-3 gap-4">
           {profiles.map((p) => (
             <article key={p.name} className="flex flex-col items-center text-center">
-              <div className="w-28 h-28 rounded-full border-2 border-[var(--color-primary-700)] flex items-center justify-center">
-                {/* Avatar placeholder */}
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className="w-12 h-12 text-[var(--color-primary-700)]"
-                >
-                  <path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5zm0 2c-4.418 0-8 2.239-8 5v1c0 .552.448 1 1 1h14c.552 0 1-.448 1-1v-1c0-2.761-3.582-5-8-5z" />
-                </svg>
+              <div className="w-24 h-24 rounded-full border-2 border-[var(--color-primary-700)] flex items-center justify-center">
+                <img
+                  src={`/creator/${
+                    p.name === "Arqila S. P."
+                      ? "arqila"
+                      : p.name === "Athian N. M."
+                      ? "athian"
+                      : p.name === "Andhika M. A."
+                      ? "andhika"
+                      : "unknown"
+                  }.webp`}
+                  alt={p.name}
+                  className="w-full h-full object-cover rounded-full"
+                />
               </div>
               <div className="mt-3">
                 <p className="text-base font-semibold">{p.name}</p>
@@ -55,7 +59,7 @@ export default function TentangKamiPage() {
         </section>
 
         <p className="mt-8 text-center text-sm font-semibold">
-          STEIK - Institut Teknologi Bandung
+          ADA SPARTANS - Institut Teknologi Bandung
         </p>
       </main>
     </div>

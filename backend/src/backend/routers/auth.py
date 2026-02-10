@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import httpx
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
@@ -231,34 +231,93 @@ async def update_profile(
     # Convert string ObjectId to ObjectId object
     user_id = ObjectId(payload["sub"])
 
-    # Check if user exists
-    existing_user = await users_collection.find_one({"_id": user_id})
-    if not existing_user:
-        raise HTTPException(status_code=404, detail="User not found")
+    # Check if user exists and prepare update safely
+    try:
+        # Debug: show incoming payload and types
+        print("update_profile called for user_id:", payload.get("sub"))
+        print("raw profile_data:", getattr(profile_data, "__dict__", str(profile_data)))
 
-    # Prepare update data
-    update_data = {
-        "name": profile_data.name,
-        "email": profile_data.email,
-    }
+        existing_user = await users_collection.find_one({"_id": user_id})
+        if not existing_user:
+            raise HTTPException(status_code=404, detail="User not found")
 
-    # Add optional fields if provided
-    if profile_data.phone is not None:
-        update_data["phone"] = profile_data.phone
-    if profile_data.birthdate is not None:
-        update_data["birthdate"] = profile_data.birthdate
-    if profile_data.city is not None:
-        update_data["city"] = profile_data.city
-    if profile_data.gender is not None:
-        update_data["gender"] = profile_data.gender
+        # Prepare update data
+        update_data = {}
+        if profile_data.name is not None:
+            update_data["name"] = profile_data.name
+        if profile_data.email is not None:
+            update_data["email"] = profile_data.email
+        if profile_data.phone is not None:
+            update_data["phone"] = profile_data.phone
+        if profile_data.birthdate is not None:
+            # Pydantic gives us a date object; MongoDB/bson expects datetime for dates.
+            # Convert date -> datetime at midnight to make it encodable.
+            try:
+                if isinstance(profile_data.birthdate, date) and not isinstance(profile_data.birthdate, datetime):
+                    update_data["birthdate"] = datetime.combine(profile_data.birthdate, datetime.min.time())
+                else:
+                    update_data["birthdate"] = profile_data.birthdate
+            except Exception:
+                # Fallback: store as-is (driver will raise if invalid)
+                update_data["birthdate"] = profile_data.birthdate
+        if profile_data.city is not None:
+            update_data["city"] = profile_data.city
+        if profile_data.gender is not None:
+            update_data["gender"] = profile_data.gender
 
-    # Update user in database
-    result = await users_collection.update_one(
-        {"_id": user_id},
-        {"$set": update_data}
-    )
+        print("Prepared update_data:", update_data)
 
-    if result.modified_count == 0:
+        # If no editable fields provided, return current profile instead of performing empty update
+        if not update_data:
+            return UserResponse(
+                id=str(existing_user["_id"]),
+                email=existing_user.get("email", ""),
+                name=existing_user.get("name", ""),
+                photo_url=existing_user.get("photo_url"),
+                points=existing_user.get("points", 0),
+                role=existing_user.get("role", "user"),
+                tier=existing_user.get("tier"),
+                phone=existing_user.get("phone"),
+                birthdate=existing_user.get("birthdate"),
+                city=existing_user.get("city"),
+                gender=existing_user.get("gender")
+            )
+
+        # Update user in database
+        print("Performing update_one for user_id:", user_id)
+        result = await users_collection.update_one(
+            {"_id": user_id},
+            {"$set": update_data}
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        # Log traceback to stdout for debugging and return a clearer 500
+        import traceback
+        print("Error while updating profile:", e)
+        traceback.print_exc()
+        # Return error message for easier debugging (can be sanitized later)
+        raise HTTPException(status_code=500, detail=str(e))
+
+    if result.modified_count == 0 and update_data:
+        # Nothing was modified even though we attempted update. This likely means
+        # the incoming data matches existing values, so we return current profile.
+        existing_user = await users_collection.find_one({"_id": user_id})
+        if existing_user:
+            return UserResponse(
+                id=str(existing_user["_id"]),
+                email=existing_user.get("email", ""),
+                name=existing_user.get("name", ""),
+                photo_url=existing_user.get("photo_url"),
+                points=existing_user.get("points", 0),
+                role=existing_user.get("role", "user"),
+                tier=existing_user.get("tier"),
+                phone=existing_user.get("phone"),
+                birthdate=existing_user.get("birthdate"),
+                city=existing_user.get("city"),
+                gender=existing_user.get("gender")
+            )
+
         raise HTTPException(status_code=500, detail="Failed to update profile")
 
     # Fetch updated user data

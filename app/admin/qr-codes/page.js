@@ -277,7 +277,7 @@ export default function AdminQRCodesPage() {
                     <input
                       type="number"
                       min="1"
-                      max="100"
+                      max="500"
                       value={formData.max_uses}
                       onChange={(e) => setFormData(prev => ({
                         ...prev,

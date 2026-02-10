@@ -10,6 +10,7 @@ import SectionHeader from "../components/SectionHeader";
 import SettingsRow from "../components/SettingsRow";
 import HeaderBar from "../components/HeaderBar";
 import ChatFab from "../components/ChatFab";
+import ProfilePageSkeleton from "../components/skeletons/ProfilePageSkeleton";
 import {
   BiArrowToTop,
   BiBeer,
@@ -133,6 +134,18 @@ function PointsRankCard({ points, monthly, rank }) {
 
 // Environmental Impact Card Component
 function EnvironmentalImpactCard({ plasticAvoidedKg, co2AvoidedKg }) {
+  // Helper to safely format numbers
+  const safeNumber = (v, decimals) => {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return "-";
+    return n.toFixed(decimals);
+  };
+
+  // Default methodology text and factor (kept in sync with LLM review)
+  const defaultFactor = 2.25; // kg CO2e per kg plastic (default avoided virgin resin)
+  const methodology =
+    "CO2e savings estimated as diverted plastic (kg) × 2.25 kg CO2e/kg (default avoided virgin resin factor).";
+
   return (
     <div className="bg-[var(--color-card)] rounded-[var(--radius-lg)] shadow-[var(--shadow-card)] overflow-hidden">
       {/* Top Section - White Background */}
@@ -150,20 +163,21 @@ function EnvironmentalImpactCard({ plasticAvoidedKg, co2AvoidedKg }) {
         <div className="grid grid-cols-2 gap-4">
           <div className="text-center">
             <div className="text-[22px] leading-7 font-semibold text-[var(--color-accent-amber)]">
-              {plasticAvoidedKg.toFixed(3)} kg
+              {safeNumber(plasticAvoidedKg, 3)} kg
             </div>
-            <div className="text-[12px] text-white leading-4 mt-1">
-              Sampah Plastik Dihindari
-            </div>
+            <div className="text-[12px] text-white leading-4 mt-1">Sampah Plastik Dihindari</div>
           </div>
           <div className="text-center">
             <div className="text-[22px] leading-7 font-semibold text-[var(--color-accent-amber)]">
-              {co2AvoidedKg.toFixed(2)} kg
+              {safeNumber(co2AvoidedKg, 2)} kg
             </div>
-            <div className="text-[12px] text-white leading-4 mt-1">
-              CO2 Dihindari
-            </div>
+            <div className="text-[12px] text-white leading-4 mt-1">CO2 Dihindari</div>
           </div>
+        </div>
+
+        <div className="mt-3 text-xs text-white/90">
+          <div className="italic">{methodology}</div>
+          <div className="text-[11px] opacity-90 mt-1">Default factor: {defaultFactor} kg CO2e/kg (use polymer-specific factor when available)</div>
         </div>
       </div>
     </div>
@@ -303,17 +317,20 @@ function StatisticsSection({ user }) {
 
   if (!auth?.token) return null;
 
+  if (loading) {
+    return (
+        <div className="space-y-4 animate-pulse">
+            <div className="bg-white rounded-lg shadow-md h-28"></div>
+            <div className="bg-white rounded-lg shadow-md h-28"></div>
+            <div className="bg-white rounded-lg shadow-md h-40"></div>
+            <div className="bg-white rounded-lg shadow-md h-52"></div>
+      </div>
+    );
+  }
+
   return (
     <>
       {/* Statistics Content */}
-      {loading && (
-        <div className="rounded-[16px] bg-white [box-shadow:var(--shadow-card)] p-4">
-          <div className="flex justify-center items-center p-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-primary-600)]"></div>
-          </div>
-        </div>
-      )}
-
       {error && (
         <div className="rounded-[16px] bg-white [box-shadow:var(--shadow-card)] p-4">
           <div className="bg-red-50 border border-red-200 rounded-[var(--radius-md)] p-4 text-center">
@@ -445,14 +462,18 @@ export default function ProfilePage() {
   const auth = useAuth();
   const router = useRouter();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!auth?.token) {
-      router.push("/login");
-      return;
+    if (!auth.loading) {
+      if (!auth?.token) {
+        router.push("/login");
+        return;
+      }
+      fetchUnread();
+      setLoading(false);
     }
-    fetchUnread();
-  }, [auth?.token]);
+  }, [auth.loading, auth.token]);
 
   const fetchUnread = useCallback(async () => {
     try {
@@ -467,6 +488,10 @@ export default function ProfilePage() {
       // ignore
     }
   }, [auth]);
+
+  if (loading || auth.loading) {
+    return <ProfilePageSkeleton />;
+  }
 
   return (
     <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
@@ -494,6 +519,14 @@ export default function ProfilePage() {
                       {auth?.user?.email}
                     </div>
                   </div>
+					<Link
+						href="/profile/edit"
+						className="inline-flex items-center gap-2 px-4 py-2 rounded-[var(--radius-pill)] border border-[var(--color-primary-700)] text-[var(--color-primary-700)] text-sm font-medium hover:bg-[rgba(0,117,58,0.08)] transition-colors"
+						aria-label="Edit Profil"
+					>
+						<span>Edit Profil</span>
+						<img src="/edit-profile.svg" alt="Edit" className="w-4 h-4" />
+					</Link>
                 </div>
               </div>
             </div>

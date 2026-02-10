@@ -89,17 +89,17 @@ def validate_scan(
         cap_label_key="mixed",
     )
 
-    if payout.payout_rp is None:
-        # Measurement confidence too low (< 0.50 bin)
-        logger.info("Bottle rejected due to low measurement confidence")
-        return ValidationResult(
-            is_valid=False,
-            reason="LOW_MEASUREMENT_CONFIDENCE",
-            brand=brand,
-            confidence=brand_confidence,
-            measurement=measurement,
-            points_awarded=0,
-        )
+    # if payout.payout_rp is None:
+    #     # Measurement confidence too low (< 0.50 bin)
+    #     logger.info("Bottle rejected due to low measurement confidence")
+    #     return ValidationResult(
+    #         is_valid=False,
+    #         reason="LOW_MEASUREMENT_CONFIDENCE",
+    #         brand=brand,
+    #         confidence=brand_confidence,
+    #         measurement=measurement,
+    #         points_awarded=0,
+    #     )
 
     # 4) Accept and return computed payout
     return ValidationResult(

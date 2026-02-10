@@ -19,13 +19,24 @@ from ..routers.auth import verify_token
 import base64
 from pathlib import Path
 from uuid import uuid4
+import json
+
+# Import ESP32 WebSocket control
+from .esp32_device_ws import clients as esp32_clients
 
 # Create router with explicit prefix
 router = APIRouter(prefix="/scan", tags=["scan"])
 logger = logging.getLogger(__name__)
 
-# Initialize services
-bottle_measurer = BottleMeasurer()
+# Initialize services with optimized parameters from Colab testing (0.7, 1.8, 1.6, 0.9, 1.4)
+bottle_measurer = BottleMeasurer(
+    detector_weight_area=0.7,
+    detector_weight_aspect=1.8,
+    detector_weight_vertical=1.6,
+    detector_weight_solidity=0.9,
+    detector_weight_border=1.4,
+    classify=True
+)
 roboflow_client = RoboflowClient()
 smartbin_client = SmartBinClient()
 transaction_service = get_transaction_service()
@@ -47,9 +58,18 @@ async def scan_bottle(
     if not user_email:
         raise HTTPException(status_code=401, detail="Invalid user token")
 
-    # OpenCV measurement
+    # Get Roboflow predictions first for ROI fusion
+    predictions = []
     try:
-        measurement, preview_bytes = bottle_measurer.measure(content, return_debug=True)
+        predictions = await roboflow_client.predict(content)
+        logger.info("Roboflow predictions received: %s", predictions)
+    except Exception as exc:
+        logger.error("Roboflow error (continuing without predictions): %s", exc)
+        predictions = []
+
+    # OpenCV measurement with ROI fusion
+    try:
+        measurement, preview_bytes = bottle_measurer.measure(content, predictions=predictions, return_debug=True)
         preview_b64: str | None = base64.b64encode(preview_bytes).decode()
         
         # Save debug image
@@ -63,20 +83,29 @@ async def scan_bottle(
         logger.warning("Measurement failed: %s", exc)
         raise HTTPException(status_code=422, detail="Unable to measure bottle") from exc
 
-    # Roboflow predictions
-    try:
-        predictions = await roboflow_client.predict(content)
-    except Exception as exc:
-        logger.error("Roboflow error: %s", exc)
-        raise HTTPException(status_code=502, detail="Error contacting AI service") from exc
-
     # Validation
     validation_result = validate_scan(measurement, predictions)
 
-    # IoT bin control
+    # IoT bin control via WebSocket
     iot_events = []
     if validation_result.is_valid:
-        iot_events = await smartbin_client.open_bin()
+        device_id = "ESP32-SPARTANS"  # Default device ID
+        
+        # Try WebSocket control first (preferred)
+        if device_id in esp32_clients:
+            try:
+                logger.info("Sending open command to ESP32 %s via WebSocket", device_id)
+                command = json.dumps({"action": "open", "duration_seconds": 3})
+                await esp32_clients[device_id].send_text(command)
+                iot_events = ["ws_command_sent", "lid_open_requested"]
+                logger.info("✅ WebSocket command sent successfully to %s", device_id)
+            except Exception as exc:
+                logger.error("❌ WebSocket command failed for %s: %s", device_id, exc)
+                iot_events = ["ws_command_failed"]
+        else:
+            logger.warning("ESP32 device %s not connected via WebSocket, falling back to IoT simulator", device_id)
+            # Fallback to old IoT simulator
+            iot_events = await smartbin_client.open_bin()
 
     # Add points
     user_total_points: Optional[int] = None
@@ -125,7 +154,7 @@ async def scan_bottle(
             logger.error("Failed to create transaction for scan %s: %s", scan_id, exc)
 
     # Broadcast to WebSocket clients
-    await manager.broadcast({
+    await manager.broadcast_notification({
         "type": "scan_result",
         "data": {
             "scan_id": scan_id,

@@ -29,6 +29,9 @@ class Settings:
     ADMIN_EMAILS: str = os.getenv("ADMIN_EMAILS", "")  # comma-separated
     MIN_WITHDRAWAL_POINTS: int = int(os.getenv("MIN_WITHDRAWAL_POINTS", "20000"))
 
+    # Feature flags
+    USE_DETECTION_ROI_FUSION: bool = os.getenv("USE_DETECTION_ROI_FUSION", "true").lower() in ("1", "true", "yes")
+
 
 @lru_cache
 def get_settings() -> Settings:  # pragma: no cover
