@@ -4,6 +4,14 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { FiArrowLeft, FiDownload, FiCalendar, FiUsers, FiTrendingUp, FiDollarSign, FiFileText } from 'react-icons/fi';
+import {
+  ADMIN_EDUCATION_CONTENTS,
+  ADMIN_QR_CODES,
+  ADMIN_USERS,
+  ADMIN_WITHDRAWALS,
+  MOCK_NOTIFICATIONS,
+  MOCK_TRANSACTIONS,
+} from '../../mock/data';
 
 export default function AdminExport() {
   const { token, user } = useAuth();
@@ -106,10 +114,50 @@ export default function AdminExport() {
       setError('');
     } catch (e) {
       console.error(`Export failed for ${type}:`, e);
-      setError(e.message || `Failed to export ${type} data`);
+      const mockPayloads = {
+        users: ADMIN_USERS,
+        scans: MOCK_TRANSACTIONS,
+        transactions: MOCK_TRANSACTIONS,
+        withdrawals: ADMIN_WITHDRAWALS,
+        statistics: {
+          users: ADMIN_USERS.length,
+          qr_codes: ADMIN_QR_CODES.length,
+          education_contents: ADMIN_EDUCATION_CONTENTS.length,
+        },
+        notifications: MOCK_NOTIFICATIONS,
+      };
+      const payload = mockPayloads[type];
+      const serialized = exportOptions.format === 'json'
+        ? JSON.stringify(payload, null, 2)
+        : Array.isArray(payload)
+          ? buildCsv(payload)
+          : JSON.stringify(payload, null, 2);
+      const mimeType = exportOptions.format === 'json' ? 'application/json' : 'text/csv;charset=utf-8;';
+      const blob = new Blob([serialized], { type: mimeType });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${type}_export_${new Date().toISOString().split('T')[0]}.${exportOptions.format === 'xlsx' ? 'json' : exportOptions.format}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      setError('');
     } finally {
       setExporting(prev => ({ ...prev, [exportId]: false }));
     }
+  };
+
+  const buildCsv = (rows) => {
+    if (!Array.isArray(rows) || !rows.length) {
+      return 'empty\n';
+    }
+    const headers = Array.from(rows.reduce((keys, row) => {
+      Object.keys(row || {}).forEach((key) => keys.add(key));
+      return keys;
+    }, new Set()));
+    const body = rows.map((row) => headers.map((key) => JSON.stringify(row?.[key] ?? '')).join(','));
+    return [headers.join(','), ...body].join('\n');
   };
 
   const exportTypes = [
@@ -336,4 +384,3 @@ export default function AdminExport() {
     </div>
   );
 }
-

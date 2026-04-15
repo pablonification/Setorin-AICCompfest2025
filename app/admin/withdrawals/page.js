@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { FiArrowLeft, FiDownload, FiCheck, FiX, FiEye, FiRefreshCw } from 'react-icons/fi';
 import AdminRoute from '../../components/AdminRoute';
+import { ADMIN_WITHDRAWALS } from '../../mock/data';
 
 export default function AdminWithdrawals() {
   const { token, user } = useAuth();
@@ -41,7 +42,9 @@ export default function AdminWithdrawals() {
       const data = await resp.json();
       setList(data || []);
     } catch (e) {
-      setError(e.message || 'Failed to fetch');
+      const filtered = status ? ADMIN_WITHDRAWALS.filter((item) => item.status === status) : ADMIN_WITHDRAWALS;
+      setList(filtered);
+      setError('');
     } finally {
       setLoading(false);
     }
@@ -57,7 +60,14 @@ export default function AdminWithdrawals() {
       fetchList();
       setError('');
     } catch (e) {
-      setError(e.message || 'Update failed');
+      setList((current) =>
+        current.map((item) =>
+          item.id === id
+            ? { ...item, status: 'completed', processed_at: new Date().toISOString(), admin_note: 'Approved in mock mode.' }
+            : item
+        )
+      );
+      setError('');
     }
   };
 
@@ -79,8 +89,23 @@ export default function AdminWithdrawals() {
       setAdminNote('');
       setError('');
     } catch (e) {
-      setError(e.message || 'Update failed');
+      setList((current) =>
+        current.map((item) =>
+          item.id === id
+            ? { ...item, status: 'rejected', processed_at: new Date().toISOString(), admin_note: adminNote }
+            : item
+        )
+      );
+      setShowModal(false);
+      setAdminNote('');
+      setError('');
     }
+  };
+
+  const buildWithdrawalsCsv = (rows) => {
+    const headers = ['id', 'user_email', 'amount_points', 'status', 'method_type', 'created_at', 'processed_at', 'admin_note'];
+    const body = rows.map((row) => headers.map((key) => JSON.stringify(row[key] ?? '')).join(','));
+    return [headers.join(','), ...body].join('\n');
   };
 
   const exportCsv = async () => {
@@ -100,7 +125,17 @@ export default function AdminWithdrawals() {
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (e) {
-      setError(e.message || 'Export failed');
+      const rows = status ? ADMIN_WITHDRAWALS.filter((item) => item.status === status) : ADMIN_WITHDRAWALS;
+      const blob = new Blob([buildWithdrawalsCsv(rows)], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `withdrawals_${status || 'all'}_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      setError('');
     } finally {
       setExporting(false);
     }

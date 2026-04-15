@@ -40,9 +40,9 @@ class Settings:
     # Simple local auth for legacy/dev access
     SIMPLE_AUTH_USERNAME: str = os.getenv("SIMPLE_AUTH_USERNAME", "admin")
     SIMPLE_AUTH_PASSWORD: str = os.getenv("SIMPLE_AUTH_PASSWORD", "setorin123")
-    SIMPLE_AUTH_EMAIL: str = os.getenv("SIMPLE_AUTH_EMAIL", "user@local.setorin")
-    SIMPLE_AUTH_NAME: str = os.getenv("SIMPLE_AUTH_NAME", "Local User")
-    SIMPLE_AUTH_ROLE: str = os.getenv("SIMPLE_AUTH_ROLE", "user")
+    SIMPLE_AUTH_EMAIL: str = os.getenv("SIMPLE_AUTH_EMAIL", "admin@local.setorin")
+    SIMPLE_AUTH_NAME: str = os.getenv("SIMPLE_AUTH_NAME", "Local Admin")
+    SIMPLE_AUTH_ROLE: str = os.getenv("SIMPLE_AUTH_ROLE", "admin")
 
     # Admin and payouts
     ADMIN_EMAILS: str = os.getenv("ADMIN_EMAILS", "")  # comma-separated

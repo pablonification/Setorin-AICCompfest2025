@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
-import { getMockSummary } from '../mock/data';
+import { getMockSummary, MOCK_USER } from '../mock/data';
 
 const AuthContext = createContext();
 const LOCAL_DEV_ISSUER = 'setorin-local-dev';
@@ -30,9 +30,12 @@ export function AuthProvider({ children }) {
         const currentTime = Math.floor(Date.now() / 1000);
         
         if (tokenData.exp > currentTime) {
-          const parsedUser = JSON.parse(storedUser);
+          const parsedUser = tokenData.iss === LOCAL_DEV_ISSUER
+            ? { ...JSON.parse(storedUser), ...MOCK_USER }
+            : JSON.parse(storedUser);
           setToken(storedToken);
           setUser(parsedUser);
+          localStorage.setItem('smartbin_user', JSON.stringify(parsedUser));
           console.log('Token loaded successfully, expires:', new Date(tokenData.exp * 1000));
           if (tokenData.iss !== LOCAL_DEV_ISSUER) {
             hydratePointsFromSummary(storedToken, parsedUser);

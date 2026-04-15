@@ -10,12 +10,12 @@ const LOCAL_DEV_USERNAME = 'admin';
 const LOCAL_DEV_PASSWORD = 'setorin123';
 const LOCAL_DEV_USER = {
   id: 'local-dev-user',
-  email: 'user@local.setorin',
-  name: 'Local User',
+  email: 'admin@local.setorin',
+  name: 'Local Admin',
   photo_url: null,
   points: 0,
-  role: 'user',
-  tier: 'Perintis',
+  role: 'admin',
+  tier: 'Panutan',
 };
 
 function LoginContent() {
