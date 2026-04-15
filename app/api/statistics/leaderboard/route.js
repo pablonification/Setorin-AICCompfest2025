@@ -1,11 +1,12 @@
-import { NextResponse } from 'next/server';
+import { MOCK_LEADERBOARD } from '../../../mock/data';
+import { json, tryJsonFetch } from '../../../mock/server';
 
 export async function GET(request) {
   try {
     const token = request.headers.get('authorization')?.replace('Bearer ', '');
     
     if (!token) {
-      return NextResponse.json(
+      return json(
         { error: 'Authentication required' },
         { status: 401 }
       );
@@ -14,7 +15,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const limit = searchParams.get('limit') || 10;
 
-    const response = await fetch(
+    const data = await tryJsonFetch(
       `${process.env.NEXT_PUBLIC_CONTAINER_API_URL || 'http://localhost:8000'}/statistics/leaderboard?limit=${limit}`,
       {
         headers: {
@@ -24,22 +25,9 @@ export async function GET(request) {
       }
     );
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      return NextResponse.json(
-        { error: errorData.detail || 'Failed to fetch leaderboard' },
-        { status: response.status }
-      );
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data);
-    
+    return json(data);
   } catch (error) {
     console.error('Leaderboard API error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return json(MOCK_LEADERBOARD);
   }
 }

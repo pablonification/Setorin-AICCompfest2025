@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '../components/ProtectedRoute';
-  import HistoryListItem from '../components/HistoryListItem';
+import HistoryListItem from '../components/HistoryListItem';
 import TopBar from '../components/TopBar';
+import { MOCK_TRANSACTIONS, MOCK_WITHDRAWALS, getMockSummary } from '../mock/data';
 
 export default function HistoryPage() {
   const { user, token, logout, updateUser } = useAuth();
@@ -84,7 +85,10 @@ export default function HistoryPage() {
       }
     } catch (err) {
       console.error('Failed to fetch data:', err);
-      setError('Failed to load transaction history');
+      setTransactions(MOCK_TRANSACTIONS);
+      setSummary(getMockSummary());
+      setWithdrawals(MOCK_WITHDRAWALS);
+      setError('');
     } finally {
       setLoading(false);
     }

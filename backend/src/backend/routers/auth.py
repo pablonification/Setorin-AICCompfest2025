@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import httpx
 from datetime import datetime, timedelta, timezone
-from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Request
+from typing import Optional, Literal
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
@@ -11,7 +11,7 @@ import jwt
 from ..core.config import get_settings
 from ..models.user import User
 from ..db.mongo import ensure_connection
-from ..schemas.auth import GoogleAuthResponse, TokenResponse, UserResponse, ProfileUpdateRequest
+from ..schemas.auth import TokenResponse, UserResponse, ProfileUpdateRequest, LoginRequest
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 security = HTTPBearer()
@@ -56,6 +56,104 @@ def require_user_role(payload: dict = Depends(verify_token)) -> dict:
     if payload.get("role") == "admin":
         raise HTTPException(status_code=403, detail="User access only - admins cannot access this endpoint")
     return payload
+
+
+def _simple_auth_role() -> Literal["user", "admin"]:
+    return "admin" if settings.SIMPLE_AUTH_ROLE == "admin" else "user"
+
+
+def _build_local_auth_user() -> tuple[User, str]:
+    user = User(
+        id="local-dev-user",
+        email=settings.SIMPLE_AUTH_EMAIL,
+        name=settings.SIMPLE_AUTH_NAME,
+        photo_url=None,
+        points=0,
+        scan_ids=[],
+        role=_simple_auth_role(),
+    )
+    return user, "local-dev-user"
+
+
+async def _ensure_local_auth_user() -> tuple[User, str]:
+    """Ensure the configured local-auth user exists in MongoDB."""
+    try:
+        db = await ensure_connection()
+    except Exception:
+        return _build_local_auth_user()
+
+    users_collection = db.users
+
+    desired_role = _simple_auth_role()
+    existing_user = await users_collection.find_one({"email": settings.SIMPLE_AUTH_EMAIL})
+
+    if existing_user:
+        updates: dict[str, str] = {}
+        if existing_user.get("name") != settings.SIMPLE_AUTH_NAME:
+            updates["name"] = settings.SIMPLE_AUTH_NAME
+        if existing_user.get("role", "user") != desired_role:
+            updates["role"] = desired_role
+
+        if updates:
+            await users_collection.update_one(
+                {"_id": existing_user["_id"]},
+                {"$set": updates}
+            )
+            existing_user.update(updates)
+
+        return User(**existing_user), str(existing_user["_id"])
+
+    user = User(
+        email=settings.SIMPLE_AUTH_EMAIL,
+        name=settings.SIMPLE_AUTH_NAME,
+        photo_url=None,
+        points=0,
+        scan_ids=[],
+        role=desired_role,
+    )
+    result = await users_collection.insert_one(user.dict())
+    user.id = result.inserted_id
+    return user, str(result.inserted_id)
+
+
+def _build_token_response(user: User, user_id: str) -> TokenResponse:
+    access_token = create_access_token(
+        data={"sub": user_id, "email": user.email, "role": user.role}
+    )
+
+    return TokenResponse(
+        access_token=access_token,
+        token_type="bearer",
+        user=UserResponse(
+            id=user_id,
+            email=user.email,
+            name=user.name,
+            photo_url=getattr(user, "photo_url", None),
+            points=user.points,
+            role=user.role,
+            tier=getattr(user, "tier", None),
+            phone=getattr(user, "phone", None),
+            birthdate=getattr(user, "birthdate", None),
+            city=getattr(user, "city", None),
+            gender=getattr(user, "gender", None),
+        )
+    )
+
+
+@router.post("/login", response_model=TokenResponse)
+async def simple_login(login_data: LoginRequest):
+    """Simple username/password login for legacy or local access."""
+    expected_username = settings.SIMPLE_AUTH_USERNAME.strip()
+    expected_password = settings.SIMPLE_AUTH_PASSWORD
+
+    if (
+        login_data.username.strip() != expected_username
+        or login_data.password != expected_password
+    ):
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+
+    user, user_id = await _ensure_local_auth_user()
+    return _build_token_response(user, user_id)
 
 
 @router.get("/google/login")
@@ -149,24 +247,7 @@ async def google_callback(code: str):
             # Update the user object with the actual ID from database
             user.id = result.inserted_id
         
-        # Create JWT token with the correct user ID and role
-        access_token = create_access_token(
-            data={"sub": user_id, "email": user.email, "role": user.role}
-        )
-        
-        return TokenResponse(
-            access_token=access_token,
-            token_type="bearer",
-            user=UserResponse(
-                id=user_id,
-                email=user.email,
-                name=user.name,
-                photo_url=getattr(user, "photo_url", None),
-                points=user.points,
-                role=user.role,
-                tier=getattr(user, "tier", None)
-            )
-        )
+        return _build_token_response(user, user_id)
         
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=400, detail=f"Google API error: {e.response.text}")
@@ -178,6 +259,22 @@ async def google_callback(code: str):
 async def get_current_user(payload: dict = Depends(verify_token)):
     """Get current authenticated user info"""
     from bson import ObjectId
+
+    if payload.get("sub") == "local-dev-user":
+        user, user_id = _build_local_auth_user()
+        return UserResponse(
+            id=user_id,
+            email=user.email,
+            name=user.name,
+            photo_url=user.photo_url,
+            points=user.points,
+            role=user.role,
+            tier=user.tier,
+            phone=user.phone,
+            birthdate=user.birthdate,
+            city=user.city,
+            gender=user.gender,
+        )
     
     db = await ensure_connection()
     users_collection = db.users

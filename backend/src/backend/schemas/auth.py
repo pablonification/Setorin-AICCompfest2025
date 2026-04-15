@@ -30,8 +30,8 @@ class UserResponse(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    """Login request (if needed for future non-OAuth login)"""
-    email: str
+    """Simple local login request"""
+    username: str
     password: str
 
 

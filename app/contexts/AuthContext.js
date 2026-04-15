@@ -1,8 +1,19 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
+import { getMockSummary } from '../mock/data';
 
 const AuthContext = createContext();
+const LOCAL_DEV_ISSUER = 'setorin-local-dev';
+
+const readTokenPayload = (rawToken) => {
+  const tokenParts = rawToken.split('.');
+  if (tokenParts.length !== 3) {
+    throw new Error('Invalid token format');
+  }
+
+  return JSON.parse(atob(tokenParts[1]));
+};
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -15,23 +26,19 @@ export function AuthProvider({ children }) {
     
     if (storedToken && storedUser && storedToken !== 'null') {
       try {
-        const tokenParts = storedToken.split('.');
-        if (tokenParts.length === 3) {
-          const tokenData = JSON.parse(atob(tokenParts[1]));
-          const currentTime = Math.floor(Date.now() / 1000);
-          
-          if (tokenData.exp > currentTime) {
-            setToken(storedToken);
-            setUser(JSON.parse(storedUser));
-            console.log('Token loaded successfully, expires:', new Date(tokenData.exp * 1000));
-            hydratePointsFromSummary(storedToken, JSON.parse(storedUser));
-          } else {
-            console.log('Token expired, removing from storage');
-            localStorage.removeItem('smartbin_token');
-            localStorage.removeItem('smartbin_user');
+        const tokenData = readTokenPayload(storedToken);
+        const currentTime = Math.floor(Date.now() / 1000);
+        
+        if (tokenData.exp > currentTime) {
+          const parsedUser = JSON.parse(storedUser);
+          setToken(storedToken);
+          setUser(parsedUser);
+          console.log('Token loaded successfully, expires:', new Date(tokenData.exp * 1000));
+          if (tokenData.iss !== LOCAL_DEV_ISSUER) {
+            hydratePointsFromSummary(storedToken, parsedUser);
           }
         } else {
-          console.log('Invalid token format, removing from storage');
+          console.log('Token expired, removing from storage');
           localStorage.removeItem('smartbin_token');
           localStorage.removeItem('smartbin_user');
         }
@@ -66,6 +73,10 @@ export function AuthProvider({ children }) {
       }
     } catch (e) {
       console.warn('hydratePointsFromSummary failed:', e);
+      const fallback = getMockSummary();
+      const merged = { ...existingUser, points: fallback.total_points };
+      setUser(merged);
+      localStorage.setItem('smartbin_user', JSON.stringify(merged));
     }
   };
 
@@ -81,7 +92,14 @@ export function AuthProvider({ children }) {
     localStorage.setItem('smartbin_token', userToken);
     localStorage.setItem('smartbin_user', JSON.stringify(userData));
 
-    syncPointsFromBackend(userToken, userData);
+    try {
+      const tokenData = readTokenPayload(userToken);
+      if (tokenData.iss !== LOCAL_DEV_ISSUER) {
+        syncPointsFromBackend(userToken, userData);
+      }
+    } catch (e) {
+      console.warn('Skipping points sync due to token parsing error:', e);
+    }
   };
 
   const syncPointsFromBackend = async (validToken, existingUser) => {
@@ -106,6 +124,10 @@ export function AuthProvider({ children }) {
       }
     } catch (e) {
       console.warn('syncPointsFromBackend failed:', e);
+      const fallback = getMockSummary();
+      const merged = { ...existingUser, points: fallback.total_points };
+      setUser(merged);
+      localStorage.setItem('smartbin_user', JSON.stringify(merged));
     }
   };
 
@@ -168,13 +190,7 @@ export function AuthProvider({ children }) {
     }
     
     try {
-      const tokenParts = token.split('.');
-      if (tokenParts.length !== 3) {
-        console.warn('Invalid token format');
-        return false;
-      }
-      
-      const tokenData = JSON.parse(atob(tokenParts[1]));
+      const tokenData = readTokenPayload(token);
       const currentTime = Math.floor(Date.now() / 1000);
       
       if (tokenData.exp <= currentTime) {

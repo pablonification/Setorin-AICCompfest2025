@@ -1,11 +1,12 @@
-import { NextResponse } from 'next/server';
+import { MOCK_NOTIFICATIONS } from '../../../mock/data';
+import { json, tryJsonFetch } from '../../../mock/server';
 
 export async function GET(request) {
   try {
     const token = request.headers.get('authorization')?.replace('Bearer ', '');
     
     if (!token || token === 'null') {
-      return NextResponse.json({ error: 'Unauthorized - No valid token' }, { status: 401 });
+      return json({ error: 'Unauthorized - No valid token' }, { status: 401 });
     }
     
     // Use the correct backend URL from environment
@@ -14,27 +15,18 @@ export async function GET(request) {
     console.log('Calling backend URL:', backendUrl);
     console.log('Token:', token ? `${token.substring(0, 10)}...` : 'null');
     
-    const response = await fetch(backendUrl, {
+    const data = await tryJsonFetch(backendUrl, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
     });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Backend error ${response.status}:`, errorText);
-      throw new Error(`Backend responded with ${response.status}: ${errorText}`);
-    }
-    
-    const data = await response.json();
-    return NextResponse.json(data);
-    
+
+    return json(data);
   } catch (error) {
     console.error('Error fetching unread count:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch unread count', details: error.message },
-      { status: 500 }
-    );
+    return json({
+      unread_count: MOCK_NOTIFICATIONS.filter((item) => !item.is_read).length,
+    });
   }
 }

@@ -2,11 +2,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Any
 
-import json
-import pytest
-import httpx
 from fastapi import status
 from fastapi.testclient import TestClient
 
@@ -53,5 +49,73 @@ def test_auth_endpoints_registered():
     # Check if auth endpoints are present
     assert "/auth/google/login" in paths
     assert "/auth/google/callback" in paths
+    assert "/auth/login" in paths
     assert "/auth/me" in paths
     assert "/auth/refresh" in paths
+
+
+class _FakeInsertResult:
+    def __init__(self, inserted_id: str):
+        self.inserted_id = inserted_id
+
+
+class _FakeUsersCollection:
+    def __init__(self):
+        self.user = None
+
+    async def find_one(self, query):
+        if self.user and self.user.get("email") == query.get("email"):
+            return self.user
+        return None
+
+    async def insert_one(self, document):
+        self.user = {**document, "_id": "507f1f77bcf86cd799439011"}
+        return _FakeInsertResult(self.user["_id"])
+
+    async def update_one(self, query, update):
+        if self.user and self.user.get("_id") == query.get("_id"):
+            self.user.update(update.get("$set", {}))
+
+
+class _FakeDB:
+    def __init__(self):
+        self.users = _FakeUsersCollection()
+
+
+def test_simple_login_returns_token(monkeypatch):
+    fake_db = _FakeDB()
+
+    async def _fake_ensure_connection():
+        return fake_db
+
+    monkeypatch.setattr(auth_router, "ensure_connection", _fake_ensure_connection)
+    monkeypatch.setattr(auth_router.settings, "SIMPLE_AUTH_USERNAME", "admin")
+    monkeypatch.setattr(auth_router.settings, "SIMPLE_AUTH_PASSWORD", "setorin123")
+    monkeypatch.setattr(auth_router.settings, "SIMPLE_AUTH_EMAIL", "admin@local.setorin")
+    monkeypatch.setattr(auth_router.settings, "SIMPLE_AUTH_NAME", "Local Admin")
+    monkeypatch.setattr(auth_router.settings, "SIMPLE_AUTH_ROLE", "admin")
+    monkeypatch.setattr(auth_router.settings, "JWT_SECRET_KEY", "test-secret")
+
+    client = TestClient(app)
+    response = client.post(
+        "/auth/login",
+        json={"username": "admin", "password": "setorin123"},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    payload = response.json()
+
+    assert payload["token_type"] == "bearer"
+    assert payload["access_token"]
+    assert payload["user"]["email"] == "admin@local.setorin"
+    assert payload["user"]["role"] == "admin"
+
+
+def test_simple_login_rejects_invalid_credentials():
+    client = TestClient(app)
+    response = client.post(
+        "/auth/login",
+        json={"username": "wrong", "password": "creds"},
+    )
+
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED

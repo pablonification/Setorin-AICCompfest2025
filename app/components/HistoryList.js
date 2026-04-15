@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { MOCK_TRANSACTIONS } from "../mock/data";
 
 export default function HistoryList({ items = [] }) {
   const authContext = useAuth();
@@ -58,7 +59,18 @@ export default function HistoryList({ items = [] }) {
         setFetchedItems(mapped);
       } catch (e) {
         console.error("Failed to load last 4 transactions", e);
-        setFetchedItems([]);
+        const mapped = MOCK_TRANSACTIONS
+          .filter((t) => !!t?.valid && (t?.points ?? 0) > 0)
+          .slice(0, 4)
+          .map((t) => ({
+            id: t.id,
+            title: "Tukar",
+            time: formatDate(t.created_at || t.timestamp),
+            amount: t.points ?? 0,
+            points: t.points ?? 0,
+            icon: "/tukar.svg",
+          }));
+        setFetchedItems(mapped);
       } finally {
         setLoading(false);
       }

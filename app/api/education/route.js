@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { getMockEducationList } from '../../mock/data';
+import { json, tryJsonFetch } from '../../mock/server';
 
 export async function GET(request) {
   try {
@@ -6,16 +7,15 @@ export async function GET(request) {
     const limit = searchParams.get('limit') || 50;
     const backendUrl = `${process.env.NEXT_PUBLIC_CONTAINER_API_URL || 'http://localhost:8000'}/education?limit=${limit}`;
 
-    const res = await fetch(backendUrl);
-    if (!res.ok) {
-      const err = await res.json();
-      return NextResponse.json({ error: err.detail || 'Failed to fetch education' }, { status: res.status });
-    }
-
-    const data = await res.json();
-    return NextResponse.json(data);
+    const data = await tryJsonFetch(backendUrl);
+    return json(data);
   } catch (error) {
     console.error('Education API list error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const { searchParams } = new URL(request.url);
+    return json({ items: getMockEducationList({
+      limit: searchParams.get('limit') || 50,
+      category: searchParams.get('category'),
+      q: searchParams.get('q'),
+    }) });
   }
 }

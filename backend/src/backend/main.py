@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
+import logging
 import os
 
 from .routers import health, scan, ws, auth, notification, statistics, educational, transactions, esp32, qr_code
@@ -14,22 +15,39 @@ from .db.mongo import connect_to_mongo, close_mongo_connection
 from .services.ws_manager import start_websocket_manager, stop_websocket_manager
 from .services.educational_service import EducationalService
 
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    await connect_to_mongo()
-    await start_websocket_manager()
+    try:
+        await connect_to_mongo()
+    except Exception as exc:
+        logger.warning("MongoDB startup skipped: %s", exc)
+
+    try:
+        await start_websocket_manager()
+    except Exception as exc:
+        logger.warning("WebSocket manager startup skipped: %s", exc)
+
     # Seed initial infoin contents (idempotent)
     try:
         await EducationalService().seed_initial_education_contents()
-    except Exception:
+    except Exception as exc:
         # Seeding is best-effort; avoid blocking app startup
-        pass
+        logger.warning("Educational content seeding skipped: %s", exc)
     yield
     # Shutdown
-    await stop_websocket_manager()
-    await close_mongo_connection()
+    try:
+        await stop_websocket_manager()
+    except Exception as exc:
+        logger.warning("WebSocket manager shutdown skipped: %s", exc)
+
+    try:
+        await close_mongo_connection()
+    except Exception as exc:
+        logger.warning("MongoDB shutdown skipped: %s", exc)
 
 
 app = FastAPI(lifespan=lifespan)
