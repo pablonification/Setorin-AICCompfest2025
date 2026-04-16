@@ -142,6 +142,41 @@ export const MOCK_PERSONAL_STATS = {
   },
 };
 
+export const MOCK_NEARBY_SMART_BINS = [
+  {
+    id: 'bin-001',
+    name: 'Smart Bin: Thamrin City',
+    status: 'aktif',
+    distance_label: '450m dari lokasi Anda',
+    area: 'Jakarta Pusat',
+    href: '/temuin',
+  },
+  {
+    id: 'bin-002',
+    name: 'Smart Bin: FX Sudirman',
+    status: 'aktif',
+    distance_label: '1,2km dari lokasi Anda',
+    area: 'Jakarta Selatan',
+    href: '/temuin',
+  },
+];
+
+export const MOCK_WEEKLY_CHALLENGE = {
+  title: 'Tantangan Mingguan',
+  reward_points: 500,
+  current_bottles: 3,
+  target_bottles: 5,
+  description: 'Setor 5 botol lagi untuk klaim bonus mingguan kamu.',
+  href: '/history',
+};
+
+export const MOCK_DAILY_TIP = {
+  eyebrow: 'Tips Hari Ini',
+  title: 'Cara memilah plastik rumah tangga dengan benar',
+  href: '/infoin/cara-memilah-botol-plastik',
+  cta: 'Baca Selengkapnya',
+};
+
 export const MOCK_LEADERBOARD = {
   user_rank: 4,
   total_participants: 128,

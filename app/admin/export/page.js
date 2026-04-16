@@ -1,9 +1,27 @@
-﻿'use client';
+'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { FiArrowLeft, FiDownload, FiCalendar, FiUsers, FiTrendingUp, FiDollarSign, FiFileText } from 'react-icons/fi';
+import {
+  FiCalendar,
+  FiDollarSign,
+  FiDownload,
+  FiFileText,
+  FiTrendingUp,
+  FiUsers,
+} from 'react-icons/fi';
+import {
+  AdminBanner,
+  AdminButton,
+  AdminInput,
+  AdminLabel,
+  AdminPageHeader,
+  AdminPageShell,
+  AdminSectionTitle,
+  AdminSelect,
+  AdminSurface,
+} from '../../components/admin/AdminUi';
 import {
   ADMIN_EDUCATION_CONTENTS,
   ADMIN_QR_CODES,
@@ -13,57 +31,69 @@ import {
   MOCK_TRANSACTIONS,
 } from '../../mock/data';
 
+function ExportCard({ title, description, icon: Icon, accent, actionLabel, loading, onClick }) {
+  return (
+    <div className="rounded-[2rem] border border-slate-200/80 bg-white p-6 shadow-[0_18px_36px_rgba(148,163,184,0.12)]">
+      <div className={`inline-flex rounded-[1rem] p-3 ${accent}`}>
+        <Icon className="h-6 w-6 text-white" />
+      </div>
+      <h3 className="mt-5 text-2xl font-extrabold tracking-[-0.04em] text-slate-900">{title}</h3>
+      <p className="mt-3 text-sm leading-6 text-slate-500">{description}</p>
+      <div className="mt-6">
+        <AdminButton variant="primary" icon={FiDownload} onClick={onClick} disabled={loading}>
+          {loading ? 'Exporting...' : actionLabel}
+        </AdminButton>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminExport() {
-  const { token, user } = useAuth();
+  const { token } = useAuth();
   const router = useRouter();
   const [error, setError] = useState('');
   const [exporting, setExporting] = useState({});
   const [dateRange, setDateRange] = useState({
-    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days ago
-    endDate: new Date().toISOString().split('T')[0]
+    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0],
   });
   const [exportOptions, setExportOptions] = useState({
     includeHeaders: true,
-    format: 'csv'
+    format: 'csv',
   });
   const apiBase = process.env.NEXT_PUBLIC_BROWSER_API_URL || 'http://localhost:8000';
 
   useEffect(() => {
     if (!token) {
       router.push('/login');
-      return;
     }
-  }, [token]);
+  }, [router, token]);
 
   const exportData = async (type, customParams = {}) => {
     const exportId = `${type}_${Date.now()}`;
-    setExporting(prev => ({ ...prev, [exportId]: true }));
-    
+    setExporting((prev) => ({ ...prev, [exportId]: true }));
+
     try {
       let endpoint = '';
-      let params = new URLSearchParams();
-      
-      // Add date range if specified
+      const params = new URLSearchParams();
+
       if (dateRange.startDate && dateRange.endDate) {
         params.append('start_date', dateRange.startDate);
         params.append('end_date', dateRange.endDate);
       }
-      
-      // Add custom parameters
+
       Object.entries(customParams).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
           params.append(key, value);
         }
       });
-      
-      // Add format parameter
+
       params.append('format', exportOptions.format);
-      
-      // Add headers parameter
+
       if (exportOptions.includeHeaders) {
         params.append('include_headers', 'true');
       }
-      
+
       switch (type) {
         case 'users':
           endpoint = `${apiBase}/admin/users/export.${exportOptions.format}`;
@@ -86,21 +116,20 @@ export default function AdminExport() {
         default:
           throw new Error('Unknown export type');
       }
-      
-      // Append query parameters if any
+
       if (params.toString()) {
         endpoint += `?${params.toString()}`;
       }
-      
+
       const resp = await fetch(endpoint, {
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       if (!resp.ok) {
         const errorData = await resp.json().catch(() => ({}));
         throw new Error(errorData.detail || `Export failed: ${resp.status}`);
       }
-      
+
       const blob = await resp.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -110,10 +139,10 @@ export default function AdminExport() {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-      
+
       setError('');
-    } catch (e) {
-      console.error(`Export failed for ${type}:`, e);
+    } catch (fetchError) {
+      console.error(`Export failed for ${type}:`, fetchError);
       const mockPayloads = {
         users: ADMIN_USERS,
         scans: MOCK_TRANSACTIONS,
@@ -127,11 +156,12 @@ export default function AdminExport() {
         notifications: MOCK_NOTIFICATIONS,
       };
       const payload = mockPayloads[type];
-      const serialized = exportOptions.format === 'json'
-        ? JSON.stringify(payload, null, 2)
-        : Array.isArray(payload)
-          ? buildCsv(payload)
-          : JSON.stringify(payload, null, 2);
+      const serialized =
+        exportOptions.format === 'json'
+          ? JSON.stringify(payload, null, 2)
+          : Array.isArray(payload)
+            ? buildCsv(payload)
+            : JSON.stringify(payload, null, 2);
       const mimeType = exportOptions.format === 'json' ? 'application/json' : 'text/csv;charset=utf-8;';
       const blob = new Blob([serialized], { type: mimeType });
       const url = window.URL.createObjectURL(blob);
@@ -144,7 +174,7 @@ export default function AdminExport() {
       window.URL.revokeObjectURL(url);
       setError('');
     } finally {
-      setExporting(prev => ({ ...prev, [exportId]: false }));
+      setExporting((prev) => ({ ...prev, [exportId]: false }));
     }
   };
 
@@ -152,235 +182,198 @@ export default function AdminExport() {
     if (!Array.isArray(rows) || !rows.length) {
       return 'empty\n';
     }
-    const headers = Array.from(rows.reduce((keys, row) => {
-      Object.keys(row || {}).forEach((key) => keys.add(key));
-      return keys;
-    }, new Set()));
+    const headers = Array.from(
+      rows.reduce((keys, row) => {
+        Object.keys(row || {}).forEach((key) => keys.add(key));
+        return keys;
+      }, new Set())
+    );
     const body = rows.map((row) => headers.map((key) => JSON.stringify(row?.[key] ?? '')).join(','));
     return [headers.join(','), ...body].join('\n');
   };
 
-  const exportTypes = [
-    {
-      id: 'users',
-      title: 'User Data',
-      description: 'Export user information, points, and statistics',
-      icon: FiUsers,
-      color: 'bg-blue-500',
-      endpoint: '/admin/users/export'
-    },
-    {
-      id: 'scans',
-      title: 'Scan Data',
-      description: 'Export bottle scan records and measurements',
-      icon: FiTrendingUp,
-      color: 'bg-green-500',
-      endpoint: '/admin/scans/export'
-    },
-    {
-      id: 'transactions',
-      title: 'Transaction Data',
-      description: 'Export point transactions and rewards',
-      icon: FiDollarSign,
-      color: 'bg-yellow-500',
-      endpoint: '/admin/transactions/export'
-    },
-    {
-      id: 'withdrawals',
-      title: 'Withdrawal Data',
-      description: 'Export withdrawal requests and status',
-      icon: FiFileText,
-      color: 'bg-purple-500',
-      endpoint: '/payout/admin/withdrawals/export'
-    },
-    {
-      id: 'statistics',
-      title: 'Statistics Data',
-      description: 'Export aggregated statistics and analytics',
-      icon: FiTrendingUp,
-      color: 'bg-indigo-500',
-      endpoint: '/admin/statistics/export'
-    },
-    {
-      id: 'notifications',
-      title: 'Notification Data',
-      description: 'Export notification history and settings',
-      icon: FiFileText,
-      color: 'bg-red-500',
-      endpoint: '/admin/notifications/export'
-    }
-  ];
+  const exportTypes = useMemo(
+    () => [
+      {
+        id: 'users',
+        title: 'User Data',
+        description: 'Export user information, points, and statistics.',
+        icon: FiUsers,
+        accent: 'bg-sky-500',
+      },
+      {
+        id: 'scans',
+        title: 'Scan Data',
+        description: 'Export bottle scan records and measurements.',
+        icon: FiTrendingUp,
+        accent: 'bg-emerald-500',
+      },
+      {
+        id: 'transactions',
+        title: 'Transaction Data',
+        description: 'Export point transactions and rewards.',
+        icon: FiDollarSign,
+        accent: 'bg-amber-500',
+      },
+      {
+        id: 'withdrawals',
+        title: 'Withdrawal Data',
+        description: 'Export withdrawal requests and their statuses.',
+        icon: FiFileText,
+        accent: 'bg-violet-500',
+      },
+      {
+        id: 'statistics',
+        title: 'Statistics Data',
+        description: 'Export aggregated statistics and analytics.',
+        icon: FiTrendingUp,
+        accent: 'bg-indigo-500',
+      },
+      {
+        id: 'notifications',
+        title: 'Notification Data',
+        description: 'Export notification history and notification settings.',
+        icon: FiFileText,
+        accent: 'bg-rose-500',
+      },
+    ],
+    []
+  );
 
-  const isExporting = (type) => {
-    return Object.keys(exporting).some(key => key.startsWith(type) && exporting[key]);
-  };
+  const isExporting = (type) => Object.keys(exporting).some((key) => key.startsWith(type) && exporting[key]);
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Data Export</h1>
-          <p className="text-gray-600 mt-2">Export system data in various formats for analysis and reporting</p>
-        </div>
+    <AdminPageShell>
+      <AdminPageHeader
+        eyebrow="Reporting Desk"
+        title="Data Export"
+        description="Siapkan ekspor terstruktur untuk analisis, audit, dan backup tanpa harus berurusan dengan halaman tools yang kaku."
+      />
 
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 text-red-700 border border-red-200 rounded-lg">
-            {error}
-          </div>
-        )}
+      {error ? <AdminBanner tone="error">{error}</AdminBanner> : null}
 
-        {/* Export Options */}
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Export Options</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Date Range */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <FiCalendar className="inline mr-2" />
+      <AdminSurface>
+        <AdminSectionTitle
+          title="Export Options"
+          subtitle="Atur rentang tanggal, format file, dan opsi header sebelum mengekspor data."
+        />
+
+        <div className="mt-6 grid gap-6 md:grid-cols-3">
+          <div>
+            <AdminLabel>
+              <span className="inline-flex items-center gap-2">
+                <FiCalendar className="h-4 w-4" />
                 Date Range
-              </label>
-              <div className="space-y-2">
-                <input
-                  type="date"
-                  value={dateRange.startDate}
-                  onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
-                  className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <input
-                  type="date"
-                  value={dateRange.endDate}
-                  onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
-                  className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-            </div>
-
-            {/* Format Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Export Format
-              </label>
-              <select
-                value={exportOptions.format}
-                onChange={(e) => setExportOptions(prev => ({ ...prev, format: e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="csv">CSV</option>
-                <option value="json">JSON</option>
-                <option value="xlsx">Excel (XLSX)</option>
-              </select>
-            </div>
-
-            {/* Additional Options */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Options
-              </label>
-              <div className="space-y-2">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={exportOptions.includeHeaders}
-                    onChange={(e) => setExportOptions(prev => ({ ...prev, includeHeaders: e.target.checked }))}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="ml-2 text-sm text-gray-700">Include Headers</span>
-                </label>
-              </div>
+              </span>
+            </AdminLabel>
+            <div className="space-y-3">
+              <AdminInput
+                type="date"
+                value={dateRange.startDate}
+                onChange={(e) => setDateRange((prev) => ({ ...prev, startDate: e.target.value }))}
+              />
+              <AdminInput
+                type="date"
+                value={dateRange.endDate}
+                onChange={(e) => setDateRange((prev) => ({ ...prev, endDate: e.target.value }))}
+              />
             </div>
           </div>
-        </div>
 
-        {/* Export Types Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {exportTypes.map((exportType) => {
-            const IconComponent = exportType.icon;
-            return (
-              <div key={exportType.id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-200">
-                <div className="p-6">
-                  <div className={`inline-flex p-3 rounded-lg ${exportType.color} mb-4`}>
-                    <IconComponent className="h-6 w-6 text-white" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    {exportType.title}
-                  </h3>
-                  <p className="text-gray-600 text-sm mb-4">
-                    {exportType.description}
-                  </p>
-                  
-                  <button
-                    onClick={() => exportData(exportType.id)}
-                    disabled={isExporting(exportType.id)}
-                    className={`w-full inline-flex items-center justify-center px-4 py-2 rounded-lg transition-colors ${
-                      isExporting(exportType.id)
-                        ? 'bg-gray-400 text-white cursor-not-allowed'
-                        : 'bg-blue-600 text-white hover:bg-blue-700'
-                    }`}
-                  >
-                    <FiDownload className="mr-2" />
-                    {isExporting(exportType.id) ? 'Exporting...' : 'Export'}
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+          <div>
+            <AdminLabel>Export Format</AdminLabel>
+            <AdminSelect
+              value={exportOptions.format}
+              onChange={(e) => setExportOptions((prev) => ({ ...prev, format: e.target.value }))}
+            >
+              <option value="csv">CSV</option>
+              <option value="json">JSON</option>
+              <option value="xlsx">Excel (XLSX)</option>
+            </AdminSelect>
+          </div>
 
-        {/* Bulk Export */}
-        <div className="mt-8 bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Bulk Export</h2>
-          <p className="text-gray-600 mb-4">
-            Export all data types at once for comprehensive system backup and analysis.
-          </p>
-          
-          <div className="flex flex-wrap gap-4">
-            <button
-              onClick={() => {
-                exportTypes.forEach(type => exportData(type.id));
-              }}
-              className="inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              <FiDownload className="mr-2" />
-              Export All Data
-            </button>
-            
-            <button
-              onClick={() => {
-                const today = new Date().toISOString().split('T')[0];
-                setDateRange({ startDate: today, endDate: today });
-              }}
-              className="inline-flex items-center px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-            >
-              <FiCalendar className="mr-2" />
-              Set to Today
-            </button>
-            
-            <button
-              onClick={() => {
-                const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-                const today = new Date().toISOString().split('T')[0];
-                setDateRange({ startDate: thirtyDaysAgo, endDate: today });
-              }}
-              className="inline-flex items-center px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-            >
-              <FiCalendar className="mr-2" />
-              Last 30 Days
-            </button>
+          <div>
+            <AdminLabel>Options</AdminLabel>
+            <label className="flex items-center gap-3 rounded-[1rem] bg-slate-50 px-4 py-3 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                checked={exportOptions.includeHeaders}
+                onChange={(e) =>
+                  setExportOptions((prev) => ({ ...prev, includeHeaders: e.target.checked }))
+                }
+                className="rounded border-slate-300 text-emerald-700 focus:ring-emerald-500"
+              />
+              <span>Include headers in exported file</span>
+            </label>
           </div>
         </div>
+      </AdminSurface>
 
-        {/* Export History */}
-        <div className="mt-8 bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Export History</h2>
-          <div className="bg-gray-50 rounded-lg p-4">
-            <p className="text-sm text-gray-600">
-              Export history and logs will be displayed here. This feature is coming soon.
-            </p>
-          </div>
-        </div>
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        {exportTypes.map((exportType) => (
+          <ExportCard
+            key={exportType.id}
+            title={exportType.title}
+            description={exportType.description}
+            icon={exportType.icon}
+            accent={exportType.accent}
+            actionLabel="Export"
+            loading={isExporting(exportType.id)}
+            onClick={() => exportData(exportType.id)}
+          />
+        ))}
       </div>
-    </div>
+
+      <AdminSurface>
+        <AdminSectionTitle
+          title="Bulk Export"
+          subtitle="Untuk backup lengkap, ekspor semua data sekaligus dengan pengaturan rentang waktu yang sama."
+        />
+        <div className="mt-5 flex flex-wrap gap-3">
+          <AdminButton
+            variant="primary"
+            icon={FiDownload}
+            onClick={() => {
+              exportTypes.forEach((type) => exportData(type.id));
+            }}
+          >
+            Export All Data
+          </AdminButton>
+          <AdminButton
+            variant="secondary"
+            icon={FiCalendar}
+            onClick={() => {
+              const today = new Date().toISOString().split('T')[0];
+              setDateRange({ startDate: today, endDate: today });
+            }}
+          >
+            Set to Today
+          </AdminButton>
+          <AdminButton
+            variant="secondary"
+            icon={FiCalendar}
+            onClick={() => {
+              const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+                .toISOString()
+                .split('T')[0];
+              const today = new Date().toISOString().split('T')[0];
+              setDateRange({ startDate: thirtyDaysAgo, endDate: today });
+            }}
+          >
+            Last 30 Days
+          </AdminButton>
+        </div>
+      </AdminSurface>
+
+      <AdminSurface>
+        <AdminSectionTitle
+          title="Export History"
+          subtitle="Placeholder untuk histori export dan log aktivitas. Bisa kita hidupkan nanti kalau kamu mau persist log lokal juga."
+        />
+        <div className="mt-5 rounded-[1.5rem] bg-slate-50 px-5 py-5 text-sm leading-6 text-slate-500">
+          Export history and logs will be displayed here. This feature is still placeholder-only in the current project state.
+        </div>
+      </AdminSurface>
+    </AdminPageShell>
   );
 }

@@ -7,14 +7,13 @@ import {
 	FiHome,
 	FiUsers,
 	FiDollarSign,
-	FiBell,
 	FiBookOpen,
 	FiActivity,
 	FiDownload,
-	FiSettings,
 	FiMenu,
 	FiX,
-	FiLogOut
+	FiLogOut,
+	FiShield,
 } from 'react-icons/fi';
 import { RiQrCodeLine } from 'react-icons/ri';
 
@@ -43,17 +42,39 @@ export default function AdminSidebar() {
 	};
 
 	const SidebarContents = () => (
-		<div className="h-full flex flex-col">
+		<div className="flex h-full flex-col">
 			<button
 				type="button"
 				onClick={() => router.push('/admin')}
-				className="flex items-center gap-3 px-4 py-4 border-b border-gray-200 w-full text-left hover:bg-gray-50 transition-colors cursor-pointer"
+				className="w-full border-b border-white/10 px-5 py-5 text-left transition-colors hover:bg-white/5"
 				aria-label="Go to Home"
 			>
-				<img src="/login-logo.svg" alt="Setorin" className="h-6 w-auto" />
-				<span className="text-sm font-semibold tracking-wide">Admin</span>
+				<div className="flex items-center gap-3">
+					<div className="flex h-11 w-11 items-center justify-center rounded-[1rem] bg-white/10">
+						<img src="/login-logo.svg" alt="Setorin" className="h-6 w-auto" />
+					</div>
+					<div>
+						<div className="text-xs font-bold uppercase tracking-[0.24em] text-emerald-200/80">
+							Setorin
+						</div>
+						<div className="mt-1 text-lg font-extrabold tracking-[-0.04em] text-white">
+							Admin
+						</div>
+					</div>
+				</div>
 			</button>
-			<nav className="flex-1 px-2 py-3 overflow-y-auto">
+			<div className="mx-5 mt-5 rounded-[1.5rem] border border-white/10 bg-white/5 px-4 py-4">
+				<div className="flex items-center gap-3">
+					<div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-400/15 text-emerald-200">
+						<FiShield className="h-5 w-5" />
+					</div>
+					<div>
+						<div className="text-sm font-bold text-white">Control Center</div>
+						<div className="text-xs text-emerald-100/70">Live admin workspace</div>
+					</div>
+				</div>
+			</div>
+			<nav className="flex-1 overflow-y-auto px-3 py-5">
 				{navItems.map((item) => {
 					const Icon = item.icon;
 					const active = isActive(item.href);
@@ -64,32 +85,32 @@ export default function AdminSidebar() {
 								setMobileOpen(false);
 								router.push(item.href);
 							}}
-							className={`w-full flex items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2 text-sm mb-1 transition-colors ${
+							className={`mb-1.5 flex w-full items-center gap-3 rounded-[1.15rem] px-3.5 py-3 text-sm transition-all ${
 								active
-									? 'bg-[color:var(--color-primary-700)] text-white'
-									: 'text-gray-700 hover:bg-gray-100'
+									? 'bg-white text-[#0d6f3c] shadow-[0_14px_26px_rgba(0,0,0,0.12)]'
+									: 'text-emerald-50/80 hover:bg-white/7 hover:text-white'
 							}`}
 						>
-							<span className="grid place-items-center w-5 h-5">
-								<Icon className={active ? 'text-white' : 'text-gray-600'} />
+							<span className={`grid h-9 w-9 place-items-center rounded-full ${active ? 'bg-emerald-50 text-[#0d6f3c]' : 'bg-white/8 text-emerald-50/90'}`}>
+								<Icon className="h-[18px] w-[18px]" />
 							</span>
-							<span className="truncate">{item.title}</span>
+							<span className="truncate font-semibold">{item.title}</span>
 						</button>
 					);
 				})}
 			</nav>
-			<div className="px-2 py-3">
+			<div className="px-3 py-3">
 				<button
 					onClick={handleLogout}
-					className="w-full flex items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+					className="flex w-full items-center gap-3 rounded-[1.15rem] px-3.5 py-3 text-sm text-rose-200 transition-colors hover:bg-white/7 hover:text-white"
 				>
-					<span className="grid place-items-center w-5 h-5">
-						<FiLogOut className="text-red-600" />
+					<span className="grid h-9 w-9 place-items-center rounded-full bg-white/8">
+						<FiLogOut className="h-[18px] w-[18px]" />
 					</span>
-					<span className="truncate">Logout</span>
+					<span className="truncate font-semibold">Logout</span>
 				</button>
 			</div>
-			<div className="px-3 py-3 text-[12px] leading-4 text-[color:var(--color-muted)] border-t border-gray-200">
+			<div className="border-t border-white/10 px-5 py-4 text-[12px] leading-4 text-emerald-100/55">
 				© {new Date().getFullYear()} Setorin
 			</div>
 		</div>
@@ -97,52 +118,55 @@ export default function AdminSidebar() {
 
 	return (
 		<>
-			{/* Mobile top bar */}
-			<div className="md:hidden sticky top-0 z-40 bg-[var(--background)] border-b border-gray-200">
-				<div className="flex items-center justify-between px-4 py-3">
-					<div className="flex items-center gap-3">
+			<div className="sticky top-0 z-40 border-b border-slate-200/70 bg-[#eef3ef]/95 backdrop-blur md:hidden">
+				<div className="flex items-center justify-between px-4 py-4">
+					<div className="min-w-0">
 						<button
 							type="button"
 							onClick={() => router.push('/admin')}
-							className="flex items-center gap-3 px-4 py-4 border-b border-gray-200 w-full text-left hover:bg-gray-50 transition-colors cursor-pointer"
+							className="flex items-center gap-3 text-left"
 							aria-label="Go to Home"
 						>
-							<img src="/login-logo.svg" alt="Setorin" className="h-5 w-auto" />
-							<span className="text-sm font-semibold">Admin</span>
+							<div className="flex h-10 w-10 items-center justify-center rounded-[1rem] bg-white shadow-[0_10px_22px_rgba(148,163,184,0.16)]">
+								<img src="/login-logo.svg" alt="Setorin" className="h-5 w-auto" />
+							</div>
+							<div>
+								<div className="text-xs font-bold uppercase tracking-[0.24em] text-emerald-700">
+									Setorin
+								</div>
+								<div className="text-lg font-extrabold tracking-[-0.04em] text-slate-900">Admin</div>
+							</div>
 						</button>
 					</div>
 					<button
 						aria-label="Toggle navigation"
 						onClick={() => setMobileOpen(true)}
-						className="p-2 rounded-[var(--radius-sm)] hover:bg-gray-100"
+						className="rounded-full border border-slate-200 bg-white p-3 text-slate-700 shadow-[0_10px_20px_rgba(148,163,184,0.12)]"
 					>
 						<FiMenu />
 					</button>
 				</div>
 			</div>
 
-			{/* Desktop sidebar (fixed to the very left) */}
-			<aside className="hidden md:block fixed left-0 top-0 h-screen w-64 bg-[var(--color-card)] [box-shadow:var(--shadow-card)] z-30">
+			<aside className="fixed left-0 top-0 z-30 hidden h-screen w-[17rem] overflow-hidden bg-[linear-gradient(180deg,#0a6f3c_0%,#0b5c34_100%)] shadow-[0_24px_60px_rgba(15,23,42,0.24)] md:block">
 				<SidebarContents />
 			</aside>
 
-			{/* Mobile drawer */}
 			{mobileOpen && (
 				<div className="md:hidden fixed inset-0 z-50">
-					<div
-						className="absolute inset-0 bg-black/40"
-						onClick={() => setMobileOpen(false)}
-					/>
-					<div className="absolute left-0 top-0 h-full w-72 bg-[var(--color-card)] [box-shadow:var(--shadow-card)] animate-fade-in-up">
-						<div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
+					<div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
+					<div className="absolute left-0 top-0 h-full w-72 overflow-hidden bg-[linear-gradient(180deg,#0a6f3c_0%,#0b5c34_100%)] shadow-[0_24px_60px_rgba(15,23,42,0.24)] animate-fade-in-up">
+						<div className="flex items-center justify-between border-b border-white/10 px-5 py-5">
 							<div className="flex items-center gap-3">
-								<img src="/login-logo.svg" alt="Setorin" className="h-5 w-auto" />
-								<span className="text-sm font-semibold">Admin</span>
+								<div className="flex h-10 w-10 items-center justify-center rounded-[1rem] bg-white/10">
+									<img src="/login-logo.svg" alt="Setorin" className="h-5 w-auto" />
+								</div>
+								<div className="text-lg font-extrabold tracking-[-0.04em] text-white">Admin</div>
 							</div>
 							<button
 								aria-label="Close navigation"
 								onClick={() => setMobileOpen(false)}
-								className="p-2 rounded-[var(--radius-sm)] hover:bg-gray-100"
+								className="rounded-full bg-white/10 p-2 text-white"
 							>
 								<FiX />
 							</button>
@@ -154,5 +178,3 @@ export default function AdminSidebar() {
 		</>
 	);
 }
-
-

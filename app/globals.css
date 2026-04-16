@@ -63,6 +63,10 @@ html { background: var(--background); }
   font-family: "Inter", sans-serif;
 }
 
+.font-plus-jakarta {
+  font-family: var(--font-plus-jakarta), "Inter", sans-serif;
+}
+
 .mobile-container {
   max-width: 430px;
   margin-left: auto;
