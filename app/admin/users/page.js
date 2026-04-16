@@ -242,7 +242,7 @@ export default function AdminUsers() {
         </AdminSurface>
 
         <AdminSurface className="overflow-hidden p-0">
-          <div className="border-b border-slate-200/80 px-6 py-5">
+          <div className="border-b border-emerald-900/5 px-6 py-5">
             <AdminSectionTitle
               title={`Users (${filteredUsers.length})`}
               subtitle="Klik salah satu user untuk melihat ringkasan aktivitas dan detail akun."
@@ -252,7 +252,7 @@ export default function AdminUsers() {
           {loading ? (
             <div className="px-6 py-12 text-center">
               <div className="mx-auto h-10 w-10 animate-spin rounded-full border-b-2 border-emerald-700" />
-              <div className="mt-4 text-sm text-slate-500">Loading users...</div>
+              <div className="mt-4 text-sm text-emerald-700/70">Loading users...</div>
             </div>
           ) : filteredUsers.length === 0 ? (
             <div className="p-6">
@@ -264,38 +264,38 @@ export default function AdminUsers() {
           ) : (
             <>
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-slate-200">
-                  <thead className="bg-slate-50/90">
+                <table className="min-w-full divide-y divide-emerald-900/5">
+                  <thead className="bg-[#f0fdf4]/80 border-b border-emerald-900/5">
                     <tr>
                       <th
-                        className="cursor-pointer px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-slate-500"
+                        className="cursor-pointer px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-emerald-700/70"
                         onClick={() => handleSort('email')}
                       >
                         Email {getSortIcon('email')}
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-slate-500">
+                      <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-emerald-700/70">
                         Name
                       </th>
                       <th
-                        className="cursor-pointer px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-slate-500"
+                        className="cursor-pointer px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-emerald-700/70"
                         onClick={() => handleSort('points')}
                       >
                         Points {getSortIcon('points')}
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-slate-500">
+                      <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-emerald-700/70">
                         Scans
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-slate-500">
+                      <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-emerald-700/70">
                         Actions
                       </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white">
                     {filteredUsers.map((user) => (
-                      <tr key={user.id} className="transition-colors hover:bg-slate-50/80">
-                        <td className="px-6 py-5 text-sm font-semibold text-slate-900">{user.email}</td>
+                      <tr key={user.id} className="transition-colors hover:bg-emerald-50/80">
+                        <td className="px-6 py-5 text-sm font-semibold text-slate-800">{user.email}</td>
                         <td className="px-6 py-5 text-sm text-slate-700">{user.name || 'N/A'}</td>
-                        <td className="px-6 py-5 text-sm font-bold text-slate-900">
+                        <td className="px-6 py-5 text-sm font-bold text-slate-800">
                           {formatNumber(user.points || 0)}
                         </td>
                         <td className="px-6 py-5 text-sm text-slate-700">
@@ -318,8 +318,8 @@ export default function AdminUsers() {
               </div>
 
               {totalPages > 1 ? (
-                <div className="flex items-center justify-between border-t border-slate-200/80 px-6 py-4">
-                  <div className="text-sm text-slate-500">
+                <div className="flex items-center justify-between border-t border-emerald-900/5 px-6 py-4">
+                  <div className="text-sm text-emerald-700/70">
                     Page {currentPage} of {totalPages}
                   </div>
                   <div className="flex gap-3">
@@ -359,7 +359,7 @@ export default function AdminUsers() {
                 <div className="text-sm font-bold uppercase tracking-widest text-emerald-700">
                   User Detail
                 </div>
-                <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900">
+                <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-800">
                   {selectedUser.name || 'Unnamed User'}
                 </h3>
               </div>
@@ -377,24 +377,24 @@ export default function AdminUsers() {
 
             <div className="mt-6 grid gap-4 md:grid-cols-2">
               <AdminSurface className="p-5">
-                <div className="text-sm font-semibold text-slate-500">Email</div>
-                <div className="mt-2 text-base font-semibold text-slate-900">{selectedUser.email}</div>
+                <div className="text-sm font-semibold text-emerald-700/70">Email</div>
+                <div className="mt-2 text-base font-semibold text-slate-800">{selectedUser.email}</div>
               </AdminSurface>
               <AdminSurface className="p-5">
-                <div className="text-sm font-semibold text-slate-500">Points</div>
-                <div className="mt-2 text-base font-semibold text-slate-900">
+                <div className="text-sm font-semibold text-emerald-700/70">Points</div>
+                <div className="mt-2 text-base font-semibold text-slate-800">
                   {formatNumber(selectedUser.points || 0)}
                 </div>
               </AdminSurface>
               <AdminSurface className="p-5">
-                <div className="text-sm font-semibold text-slate-500">Total Scans</div>
-                <div className="mt-2 text-base font-semibold text-slate-900">
+                <div className="text-sm font-semibold text-emerald-700/70">Total Scans</div>
+                <div className="mt-2 text-base font-semibold text-slate-800">
                   {formatNumber(selectedUser.total_scans || 0)}
                 </div>
               </AdminSurface>
               <AdminSurface className="p-5">
-                <div className="text-sm font-semibold text-slate-500">Last Active</div>
-                <div className="mt-2 text-base font-semibold text-slate-900">
+                <div className="text-sm font-semibold text-emerald-700/70">Last Active</div>
+                <div className="mt-2 text-base font-semibold text-slate-800">
                   {formatDate(selectedUser.last_active)}
                 </div>
               </AdminSurface>
@@ -402,7 +402,7 @@ export default function AdminUsers() {
 
             {selectedUser.scan_ids?.length ? (
               <AdminSurface className="mt-4 p-5">
-                <div className="text-sm font-semibold text-slate-500">Recent Scans</div>
+                <div className="text-sm font-semibold text-emerald-700/70">Recent Scans</div>
                 <div className="mt-2 text-sm leading-6 text-slate-600">
                   User has {selectedUser.scan_ids.length} associated scan record(s).
                 </div>

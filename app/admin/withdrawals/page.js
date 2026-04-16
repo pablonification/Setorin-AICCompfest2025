@@ -301,7 +301,7 @@ export default function AdminWithdrawals() {
         </AdminSurface>
 
         <AdminSurface className="overflow-hidden p-0">
-          <div className="border-b border-slate-200/80 px-6 py-5">
+          <div className="border-b border-emerald-900/5 px-6 py-5">
             <AdminSectionTitle
               title={`Withdrawal Requests (${list.length})`}
               subtitle="Setiap item sekarang dibaca seperti task card, bukan daftar admin datar."
@@ -311,7 +311,7 @@ export default function AdminWithdrawals() {
           {loading ? (
             <div className="px-6 py-12 text-center">
               <div className="mx-auto h-10 w-10 animate-spin rounded-full border-b-2 border-emerald-700" />
-              <div className="mt-4 text-sm text-slate-500">Loading withdrawals...</div>
+              <div className="mt-4 text-sm text-emerald-700/70">Loading withdrawals...</div>
             </div>
           ) : list.length === 0 ? (
             <div className="p-6">
@@ -328,31 +328,31 @@ export default function AdminWithdrawals() {
                     <div className="flex-1">
                       <div className="flex flex-wrap items-center gap-3">
                         <AdminBadge tone={getStatusTone(item.status)}>{item.status}</AdminBadge>
-                        <div className="text-2xl font-black tracking-tight text-slate-900">
+                        <div className="text-2xl font-black tracking-tight text-slate-800">
                           {formatPoints(item.amount_points)} points
                         </div>
                       </div>
 
                       <div className="mt-4 text-sm leading-7 text-slate-600">
                         <div>
-                          <span className="font-semibold text-slate-900">Method:</span>{' '}
+                          <span className="font-semibold text-slate-800">Method:</span>{' '}
                           {item.method_type}
                           {item.method_type === 'bank'
                             ? ` • ${item.bank_code} • ${item.bank_account_number} • ${item.bank_account_name}`
                             : ` • ${item.ewallet_provider} • ${item.phone_number}`}
                         </div>
                         <div>
-                          <span className="font-semibold text-slate-900">User:</span> {item.user_email}
+                          <span className="font-semibold text-slate-800">User:</span> {item.user_email}
                         </div>
                         <div>
-                          <span className="font-semibold text-slate-900">Requested:</span> {formatDate(item.created_at)}
+                          <span className="font-semibold text-slate-800">Requested:</span> {formatDate(item.created_at)}
                           {item.processed_at ? ` • Processed: ${formatDate(item.processed_at)}` : ''}
                         </div>
                       </div>
 
                       {item.admin_note ? (
-                        <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
-                          <span className="font-semibold text-slate-900">Admin Note:</span> {item.admin_note}
+                        <div className="mt-4 rounded-2xl bg-emerald-50/40 px-4 py-3 text-sm leading-6 text-slate-600">
+                          <span className="font-semibold text-slate-800">Admin Note:</span> {item.admin_note}
                         </div>
                       ) : null}
                     </div>
@@ -410,7 +410,7 @@ export default function AdminWithdrawals() {
                     <div className="text-sm font-bold uppercase tracking-widest text-emerald-700">
                       Withdrawal Detail
                     </div>
-                    <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900">
+                    <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-800">
                       {formatPoints(selectedWithdrawal.amount_points)} points
                     </h3>
                   </div>
@@ -425,7 +425,7 @@ export default function AdminWithdrawals() {
 
                 <div className="mt-6 space-y-4">
                   <AdminSurface className="p-5">
-                    <div className="text-sm font-semibold text-slate-500">Status</div>
+                    <div className="text-sm font-semibold text-emerald-700/70">Status</div>
                     <div className="mt-2">
                       <AdminBadge tone={getStatusTone(selectedWithdrawal.status)}>
                         {selectedWithdrawal.status}
@@ -433,13 +433,13 @@ export default function AdminWithdrawals() {
                     </div>
                   </AdminSurface>
                   <AdminSurface className="p-5">
-                    <div className="text-sm font-semibold text-slate-500">User</div>
-                    <div className="mt-2 text-base font-semibold text-slate-900">{selectedWithdrawal.user_email}</div>
+                    <div className="text-sm font-semibold text-emerald-700/70">User</div>
+                    <div className="mt-2 text-base font-semibold text-slate-800">{selectedWithdrawal.user_email}</div>
                   </AdminSurface>
                   <AdminSurface className="p-5">
-                    <div className="text-sm font-semibold text-slate-500">Withdrawal Method</div>
+                    <div className="text-sm font-semibold text-emerald-700/70">Withdrawal Method</div>
                     <div className="mt-2 text-sm leading-6 text-slate-700">
-                      <div className="font-semibold text-slate-900">{selectedWithdrawal.method_type}</div>
+                      <div className="font-semibold text-slate-800">{selectedWithdrawal.method_type}</div>
                       {selectedWithdrawal.method_type === 'bank' ? (
                         <div>
                           {selectedWithdrawal.bank_code} - {selectedWithdrawal.bank_account_number} (
@@ -453,7 +453,7 @@ export default function AdminWithdrawals() {
                     </div>
                   </AdminSurface>
                   <AdminSurface className="p-5">
-                    <div className="text-sm font-semibold text-slate-500">Timeline</div>
+                    <div className="text-sm font-semibold text-emerald-700/70">Timeline</div>
                     <div className="mt-2 text-sm leading-6 text-slate-700">
                       <div>Requested: {formatDate(selectedWithdrawal.created_at)}</div>
                       {selectedWithdrawal.processed_at ? (
@@ -463,7 +463,7 @@ export default function AdminWithdrawals() {
                   </AdminSurface>
                   {selectedWithdrawal.admin_note ? (
                     <AdminSurface className="p-5">
-                      <div className="text-sm font-semibold text-slate-500">Admin Note</div>
+                      <div className="text-sm font-semibold text-emerald-700/70">Admin Note</div>
                       <div className="mt-2 text-sm leading-6 text-slate-700">{selectedWithdrawal.admin_note}</div>
                     </AdminSurface>
                   ) : null}
@@ -474,10 +474,10 @@ export default function AdminWithdrawals() {
                 <div className="text-sm font-bold uppercase tracking-widest text-rose-700">
                   Reject Request
                 </div>
-                <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900">
+                <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-800">
                   Reject {formatPoints(selectedWithdrawal.amount_points)} points
                 </h3>
-                <p className="mt-3 text-sm leading-6 text-slate-500">
+                <p className="mt-3 text-sm leading-6 text-emerald-700/70">
                   Jelaskan alasan rejection agar tim dan user tidak kehilangan konteks.
                 </p>
 

@@ -264,9 +264,9 @@ export default function AdminMonitoring() {
             </AdminButton>
           </div>
 
-          <div className="mt-6 rounded-3xl bg-slate-50 px-5 py-5">
+          <div className="mt-6 rounded-3xl bg-emerald-50/40 px-5 py-5">
             <div className="flex flex-wrap items-center gap-3">
-              <div className="text-sm font-semibold text-slate-500">Manager Status</div>
+              <div className="text-sm font-semibold text-emerald-700/70">Manager Status</div>
               <AdminBadge tone={getStatusTone(wsManagerStatus)} className="gap-2">
                 {getStatusIcon(wsManagerStatus)}
                 <span className="capitalize">{wsManagerStatus}</span>
@@ -274,14 +274,14 @@ export default function AdminMonitoring() {
             </div>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               <div className="rounded-2xl bg-white px-4 py-4">
-                <div className="text-sm font-semibold text-slate-500">Total Connections</div>
-                <div className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900">
+                <div className="text-sm font-semibold text-emerald-700/70">Total Connections</div>
+                <div className="mt-2 text-2xl font-extrabold tracking-tight text-slate-800">
                   {wsStatus.total_connections}
                 </div>
               </div>
               <div className="rounded-2xl bg-white px-4 py-4">
-                <div className="text-sm font-semibold text-slate-500">Connected Users</div>
-                <div className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900">
+                <div className="text-sm font-semibold text-emerald-700/70">Connected Users</div>
+                <div className="mt-2 text-2xl font-extrabold tracking-tight text-slate-800">
                   {wsStatus.total_users}
                 </div>
               </div>
@@ -295,24 +295,24 @@ export default function AdminMonitoring() {
             subtitle="Ringkasan cepat untuk kondisi realtime saat ini."
           />
           <div className="mt-5 space-y-3">
-            <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
-              <span className="text-sm font-medium text-slate-500">Manager status</span>
+            <div className="flex items-center justify-between rounded-2xl bg-emerald-50/40 px-4 py-3">
+              <span className="text-sm font-medium text-emerald-700/70">Manager status</span>
               <AdminBadge tone={getStatusTone(wsManagerStatus)} className="gap-2">
                 {getStatusIcon(wsManagerStatus)}
                 <span className="capitalize">{wsManagerStatus}</span>
               </AdminBadge>
             </div>
-            <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
-              <span className="text-sm font-medium text-slate-500">Active connections</span>
-              <span className="text-sm font-bold text-slate-900">{wsStatus.total_connections}</span>
+            <div className="flex items-center justify-between rounded-2xl bg-emerald-50/40 px-4 py-3">
+              <span className="text-sm font-medium text-emerald-700/70">Active connections</span>
+              <span className="text-sm font-bold text-slate-800">{wsStatus.total_connections}</span>
             </div>
-            <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
-              <span className="text-sm font-medium text-slate-500">Connected users</span>
-              <span className="text-sm font-bold text-slate-900">{wsStatus.total_users}</span>
+            <div className="flex items-center justify-between rounded-2xl bg-emerald-50/40 px-4 py-3">
+              <span className="text-sm font-medium text-emerald-700/70">Connected users</span>
+              <span className="text-sm font-bold text-slate-800">{wsStatus.total_users}</span>
             </div>
-            <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
-              <span className="text-sm font-medium text-slate-500">Last updated</span>
-              <span className="text-sm font-bold text-slate-900">{new Date().toLocaleTimeString()}</span>
+            <div className="flex items-center justify-between rounded-2xl bg-emerald-50/40 px-4 py-3">
+              <span className="text-sm font-medium text-emerald-700/70">Last updated</span>
+              <span className="text-sm font-bold text-slate-800">{new Date().toLocaleTimeString()}</span>
             </div>
           </div>
         </AdminSurface>

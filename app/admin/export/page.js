@@ -33,12 +33,12 @@ import {
 
 function ExportCard({ title, description, icon: Icon, accent, actionLabel, loading, onClick }) {
   return (
-    <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-[0_18px_36px_rgba(148,163,184,0.12)]">
+    <div className="rounded-3xl border border-emerald-900/5 bg-white p-6 shadow-[0_18px_36px_rgba(148,163,184,0.12)]">
       <div className={`inline-flex rounded-2xl p-3 ${accent}`}>
         <Icon className="h-6 w-6 text-white" />
       </div>
-      <h3 className="mt-5 text-2xl font-extrabold tracking-tight text-slate-900">{title}</h3>
-      <p className="mt-3 text-sm leading-6 text-slate-500">{description}</p>
+      <h3 className="mt-5 text-2xl font-extrabold tracking-tight text-slate-800">{title}</h3>
+      <p className="mt-3 text-sm leading-6 text-emerald-700/70">{description}</p>
       <div className="mt-6">
         <AdminButton variant="primary" icon={FiDownload} onClick={onClick} disabled={loading}>
           {loading ? 'Exporting...' : actionLabel}
@@ -294,7 +294,7 @@ export default function AdminExport() {
 
           <div>
             <AdminLabel>Options</AdminLabel>
-            <label className="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+            <label className="flex items-center gap-3 rounded-2xl bg-emerald-50/40 px-4 py-3 text-sm text-slate-700">
               <input
                 type="checkbox"
                 checked={exportOptions.includeHeaders}
@@ -370,7 +370,7 @@ export default function AdminExport() {
           title="Export History"
           subtitle="Placeholder untuk histori export dan log aktivitas. Bisa kita hidupkan nanti kalau kamu mau persist log lokal juga."
         />
-        <div className="mt-5 rounded-3xl bg-slate-50 px-5 py-5 text-sm leading-6 text-slate-500">
+        <div className="mt-5 rounded-3xl bg-emerald-50/40 px-5 py-5 text-sm leading-6 text-emerald-700/70">
           Export history and logs will be displayed here. This feature is still placeholder-only in the current project state.
         </div>
       </AdminSurface>

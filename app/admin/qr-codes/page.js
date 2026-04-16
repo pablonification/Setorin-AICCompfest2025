@@ -233,7 +233,7 @@ export default function AdminQRCodesPage() {
         <AdminPageShell>
           <div className="py-16 text-center">
             <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-emerald-700" />
-            <div className="mt-4 text-sm text-slate-500">Loading QR codes...</div>
+            <div className="mt-4 text-sm text-emerald-700/70">Loading QR codes...</div>
           </div>
         </AdminPageShell>
       </AdminRoute>
@@ -321,7 +321,7 @@ export default function AdminQRCodesPage() {
                     }
                     required
                   />
-                  <div className="mt-2 text-xs text-slate-500">Maximum: 30 days (720 hours)</div>
+                  <div className="mt-2 text-xs text-emerald-700/70">Maximum: 30 days (720 hours)</div>
                 </div>
                 <div>
                   <AdminLabel>Max Uses</AdminLabel>
@@ -338,7 +338,7 @@ export default function AdminQRCodesPage() {
                     }
                     required
                   />
-                  <div className="mt-2 text-xs text-slate-500">How many times this QR can be used</div>
+                  <div className="mt-2 text-xs text-emerald-700/70">How many times this QR can be used</div>
                 </div>
               </div>
               <div className="flex flex-wrap gap-3">
@@ -351,14 +351,14 @@ export default function AdminQRCodesPage() {
               </div>
             </form>
           ) : (
-            <div className="mt-5 rounded-3xl bg-slate-50 px-5 py-5 text-sm leading-6 text-slate-500">
+            <div className="mt-5 rounded-3xl bg-emerald-50/40 px-5 py-5 text-sm leading-6 text-emerald-700/70">
               Open the form to generate a new QR access token with custom expiry and usage limits.
             </div>
           )}
         </AdminSurface>
 
         <AdminSurface className="overflow-hidden p-0">
-          <div className="border-b border-slate-200/80 px-6 py-5">
+          <div className="border-b border-emerald-900/5 px-6 py-5">
             <AdminSectionTitle
               title={`QR Codes (${qrCodes.length})`}
               subtitle="Token list dengan kontrol visibility, copy, download, dan deactivate dari satu tempat."
@@ -379,46 +379,46 @@ export default function AdminQRCodesPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200">
-                <thead className="bg-slate-50/90">
+              <table className="min-w-full divide-y divide-emerald-900/5">
+                <thead className="bg-[#f0fdf4]/80 border-b border-emerald-900/5">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-slate-500">
+                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-emerald-700/70">
                       Token
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-slate-500">
+                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-emerald-700/70">
                       Status
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-slate-500">
+                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-emerald-700/70">
                       Usage
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-slate-500">
+                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-emerald-700/70">
                       Expires
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-slate-500">
+                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-emerald-700/70">
                       Created
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-slate-500">
+                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-emerald-700/70">
                       Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
                   {qrCodes.map((qr) => (
-                    <tr key={qr.id} className="transition-colors hover:bg-slate-50/80">
+                    <tr key={qr.id} className="transition-colors hover:bg-emerald-50/80">
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-2">
-                          <div className="max-w-[220px] truncate rounded-xl bg-slate-50 px-3 py-2 font-mono text-sm text-slate-900">
+                          <div className="max-w-[220px] truncate rounded-xl bg-emerald-50/40 px-3 py-2 font-mono text-sm text-slate-800">
                             {visibleTokens.has(qr.id) ? qr.token : '••••••••••••••••••••••••••'}
                           </div>
                           <button
                             onClick={() => toggleTokenVisibility(qr.id)}
-                            className="rounded-full bg-slate-100 p-2 text-slate-500 transition-colors hover:bg-slate-200"
+                            className="rounded-full bg-slate-100 p-2 text-emerald-700/70 transition-colors hover:bg-slate-200"
                           >
                             {visibleTokens.has(qr.id) ? <FiEyeOff className="h-4 w-4" /> : <FiEye className="h-4 w-4" />}
                           </button>
                           <button
                             onClick={() => copyToClipboard(qr.token, qr.id)}
-                            className="rounded-full bg-slate-100 p-2 text-slate-500 transition-colors hover:bg-slate-200"
+                            className="rounded-full bg-slate-100 p-2 text-emerald-700/70 transition-colors hover:bg-slate-200"
                           >
                             {copiedToken === qr.id ? (
                               <FiCheck className="h-4 w-4 text-emerald-700" />

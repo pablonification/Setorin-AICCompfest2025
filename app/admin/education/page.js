@@ -318,7 +318,7 @@ export default function AdminEducation() {
         {loading ? (
           <div className="py-12 text-center">
             <div className="mx-auto h-10 w-10 animate-spin rounded-full border-b-2 border-emerald-700" />
-            <div className="mt-4 text-sm text-slate-500">Loading contents...</div>
+            <div className="mt-4 text-sm text-emerald-700/70">Loading contents...</div>
           </div>
         ) : filteredContents.length === 0 ? (
           <div className="mt-6">
@@ -332,7 +332,7 @@ export default function AdminEducation() {
             {filteredContents.map((content) => (
               <div
                 key={content.id}
-                className="rounded-3xl border border-slate-200/80 bg-slate-50/70 p-5 transition-colors hover:bg-slate-50"
+                className="rounded-3xl border border-emerald-900/5 bg-emerald-50/70 p-5 transition-colors hover:bg-emerald-50/40"
               >
                 <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                   <div className="flex-1">
@@ -344,7 +344,7 @@ export default function AdminEducation() {
                       </AdminBadge>
                     </div>
 
-                    <h3 className="mt-4 text-2xl font-extrabold tracking-tight text-slate-900">
+                    <h3 className="mt-4 text-2xl font-extrabold tracking-tight text-slate-800">
                       {content.title}
                     </h3>
 
@@ -352,7 +352,7 @@ export default function AdminEducation() {
                       {content.content}
                     </p>
 
-                    <div className="mt-4 flex flex-wrap gap-4 text-sm text-slate-500">
+                    <div className="mt-4 flex flex-wrap gap-4 text-sm text-emerald-700/70">
                       <span>Read time: {content.estimated_read_time} min</span>
                       {content.tags?.length ? <span>Tags: {content.tags.join(', ')}</span> : null}
                     </div>
@@ -398,7 +398,7 @@ export default function AdminEducation() {
               <div className="text-sm font-bold uppercase tracking-widest text-emerald-700">
                 {showEditForm ? 'Edit Content' : 'Create Content'}
               </div>
-              <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900">
+              <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-800">
                 {showEditForm ? 'Update educational material' : 'Add new educational material'}
               </h3>
             </div>
@@ -482,7 +482,7 @@ export default function AdminEducation() {
                 onChange={handleInputChange}
                 placeholder="Enter tags separated by commas..."
               />
-              <div className="mt-2 text-xs text-slate-500">
+              <div className="mt-2 text-xs text-emerald-700/70">
                 Separate multiple tags with commas, for example: recycling, environment, tips
               </div>
             </div>
@@ -499,7 +499,7 @@ export default function AdminEducation() {
               />
             </div>
 
-            <label className="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+            <label className="flex items-center gap-3 rounded-2xl bg-emerald-50/40 px-4 py-3 text-sm text-slate-700">
               <input
                 type="checkbox"
                 name="is_published"
