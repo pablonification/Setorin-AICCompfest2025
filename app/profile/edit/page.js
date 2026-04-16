@@ -109,19 +109,7 @@ export default function EditProfilePage() {
 
     } catch (err) {
       console.error("Failed to save profile:", err);
-      updateUser({
-        ...user,
-        name: name.trim(),
-        email: email.trim(),
-        phone: phone.trim() || null,
-        birthdate: birthdate || null,
-        city: city.trim() || null,
-        gender: gender || null,
-      });
-      setSuccessMessage("Profil mock berhasil diperbarui!");
-      setTimeout(() => {
-        router.back();
-      }, 1500);
+      setErrorMessage(err.message || "Terjadi kesalahan saat menyimpan profil");
     } finally {
       setSaving(false);
     }
@@ -308,4 +296,5 @@ function Field({ label, meta, children }) {
     </div>
   );
 }
+
 

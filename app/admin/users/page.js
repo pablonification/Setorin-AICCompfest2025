@@ -268,24 +268,24 @@ export default function AdminUsers() {
                   <thead className="bg-slate-50/90">
                     <tr>
                       <th
-                        className="cursor-pointer px-6 py-4 text-left text-xs font-bold uppercase tracking-[0.22em] text-slate-500"
+                        className="cursor-pointer px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-slate-500"
                         onClick={() => handleSort('email')}
                       >
                         Email {getSortIcon('email')}
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-[0.22em] text-slate-500">
+                      <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-slate-500">
                         Name
                       </th>
                       <th
-                        className="cursor-pointer px-6 py-4 text-left text-xs font-bold uppercase tracking-[0.22em] text-slate-500"
+                        className="cursor-pointer px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-slate-500"
                         onClick={() => handleSort('points')}
                       >
                         Points {getSortIcon('points')}
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-[0.22em] text-slate-500">
+                      <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-slate-500">
                         Scans
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-[0.22em] text-slate-500">
+                      <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-slate-500">
                         Actions
                       </th>
                     </tr>
@@ -356,10 +356,10 @@ export default function AdminUsers() {
           >
             <div className="flex items-center justify-between gap-4">
               <div>
-                <div className="text-sm font-bold uppercase tracking-[0.24em] text-emerald-700">
+                <div className="text-sm font-bold uppercase tracking-widest text-emerald-700">
                   User Detail
                 </div>
-                <h3 className="mt-2 text-3xl font-black tracking-[-0.05em] text-slate-900">
+                <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900">
                   {selectedUser.name || 'Unnamed User'}
                 </h3>
               </div>

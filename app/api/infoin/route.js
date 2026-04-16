@@ -1,5 +1,4 @@
-import { getMockEducationList } from '../../mock/data';
-import { json, tryJsonFetch } from '../../mock/server';
+import { NextResponse } from 'next/server';
 
 export async function GET(request) {
   try {
@@ -15,15 +14,17 @@ export async function GET(request) {
     if (category) url.searchParams.set('category', category);
     if (q) url.searchParams.set('q', q);
 
-    const data = await tryJsonFetch(url.toString());
-    return json(data);
+    const res = await fetch(url.toString());
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return NextResponse.json({ error: err.detail || 'Failed to fetch infoin' }, { status: res.status });
+    }
+    const data = await res.json();
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Infoin API list error:', error);
-    const { searchParams } = new URL(request.url);
-    return json({ items: getMockEducationList({
-      limit: searchParams.get('limit') || 100,
-      category: searchParams.get('category'),
-      q: searchParams.get('q'),
-    }) });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+

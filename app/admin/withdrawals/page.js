@@ -328,7 +328,7 @@ export default function AdminWithdrawals() {
                     <div className="flex-1">
                       <div className="flex flex-wrap items-center gap-3">
                         <AdminBadge tone={getStatusTone(item.status)}>{item.status}</AdminBadge>
-                        <div className="text-2xl font-black tracking-[-0.05em] text-slate-900">
+                        <div className="text-2xl font-black tracking-tight text-slate-900">
                           {formatPoints(item.amount_points)} points
                         </div>
                       </div>
@@ -351,7 +351,7 @@ export default function AdminWithdrawals() {
                       </div>
 
                       {item.admin_note ? (
-                        <div className="mt-4 rounded-[1.2rem] bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+                        <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
                           <span className="font-semibold text-slate-900">Admin Note:</span> {item.admin_note}
                         </div>
                       ) : null}
@@ -407,10 +407,10 @@ export default function AdminWithdrawals() {
               <>
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <div className="text-sm font-bold uppercase tracking-[0.24em] text-emerald-700">
+                    <div className="text-sm font-bold uppercase tracking-widest text-emerald-700">
                       Withdrawal Detail
                     </div>
-                    <h3 className="mt-2 text-3xl font-black tracking-[-0.05em] text-slate-900">
+                    <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900">
                       {formatPoints(selectedWithdrawal.amount_points)} points
                     </h3>
                   </div>
@@ -471,10 +471,10 @@ export default function AdminWithdrawals() {
               </>
             ) : (
               <>
-                <div className="text-sm font-bold uppercase tracking-[0.24em] text-rose-700">
+                <div className="text-sm font-bold uppercase tracking-widest text-rose-700">
                   Reject Request
                 </div>
-                <h3 className="mt-2 text-3xl font-black tracking-[-0.05em] text-slate-900">
+                <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900">
                   Reject {formatPoints(selectedWithdrawal.amount_points)} points
                 </h3>
                 <p className="mt-3 text-sm leading-6 text-slate-500">

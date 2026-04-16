@@ -1,0 +1,13 @@
+[     194ms] [LOG] [Fast Refresh] rebuilding @ http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_client_20b209c9._.js:5693
+[     580ms] [LOG] [Fast Refresh] done in 488ms @ http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_client_20b209c9._.js:5557
+[     819ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:14475
+[     824ms] [WARNING] %c%s%c  ⚠ Unsupported metadata viewport is configured in metadata export in /admin/users. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport background: #e6e6e6;background: light-dark(rgba(0,0,0,0.1), rgba(255,255,255,0.25));color: #000000;color: light-dark(#000000, #ffffff);border-radius: 2px  Server   @ http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_0f1b9fd4._.js:4651
+[     824ms] [WARNING] %c%s%c  ⚠ Unsupported metadata themeColor is configured in metadata export in /admin/users. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport background: #e6e6e6;background: light-dark(rgba(0,0,0,0.1), rgba(255,255,255,0.25));color: #000000;color: light-dark(#000000, #ffffff);border-radius: 2px  Server   @ http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_0f1b9fd4._.js:4651
+[     842ms] [LOG] Token loaded successfully, expires: Fri Apr 17 2026 10:37:43 GMT+0700 (Western Indonesia Time) @ http://127.0.0.1:3003/_next/static/chunks/app_7b7158bd._.js:551
+[    1061ms] [LOG] [Fast Refresh] rebuilding @ http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_client_20b209c9._.js:5693
+[    1101ms] [LOG] [Fast Refresh] done in 141ms @ http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_client_20b209c9._.js:5557
+[    1108ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://127.0.0.1:3003/admin/users:0
+[    1108ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/admin/users?limit=20&offset=0&sort_by=points&sort_order=desc:0
+[    1108ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/admin/users?limit=20&offset=0&sort_by=points&sort_order=desc:0

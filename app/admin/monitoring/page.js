@@ -264,7 +264,7 @@ export default function AdminMonitoring() {
             </AdminButton>
           </div>
 
-          <div className="mt-6 rounded-[1.5rem] bg-slate-50 px-5 py-5">
+          <div className="mt-6 rounded-3xl bg-slate-50 px-5 py-5">
             <div className="flex flex-wrap items-center gap-3">
               <div className="text-sm font-semibold text-slate-500">Manager Status</div>
               <AdminBadge tone={getStatusTone(wsManagerStatus)} className="gap-2">
@@ -273,15 +273,15 @@ export default function AdminMonitoring() {
               </AdminBadge>
             </div>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <div className="rounded-[1.2rem] bg-white px-4 py-4">
+              <div className="rounded-2xl bg-white px-4 py-4">
                 <div className="text-sm font-semibold text-slate-500">Total Connections</div>
-                <div className="mt-2 text-2xl font-extrabold tracking-[-0.04em] text-slate-900">
+                <div className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900">
                   {wsStatus.total_connections}
                 </div>
               </div>
-              <div className="rounded-[1.2rem] bg-white px-4 py-4">
+              <div className="rounded-2xl bg-white px-4 py-4">
                 <div className="text-sm font-semibold text-slate-500">Connected Users</div>
-                <div className="mt-2 text-2xl font-extrabold tracking-[-0.04em] text-slate-900">
+                <div className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900">
                   {wsStatus.total_users}
                 </div>
               </div>
@@ -295,22 +295,22 @@ export default function AdminMonitoring() {
             subtitle="Ringkasan cepat untuk kondisi realtime saat ini."
           />
           <div className="mt-5 space-y-3">
-            <div className="flex items-center justify-between rounded-[1.2rem] bg-slate-50 px-4 py-3">
+            <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
               <span className="text-sm font-medium text-slate-500">Manager status</span>
               <AdminBadge tone={getStatusTone(wsManagerStatus)} className="gap-2">
                 {getStatusIcon(wsManagerStatus)}
                 <span className="capitalize">{wsManagerStatus}</span>
               </AdminBadge>
             </div>
-            <div className="flex items-center justify-between rounded-[1.2rem] bg-slate-50 px-4 py-3">
+            <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
               <span className="text-sm font-medium text-slate-500">Active connections</span>
               <span className="text-sm font-bold text-slate-900">{wsStatus.total_connections}</span>
             </div>
-            <div className="flex items-center justify-between rounded-[1.2rem] bg-slate-50 px-4 py-3">
+            <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
               <span className="text-sm font-medium text-slate-500">Connected users</span>
               <span className="text-sm font-bold text-slate-900">{wsStatus.total_users}</span>
             </div>
-            <div className="flex items-center justify-between rounded-[1.2rem] bg-slate-50 px-4 py-3">
+            <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
               <span className="text-sm font-medium text-slate-500">Last updated</span>
               <span className="text-sm font-bold text-slate-900">{new Date().toLocaleTimeString()}</span>
             </div>

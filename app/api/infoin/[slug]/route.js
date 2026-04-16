@@ -1,16 +1,20 @@
-import { getMockEducationBySlug } from '../../../mock/data';
-import { json, tryJsonFetch } from '../../../mock/server';
+import { NextResponse } from 'next/server';
 
 export async function GET(_, { params }) {
   try {
     const { slug } = params;
     const base = process.env.NEXT_PUBLIC_CONTAINER_API_URL || 'http://localhost:8000';
-    const data = await tryJsonFetch(`${base}/education/slug/${encodeURIComponent(slug)}`);
-    return json(data);
+    const res = await fetch(`${base}/education/slug/${encodeURIComponent(slug)}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return NextResponse.json({ error: err.detail || 'Failed to fetch infoin detail' }, { status: res.status });
+    }
+    const data = await res.json();
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Infoin detail API error:', error);
-    const item = getMockEducationBySlug(params.slug);
-    return item ? json(item) : json({ error: 'Infoin detail not found' }, { status: 404 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
 

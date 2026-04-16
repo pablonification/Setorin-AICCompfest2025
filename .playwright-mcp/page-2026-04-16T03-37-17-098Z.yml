@@ -1,0 +1,33 @@
+- generic [active] [ref=e1]:
+  - button "Open Next.js Dev Tools" [ref=e7] [cursor=pointer]:
+    - img [ref=e8]
+  - alert [ref=e11]
+  - generic [ref=e12]:
+    - img "Setorin illustration" [ref=e14]
+    - generic [ref=e15]:
+      - img "Setorin" [ref=e16]
+      - heading "Selamat datang, Agen Perubahan!" [level=1] [ref=e17]:
+        - text: Selamat datang,
+        - text: Agen Perubahan!
+      - paragraph [ref=e18]: Masuk untuk mulai mengubah sampahmu jadi saldo. Semudah itu.
+    - generic [ref=e19]:
+      - generic [ref=e20]:
+        - generic [ref=e21]:
+          - generic [ref=e22]: Username
+          - textbox "Username" [ref=e23]:
+            - /placeholder: Masukkan username
+        - generic [ref=e24]:
+          - generic [ref=e25]: Password
+          - textbox "Password" [ref=e26]:
+            - /placeholder: Masukkan password
+        - button "Masuk dengan Username" [ref=e27]:
+          - generic [ref=e28]: Masuk dengan Username
+      - generic [ref=e31]: atau
+      - button "Masuk dengan Google" [ref=e33]:
+        - img "Google" [ref=e34]
+        - generic [ref=e35]: Masuk dengan Google
+      - paragraph [ref=e36]:
+        - text: Dengan masuk, Anda menyetujui
+        - link "Ketentuan Layanan" [ref=e37] [cursor=pointer]:
+          - /url: /ketentuan-layanan
+        - text: kami.

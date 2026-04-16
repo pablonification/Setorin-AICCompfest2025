@@ -1,0 +1,134 @@
+[     305ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:14475
+[     309ms] [WARNING] %c%s%c  ⚠ Unsupported metadata viewport is configured in metadata export in /admin. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport background: #e6e6e6;background: light-dark(rgba(0,0,0,0.1), rgba(255,255,255,0.25));color: #000000;color: light-dark(#000000, #ffffff);border-radius: 2px  Server   @ http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_0f1b9fd4._.js:4651
+[     309ms] [WARNING] %c%s%c  ⚠ Unsupported metadata themeColor is configured in metadata export in /admin. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport background: #e6e6e6;background: light-dark(rgba(0,0,0,0.1), rgba(255,255,255,0.25));color: #000000;color: light-dark(#000000, #ffffff);border-radius: 2px  Server   @ http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_0f1b9fd4._.js:4651
+[     321ms] [LOG] Token loaded successfully, expires: Fri Apr 17 2026 10:37:43 GMT+0700 (Western Indonesia Time) @ http://127.0.0.1:3003/_next/static/chunks/app_7b7158bd._.js:551
+[     367ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/admin/users/count:0
+[     368ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/admin/scans/count:0
+[     368ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/payout/admin/withdrawals?status=pending:0
+[     368ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/ws/status:0
+[     368ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/api/qr/stats:0
+[     368ms] [WARNING] QR stats endpoint not available: Failed to fetch @ http://127.0.0.1:3003/_next/static/chunks/app_13db064f._.js:630
+[     368ms] [ERROR] Failed to fetch dashboard stats: TypeError: Failed to fetch
+    at AdminPage.useCallback[fetchDashboardStats] (http://127.0.0.1:3003/_next/static/chunks/app_13db064f._.js:602:21)
+    at AdminPage.useEffect (http://127.0.0.1:3003/_next/static/chunks/app_13db064f._.js:696:13)
+    at Object.react_stack_bottom_frame (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:13064:22)
+    at runWithFiberInDEV (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:890:74)
+    at commitHookEffectListMount (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:6578:628)
+    at commitHookPassiveMountEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:6613:60)
+    at commitPassiveMountOnFiber (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7568:33)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7559:106)
+    at commitPassiveMountOnFiber (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7567:17)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7559:106)
+    at commitPassiveMountOnFiber (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7611:17)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7559:106)
+    at commitPassiveMountOnFiber (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7611:17)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7559:106)
+    at commitPassiveMountOnFiber (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7567:17)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7559:106)
+    at commitPassiveMountOnFiber (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7571:17)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7559:106)
+    at commitPassiveMountOnFiber (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7567:17)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7559:106)
+    at commitPassiveMountOnFiber (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7567:17)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7559:106)
+    at commitPassiveMountOnFiber (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7567:17)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7559:106)
+    at commitPassiveMountOnFiber (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7567:17)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7559:106)
+    at commitPassiveMountOnFiber (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7571:17)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7559:106)
+    at commitPassiveMountOnFiber (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7567:17)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7559:106)
+    at commitPassiveMountOnFiber (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7567:17)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7559:106)
+    at commitPassiveMountOnFiber (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7611:17)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7559:106)
+    at commitPassiveMountOnFiber (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7611:17)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7559:106)
+    at commitPassiveMountOnFiber (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7567:17)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7559:106)
+    at commitPassiveMountOnFiber (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7567:17)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7559:106)
+    at commitPassiveMountOnFiber (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7611:17)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7559:106)
+    at commitPassiveMountOnFiber (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7611:17)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7559:106)
+    at commitPassiveMountOnFiber (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7611:17)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7559:106)
+    at commitPassiveMountOnFiber (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7567:17)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7559:106)
+    at commitPassiveMountOnFiber (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7567:17)
+    at recursivelyTraversePassiveMountEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7559:106) @ http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_445d8acf._.js:2248
+[     368ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/admin/users/count:0
+[     368ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/admin/scans/count:0
+[     369ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/payout/admin/withdrawals?status=pending:0
+[     369ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/ws/status:0
+[     369ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/api/qr/stats:0
+[     369ms] [WARNING] QR stats endpoint not available: Failed to fetch @ http://127.0.0.1:3003/_next/static/chunks/app_13db064f._.js:630
+[     369ms] [ERROR] Failed to fetch dashboard stats: TypeError: Failed to fetch
+    at AdminPage.useCallback[fetchDashboardStats] (http://127.0.0.1:3003/_next/static/chunks/app_13db064f._.js:602:21)
+    at AdminPage.useEffect (http://127.0.0.1:3003/_next/static/chunks/app_13db064f._.js:696:13)
+    at Object.react_stack_bottom_frame (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:13064:22)
+    at runWithFiberInDEV (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:890:74)
+    at commitHookEffectListMount (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:6578:628)
+    at commitHookPassiveMountEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:6613:60)
+    at reconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7626:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7617:68)
+    at reconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7625:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7617:68)
+    at reconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7640:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7617:68)
+    at reconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7640:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7617:68)
+    at reconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7625:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7617:68)
+    at reconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7640:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7617:68)
+    at reconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7625:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7617:68)
+    at reconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7625:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7617:68)
+    at reconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7625:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7617:68)
+    at reconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7625:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7617:68)
+    at reconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7640:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7617:68)
+    at reconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7625:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7617:68)
+    at reconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7625:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7617:68)
+    at reconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7640:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7617:68)
+    at reconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7640:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7617:68)
+    at reconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7625:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7617:68)
+    at reconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7625:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7617:68)
+    at reconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7640:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7617:68)
+    at reconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7640:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7617:68)
+    at reconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7640:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7617:68)
+    at reconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7625:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7617:68)
+    at reconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7625:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1f56dc06._.js:7617:68) @ http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_445d8acf._.js:2248
+[     393ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://127.0.0.1:3003/admin:0
+[     501ms] [LOG] [Fast Refresh] rebuilding @ http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_client_20b209c9._.js:5693
+[     525ms] [LOG] [Fast Refresh] done in 128ms @ http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_client_20b209c9._.js:5557
+[   74010ms] [LOG] [Fast Refresh] rebuilding @ http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_client_20b209c9._.js:5693
+[   74523ms] [LOG] [Fast Refresh] done in 585ms @ http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_client_20b209c9._.js:5557
+[   87116ms] [LOG] [Fast Refresh] rebuilding @ http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_client_20b209c9._.js:5693
+[   87746ms] [LOG] [Fast Refresh] done in 713ms @ http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_client_20b209c9._.js:5557
+[  117211ms] [LOG] [Fast Refresh] rebuilding @ http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_client_20b209c9._.js:5693
+[  117969ms] [LOG] [Fast Refresh] done in 859ms @ http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_client_20b209c9._.js:5557
+[  118117ms] [LOG] [Fast Refresh] rebuilding @ http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_client_20b209c9._.js:5693
+[  118206ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:3003/admin?_rsc=1szk4:0
+[  118223ms] [LOG] [Fast Refresh] done in 206ms @ http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_client_20b209c9._.js:5557
+[  118391ms] [LOG] [Fast Refresh] rebuilding @ http://127.0.0.1:3003/_next/static/chunks/node_modules_next_dist_client_20b209c9._.js:5693
+[  118418ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:3003/admin:0

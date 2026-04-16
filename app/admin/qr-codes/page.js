@@ -351,7 +351,7 @@ export default function AdminQRCodesPage() {
               </div>
             </form>
           ) : (
-            <div className="mt-5 rounded-[1.5rem] bg-slate-50 px-5 py-5 text-sm leading-6 text-slate-500">
+            <div className="mt-5 rounded-3xl bg-slate-50 px-5 py-5 text-sm leading-6 text-slate-500">
               Open the form to generate a new QR access token with custom expiry and usage limits.
             </div>
           )}
@@ -382,22 +382,22 @@ export default function AdminQRCodesPage() {
               <table className="min-w-full divide-y divide-slate-200">
                 <thead className="bg-slate-50/90">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-[0.22em] text-slate-500">
+                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-slate-500">
                       Token
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-[0.22em] text-slate-500">
+                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-slate-500">
                       Status
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-[0.22em] text-slate-500">
+                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-slate-500">
                       Usage
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-[0.22em] text-slate-500">
+                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-slate-500">
                       Expires
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-[0.22em] text-slate-500">
+                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-slate-500">
                       Created
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-[0.22em] text-slate-500">
+                    <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-widest text-slate-500">
                       Actions
                     </th>
                   </tr>
@@ -407,7 +407,7 @@ export default function AdminQRCodesPage() {
                     <tr key={qr.id} className="transition-colors hover:bg-slate-50/80">
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-2">
-                          <div className="max-w-[220px] truncate rounded-[0.9rem] bg-slate-50 px-3 py-2 font-mono text-sm text-slate-900">
+                          <div className="max-w-[220px] truncate rounded-xl bg-slate-50 px-3 py-2 font-mono text-sm text-slate-900">
                             {visibleTokens.has(qr.id) ? qr.token : '••••••••••••••••••••••••••'}
                           </div>
                           <button

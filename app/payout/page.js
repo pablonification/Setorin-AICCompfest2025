@@ -5,12 +5,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '../components/ProtectedRoute';
 import TopBar from '../components/TopBar';
-import {
-  MOCK_PAYOUT_METADATA,
-  MOCK_PAYOUT_METHOD,
-  MOCK_USER,
-  MOCK_WITHDRAWALS,
-} from '../mock/data';
 
 export default function PayoutPage() {
   const { token, user, updateUser } = useAuth();
@@ -72,13 +66,7 @@ export default function PayoutPage() {
         }
       }
     } catch (e) {
-      setMethod(MOCK_PAYOUT_METHOD);
-      setWithdrawals(MOCK_WITHDRAWALS);
-      setBanks(MOCK_PAYOUT_METADATA.banks);
-      setEwallets(MOCK_PAYOUT_METADATA.ewallets);
-      setMinWithdrawal(MOCK_PAYOUT_METADATA.min_withdrawal_points);
-      setAmount((current) => current || MOCK_PAYOUT_METADATA.min_withdrawal_points);
-      setError('');
+      setError('Failed to load payout data');
     } finally {
       setLoading(false);
     }
@@ -113,20 +101,7 @@ export default function PayoutPage() {
       const md = await resp.json();
       setMethod(md);
     } catch (e) {
-      const fallbackMethod = methodType === 'bank' ? {
-        id: 'pm-local-bank',
-        method_type: 'bank',
-        bank_code: bankCode,
-        bank_account_number: bankAcc,
-        bank_account_name: bankName,
-      } : {
-        id: 'pm-local-ewallet',
-        method_type: 'ewallet',
-        ewallet_provider: ewalletProvider,
-        phone_number: phoneNumber,
-      };
-      setMethod(fallbackMethod);
-      setError('');
+      setError(e.message || 'Failed to set method');
     }
   };
 
@@ -158,16 +133,7 @@ export default function PayoutPage() {
         }
       } catch {}
     } catch (e) {
-      const mockWithdrawal = {
-        id: `wd-local-${Date.now()}`,
-        amount_points: Number(amount),
-        status: 'pending',
-        created_at: new Date().toISOString(),
-      };
-      setWithdrawals((current) => [mockWithdrawal, ...current]);
-      const nextPoints = Math.max(0, (user?.points ?? MOCK_USER.points) - Number(amount));
-      updateUser({ ...user, points: nextPoints });
-      setError('');
+      setError(e.message || 'Failed to request withdrawal');
     }
   };
 
@@ -299,4 +265,5 @@ export default function PayoutPage() {
     </ProtectedRoute>
   );
 }
+
 

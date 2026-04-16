@@ -3,7 +3,12 @@
 import { useEffect } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import DashboardScreen from './components/dashboard/DashboardScreen';
+import BalanceCard from './components/BalanceCard';
+import ActionGrid from './components/ActionGrid';
+import HeroCarousel from './components/HeroCarousel';
+import HistoryList from './components/HistoryList';
+import HeaderBar from './components/HeaderBar';
+import ChatFab from './components/ChatFab';
 import HomePageSkeleton from './components/skeletons/HomePageSkeleton';
 
 export default function HomePage() {
@@ -24,5 +29,20 @@ export default function HomePage() {
     return <HomePageSkeleton />;
   }
 
-  return <DashboardScreen />;
+  return (
+    <div className="w-full min-h-screen bg-[var(--background)] text-[var(--foreground)] font-inter">
+      <div className="bg-[var(--color-primary-700)] [box-shadow:var(--shadow-card)]">
+        <HeaderBar />
+        <div className="px-4 pb-4 space-y-4">
+          <BalanceCard />
+          <ActionGrid />
+        </div>
+      </div>
+      <div className="px-4 pb-32 pt-4 space-y-4">
+        <HeroCarousel />
+        <HistoryList />
+      </div>
+      <ChatFab />
+    </div>
+  );
 }

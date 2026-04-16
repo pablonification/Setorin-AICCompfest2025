@@ -332,7 +332,7 @@ export default function AdminEducation() {
             {filteredContents.map((content) => (
               <div
                 key={content.id}
-                className="rounded-[1.75rem] border border-slate-200/80 bg-slate-50/70 p-5 transition-colors hover:bg-slate-50"
+                className="rounded-3xl border border-slate-200/80 bg-slate-50/70 p-5 transition-colors hover:bg-slate-50"
               >
                 <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                   <div className="flex-1">
@@ -344,7 +344,7 @@ export default function AdminEducation() {
                       </AdminBadge>
                     </div>
 
-                    <h3 className="mt-4 text-2xl font-extrabold tracking-[-0.04em] text-slate-900">
+                    <h3 className="mt-4 text-2xl font-extrabold tracking-tight text-slate-900">
                       {content.title}
                     </h3>
 
@@ -395,10 +395,10 @@ export default function AdminEducation() {
         >
           <div className="flex items-center justify-between gap-4">
             <div>
-              <div className="text-sm font-bold uppercase tracking-[0.24em] text-emerald-700">
+              <div className="text-sm font-bold uppercase tracking-widest text-emerald-700">
                 {showEditForm ? 'Edit Content' : 'Create Content'}
               </div>
-              <h3 className="mt-2 text-3xl font-black tracking-[-0.05em] text-slate-900">
+              <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900">
                 {showEditForm ? 'Update educational material' : 'Add new educational material'}
               </h3>
             </div>
@@ -499,7 +499,7 @@ export default function AdminEducation() {
               />
             </div>
 
-            <label className="flex items-center gap-3 rounded-[1rem] bg-slate-50 px-4 py-3 text-sm text-slate-700">
+            <label className="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
               <input
                 type="checkbox"
                 name="is_published"

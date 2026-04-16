@@ -50,7 +50,7 @@ export default function AdminSidebar() {
 				aria-label="Go to Home"
 			>
 				<div className="flex items-center gap-3">
-					<div className="flex h-11 w-11 items-center justify-center rounded-[1rem] bg-white/10">
+					<div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10">
 						<img src="/login-logo.svg" alt="Setorin" className="h-6 w-auto" />
 					</div>
 					<div>
@@ -63,7 +63,7 @@ export default function AdminSidebar() {
 					</div>
 				</div>
 			</button>
-			<div className="mx-5 mt-5 rounded-[1.5rem] border border-white/10 bg-white/5 px-4 py-4">
+			<div className="mx-5 mt-5 rounded-3xl border border-white/10 bg-white/5 px-4 py-4">
 				<div className="flex items-center gap-3">
 					<div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-400/15 text-emerald-200">
 						<FiShield className="h-5 w-5" />
@@ -85,7 +85,7 @@ export default function AdminSidebar() {
 								setMobileOpen(false);
 								router.push(item.href);
 							}}
-							className={`mb-1.5 flex w-full items-center gap-3 rounded-[1.15rem] px-3.5 py-3 text-sm transition-all ${
+							className={`mb-1.5 flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-sm transition-all ${
 								active
 									? 'bg-white text-[#0d6f3c] shadow-[0_14px_26px_rgba(0,0,0,0.12)]'
 									: 'text-emerald-50/80 hover:bg-white/7 hover:text-white'
@@ -102,7 +102,7 @@ export default function AdminSidebar() {
 			<div className="px-3 py-3">
 				<button
 					onClick={handleLogout}
-					className="flex w-full items-center gap-3 rounded-[1.15rem] px-3.5 py-3 text-sm text-rose-200 transition-colors hover:bg-white/7 hover:text-white"
+					className="flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-sm text-rose-200 transition-colors hover:bg-white/7 hover:text-white"
 				>
 					<span className="grid h-9 w-9 place-items-center rounded-full bg-white/8">
 						<FiLogOut className="h-[18px] w-[18px]" />
@@ -118,7 +118,7 @@ export default function AdminSidebar() {
 
 	return (
 		<>
-			<div className="sticky top-0 z-40 border-b border-slate-200/70 bg-[#eef3ef]/95 backdrop-blur md:hidden">
+			<div className="sticky top-0 z-40 border-b border-emerald-900/5 bg-[#f8faf9]/80 backdrop-blur-xl md:hidden">
 				<div className="flex items-center justify-between px-4 py-4">
 					<div className="min-w-0">
 						<button
@@ -127,7 +127,7 @@ export default function AdminSidebar() {
 							className="flex items-center gap-3 text-left"
 							aria-label="Go to Home"
 						>
-							<div className="flex h-10 w-10 items-center justify-center rounded-[1rem] bg-white shadow-[0_10px_22px_rgba(148,163,184,0.16)]">
+							<div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-sm border border-emerald-900/5">
 								<img src="/login-logo.svg" alt="Setorin" className="h-5 w-auto" />
 							</div>
 							<div>
@@ -138,11 +138,11 @@ export default function AdminSidebar() {
 							</div>
 						</button>
 					</div>
-					<button
-						aria-label="Toggle navigation"
-						onClick={() => setMobileOpen(true)}
-						className="rounded-full border border-slate-200 bg-white p-3 text-slate-700 shadow-[0_10px_20px_rgba(148,163,184,0.12)]"
-					>
+						<button
+							aria-label="Toggle navigation"
+							onClick={() => setMobileOpen(true)}
+							className="rounded-full border border-emerald-900/5 bg-white p-3 text-slate-700 shadow-[0_4px_12px_rgba(16,185,129,0.05)] hover:bg-slate-50 transition-colors"
+						>
 						<FiMenu />
 					</button>
 				</div>
@@ -158,7 +158,7 @@ export default function AdminSidebar() {
 					<div className="absolute left-0 top-0 h-full w-72 overflow-hidden bg-[linear-gradient(180deg,#0a6f3c_0%,#0b5c34_100%)] shadow-[0_24px_60px_rgba(15,23,42,0.24)] animate-fade-in-up">
 						<div className="flex items-center justify-between border-b border-white/10 px-5 py-5">
 							<div className="flex items-center gap-3">
-								<div className="flex h-10 w-10 items-center justify-center rounded-[1rem] bg-white/10">
+								<div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10">
 									<img src="/login-logo.svg" alt="Setorin" className="h-5 w-auto" />
 								</div>
 								<div className="text-lg font-extrabold tracking-[-0.04em] text-white">Admin</div>
