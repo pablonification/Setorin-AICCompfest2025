@@ -35,7 +35,7 @@ const formatCompact = (value) =>
 function ActionCard({ title, description, tone, icon: Icon, onClick }) {
   const tones = {
     emerald:
-      'bg-emerald-600 text-white shadow-[0_16px_40px_-4px_rgba(16,185,129,0.3)] border border-transparent',
+      'bg-[#f0fdf4] text-emerald-900 border border-emerald-200/60 shadow-[0_8px_20px_-4px_rgba(16,185,129,0.05)]',
     white:
       'bg-white text-slate-900 border border-emerald-900/5 shadow-[0_12px_40px_-4px_rgba(16,185,129,0.04)]',
   };
@@ -47,17 +47,17 @@ function ActionCard({ title, description, tone, icon: Icon, onClick }) {
       className={`group rounded-3xl p-7 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${tones[tone]}`}
     >
       <div className="flex items-start justify-between gap-4">
-        <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${tone === 'emerald' ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-700'}`}>
+        <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${tone === 'emerald' ? 'bg-emerald-100/60 text-emerald-700' : 'bg-emerald-50 text-emerald-700'}`}>
           <Icon className="h-6 w-6" />
         </div>
-        <div className={`rounded-full p-2 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${tone === 'emerald' ? 'bg-white/10 text-white' : 'bg-slate-50 text-slate-400'}`}>
+        <div className={`rounded-full p-2 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${tone === 'emerald' ? 'bg-emerald-100/50 text-emerald-600' : 'bg-slate-50 text-slate-400'}`}>
           <FiArrowUpRight className="h-5 w-5" />
         </div>
       </div>
-      <div className={`mt-8 text-2xl font-black tracking-tight ${tone === 'emerald' ? 'text-white' : 'text-slate-900'}`}>
+      <div className={`mt-8 text-2xl font-black tracking-tight ${tone === 'emerald' ? 'text-emerald-900' : 'text-slate-900'}`}>
         {title}
       </div>
-      <div className={`mt-3 text-sm leading-relaxed ${tone === 'emerald' ? 'text-emerald-50/90' : 'text-slate-500'}`}>
+      <div className={`mt-3 text-sm leading-relaxed ${tone === 'emerald' ? 'text-emerald-700/70' : 'text-slate-500'}`}>
         {description}
       </div>
     </button>
@@ -263,54 +263,54 @@ export default function AdminPage() {
       )}
 
       <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
-        <section className="relative overflow-hidden rounded-[32px] bg-emerald-700 px-8 py-10 text-white shadow-[0_20px_60px_-12px_rgba(16,185,129,0.3)] md:px-10">
-          <div className="pointer-events-none absolute -left-10 top-8 h-48 w-48 rounded-full bg-emerald-400/20 blur-3xl" />
-          <div className="pointer-events-none absolute right-8 top-6 h-32 w-32 rounded-full bg-emerald-300/20 blur-3xl" />
+        <section className="relative overflow-hidden rounded-[32px] bg-white px-8 py-10 text-slate-900 shadow-[0_12px_40px_-4px_rgba(16,185,129,0.06)] border border-emerald-900/5 md:px-10">
+          <div className="pointer-events-none absolute -left-10 top-8 h-48 w-48 rounded-full bg-emerald-100/50 blur-[60px]" />
+          <div className="pointer-events-none absolute right-8 top-6 h-32 w-32 rounded-full bg-emerald-50/50 blur-[60px]" />
 
           <div className="relative flex flex-col gap-10">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
               <div className="max-w-xl">
-                <div className="text-xs font-extrabold uppercase tracking-[0.25em] text-emerald-200">
+                <div className="text-xs font-extrabold uppercase tracking-[0.25em] text-emerald-600">
                   System Pulse
                 </div>
                 <div className="mt-4 text-4xl font-black tracking-tight md:text-5xl">
                   {stats.pendingWithdrawals} penarikan perlu diproses
                 </div>
-                <div className="mt-4 max-w-lg text-base leading-relaxed text-emerald-50/90">
+                <div className="mt-4 max-w-lg text-base leading-relaxed text-slate-500">
                   Dashboard ditata untuk keputusan cepat: siapa yang menunggu, berapa trafik sistem, dan area mana yang butuh perhatian.
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-white/10 bg-white/10 px-6 py-5 backdrop-blur-md">
-                <div className="text-xs font-bold uppercase tracking-widest text-emerald-200">
+              <div className="rounded-3xl border border-emerald-100 bg-emerald-50/50 px-6 py-5 backdrop-blur-md">
+                <div className="text-xs font-bold uppercase tracking-widest text-emerald-700">
                   Status
                 </div>
                 <div className="mt-2 text-2xl font-black tracking-tight">
                   Healthy
                 </div>
-                <div className="mt-1 text-sm font-medium text-emerald-100">
+                <div className="mt-1 text-sm font-medium text-slate-600">
                   {stats.activeConnections} koneksi aktif
                 </div>
               </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
-              <div className="rounded-3xl border border-white/10 bg-white/10 p-6 backdrop-blur-md">
-                <div className="text-sm font-bold text-emerald-100">Pending Withdrawals</div>
+              <div className="rounded-3xl border border-emerald-100 bg-white p-6 shadow-sm backdrop-blur-md">
+                <div className="text-sm font-bold text-slate-500">Pending Withdrawals</div>
                 <div className="mt-2 text-3xl font-black tracking-tight">{formatNumber(stats.pendingWithdrawals)}</div>
-                <div className="mt-2 text-xs font-medium text-emerald-100/80">Perlu approval manual.</div>
+                <div className="mt-2 text-xs font-medium text-slate-400">Perlu approval manual.</div>
               </div>
-              <div className="rounded-3xl border border-white/10 bg-white/10 p-6 backdrop-blur-md">
-                <div className="text-sm font-bold text-emerald-100">Live Connections</div>
+              <div className="rounded-3xl border border-emerald-100 bg-white p-6 shadow-sm backdrop-blur-md">
+                <div className="text-sm font-bold text-slate-500">Live Connections</div>
                 <div className="mt-2 text-3xl font-black tracking-tight">{formatNumber(stats.activeConnections)}</div>
-                <div className="mt-2 text-xs font-medium text-emerald-100/80">WebSocket & IoT aktif.</div>
+                <div className="mt-2 text-xs font-medium text-slate-400">WebSocket & IoT aktif.</div>
               </div>
-              <div className="rounded-3xl border border-white/10 bg-white/10 p-6 backdrop-blur-md">
-                <div className="text-sm font-bold text-emerald-100">QR Coverage</div>
+              <div className="rounded-3xl border border-emerald-100 bg-white p-6 shadow-sm backdrop-blur-md">
+                <div className="text-sm font-bold text-slate-500">QR Coverage</div>
                 <div className="mt-2 text-3xl font-black tracking-tight">
                   {stats.totalQrCodes >= 0 ? `${qrCoverage}%` : 'N/A'}
                 </div>
-                <div className="mt-2 text-xs font-medium text-emerald-100/80">
+                <div className="mt-2 text-xs font-medium text-slate-400">
                   {stats.totalQrCodes >= 0
                     ? `${stats.activeQrCodes} QR siap pakai`
                     : 'Belum tersedia'}

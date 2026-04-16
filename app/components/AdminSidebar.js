@@ -25,7 +25,6 @@ const navItems = [
 	{ title: 'Monitoring', href: '/admin/monitoring', icon: FiActivity },
 	{ title: 'Export', href: '/admin/export', icon: FiDownload },
 	{ title: 'QR Codes', href: '/admin/qr-codes', icon: RiQrCodeLine },
-
 ];
 
 export default function AdminSidebar() {
@@ -42,38 +41,40 @@ export default function AdminSidebar() {
 	};
 
 	const SidebarContents = () => (
-		<div className="flex h-full flex-col">
+		<div className="flex h-full flex-col bg-[#F9FBF9] text-slate-700">
 			<button
 				type="button"
 				onClick={() => router.push('/admin')}
-				className="w-full border-b border-white/10 px-5 py-5 text-left transition-colors hover:bg-white/5"
+				className="w-full border-b border-emerald-900/5 px-5 py-5 text-left transition-colors hover:bg-emerald-50/50"
 				aria-label="Go to Home"
 			>
 				<div className="flex items-center gap-3">
-					<div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10">
+					<div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-sm border border-emerald-100">
 						<img src="/login-logo.svg" alt="Setorin" className="h-6 w-auto" />
 					</div>
 					<div>
-						<div className="text-xs font-bold uppercase tracking-[0.24em] text-emerald-200/80">
+						<div className="text-xs font-bold uppercase tracking-[0.24em] text-emerald-600">
 							Setorin
 						</div>
-						<div className="mt-1 text-lg font-extrabold tracking-[-0.04em] text-white">
+						<div className="mt-1 text-lg font-extrabold tracking-[-0.04em] text-slate-900">
 							Admin
 						</div>
 					</div>
 				</div>
 			</button>
-			<div className="mx-5 mt-5 rounded-3xl border border-white/10 bg-white/5 px-4 py-4">
+			
+			<div className="mx-5 mt-5 rounded-3xl border border-emerald-100 bg-white px-4 py-4 shadow-sm">
 				<div className="flex items-center gap-3">
-					<div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-400/15 text-emerald-200">
+					<div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
 						<FiShield className="h-5 w-5" />
 					</div>
 					<div>
-						<div className="text-sm font-bold text-white">Control Center</div>
-						<div className="text-xs text-emerald-100/70">Live admin workspace</div>
+						<div className="text-sm font-bold text-slate-800">Control Center</div>
+						<div className="text-xs text-slate-500">Live admin workspace</div>
 					</div>
 				</div>
 			</div>
+
 			<nav className="flex-1 overflow-y-auto px-3 py-5">
 				{navItems.map((item) => {
 					const Icon = item.icon;
@@ -87,30 +88,34 @@ export default function AdminSidebar() {
 							}}
 							className={`mb-1.5 flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-sm transition-all ${
 								active
-									? 'bg-white text-[#0d6f3c] shadow-[0_14px_26px_rgba(0,0,0,0.12)]'
-									: 'text-emerald-50/80 hover:bg-white/7 hover:text-white'
+									? 'bg-emerald-100/60 text-emerald-900 font-bold border border-emerald-200/50 shadow-sm'
+									: 'text-slate-600 hover:bg-emerald-50/50 hover:text-emerald-800 font-medium'
 							}`}
 						>
-							<span className={`grid h-9 w-9 place-items-center rounded-full ${active ? 'bg-emerald-50 text-[#0d6f3c]' : 'bg-white/8 text-emerald-50/90'}`}>
+							<span className={`grid h-9 w-9 place-items-center rounded-full transition-colors ${
+								active ? 'bg-white text-emerald-700 shadow-sm' : 'bg-transparent text-slate-500'
+							}`}>
 								<Icon className="h-[18px] w-[18px]" />
 							</span>
-							<span className="truncate font-semibold">{item.title}</span>
+							<span className="truncate">{item.title}</span>
 						</button>
 					);
 				})}
 			</nav>
+
 			<div className="px-3 py-3">
 				<button
 					onClick={handleLogout}
-					className="flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-sm text-rose-200 transition-colors hover:bg-white/7 hover:text-white"
+					className="flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-sm font-medium text-rose-600 transition-colors hover:bg-rose-50"
 				>
-					<span className="grid h-9 w-9 place-items-center rounded-full bg-white/8">
+					<span className="grid h-9 w-9 place-items-center rounded-full bg-transparent">
 						<FiLogOut className="h-[18px] w-[18px]" />
 					</span>
-					<span className="truncate font-semibold">Logout</span>
+					<span className="truncate">Logout</span>
 				</button>
 			</div>
-			<div className="border-t border-white/10 px-5 py-4 text-[12px] leading-4 text-emerald-100/55">
+			
+			<div className="border-t border-emerald-900/5 px-5 py-4 text-[12px] leading-4 text-slate-400 font-medium">
 				© {new Date().getFullYear()} Setorin
 			</div>
 		</div>
@@ -118,7 +123,7 @@ export default function AdminSidebar() {
 
 	return (
 		<>
-			<div className="sticky top-0 z-40 border-b border-emerald-900/5 bg-[#f8faf9]/80 backdrop-blur-xl md:hidden">
+			<div className="sticky top-0 z-40 border-b border-emerald-900/5 bg-[#F9FBF9]/80 backdrop-blur-xl md:hidden">
 				<div className="flex items-center justify-between px-4 py-4">
 					<div className="min-w-0">
 						<button
@@ -127,46 +132,46 @@ export default function AdminSidebar() {
 							className="flex items-center gap-3 text-left"
 							aria-label="Go to Home"
 						>
-							<div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-sm border border-emerald-900/5">
+							<div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-sm border border-emerald-100">
 								<img src="/login-logo.svg" alt="Setorin" className="h-5 w-auto" />
 							</div>
 							<div>
-								<div className="text-xs font-bold uppercase tracking-[0.24em] text-emerald-700">
+								<div className="text-xs font-bold uppercase tracking-[0.24em] text-emerald-600">
 									Setorin
 								</div>
 								<div className="text-lg font-extrabold tracking-[-0.04em] text-slate-900">Admin</div>
 							</div>
 						</button>
 					</div>
-						<button
-							aria-label="Toggle navigation"
-							onClick={() => setMobileOpen(true)}
-							className="rounded-full border border-emerald-900/5 bg-white p-3 text-slate-700 shadow-[0_4px_12px_rgba(16,185,129,0.05)] hover:bg-slate-50 transition-colors"
-						>
+					<button
+						aria-label="Toggle navigation"
+						onClick={() => setMobileOpen(true)}
+						className="rounded-full border border-emerald-100 bg-white p-3 text-emerald-700 shadow-sm hover:bg-emerald-50 transition-colors"
+					>
 						<FiMenu />
 					</button>
 				</div>
 			</div>
 
-			<aside className="fixed left-0 top-0 z-30 hidden h-screen w-[17rem] overflow-hidden bg-[linear-gradient(180deg,#0a6f3c_0%,#0b5c34_100%)] shadow-[0_24px_60px_rgba(15,23,42,0.24)] md:block">
+			<aside className="fixed left-0 top-0 z-30 hidden h-screen w-[17rem] overflow-hidden border-r border-emerald-900/5 bg-[#F9FBF9] shadow-[4px_0_24px_rgba(16,185,129,0.02)] md:block">
 				<SidebarContents />
 			</aside>
 
 			{mobileOpen && (
 				<div className="md:hidden fixed inset-0 z-50">
-					<div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
-					<div className="absolute left-0 top-0 h-full w-72 overflow-hidden bg-[linear-gradient(180deg,#0a6f3c_0%,#0b5c34_100%)] shadow-[0_24px_60px_rgba(15,23,42,0.24)] animate-fade-in-up">
-						<div className="flex items-center justify-between border-b border-white/10 px-5 py-5">
+					<div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+					<div className="absolute left-0 top-0 h-full w-72 overflow-hidden bg-[#F9FBF9] shadow-2xl animate-fade-in-up">
+						<div className="flex items-center justify-between border-b border-emerald-900/5 px-5 py-5">
 							<div className="flex items-center gap-3">
-								<div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10">
+								<div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-sm border border-emerald-100">
 									<img src="/login-logo.svg" alt="Setorin" className="h-5 w-auto" />
 								</div>
-								<div className="text-lg font-extrabold tracking-[-0.04em] text-white">Admin</div>
+								<div className="text-lg font-extrabold tracking-[-0.04em] text-slate-900">Admin</div>
 							</div>
 							<button
 								aria-label="Close navigation"
 								onClick={() => setMobileOpen(false)}
-								className="rounded-full bg-white/10 p-2 text-white"
+								className="rounded-full bg-white border border-emerald-100 p-2 text-slate-500 shadow-sm hover:text-slate-800"
 							>
 								<FiX />
 							</button>

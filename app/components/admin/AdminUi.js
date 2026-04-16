@@ -44,7 +44,7 @@ export function AdminSurface({ children, className = "" }) {
   return (
     <div
       className={cx(
-        "rounded-3xl border border-emerald-900/5 bg-white p-6 shadow-[0_12px_40px_-4px_rgba(16,185,129,0.04),0_4px_12px_-2px_rgba(0,0,0,0.02)] transition-all",
+        "rounded-[32px] border border-emerald-900/5 bg-white p-6 shadow-[0_4px_24px_rgba(16,185,129,0.03)] transition-all",
         className
       )}
     >
@@ -92,7 +92,7 @@ export function AdminButton({
 }) {
   const variants = {
     primary:
-      "border border-emerald-600 bg-emerald-600 text-white shadow-[0_8px_16px_-4px_rgba(16,185,129,0.25)] hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-[0_12px_20px_-4px_rgba(16,185,129,0.3)]",
+      "border border-emerald-500 bg-emerald-500 text-white shadow-[0_8px_16px_-4px_rgba(16,185,129,0.2)] hover:-translate-y-0.5 hover:bg-emerald-600 hover:shadow-[0_12px_20px_-4px_rgba(16,185,129,0.25)]",
     secondary:
       "border border-emerald-900/10 bg-white text-slate-700 shadow-sm hover:-translate-y-0.5 hover:bg-emerald-50 hover:text-emerald-900",
     subtle:
