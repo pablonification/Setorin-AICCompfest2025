@@ -1,340 +1,175 @@
-# ♻️ Setorin – AI-Powered Recycling System
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://docker.com)
-[![Next.js](https://img.shields.io/badge/Next.js-14+-black)](https://nextjs.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green)](https://fastapi.tiangolo.com)
+# Setorin
 
-Setorin adalah sistem bank sampah cerdas yang menggabungkan teknologi Web, AI, dan IoT untuk memvalidasi serta memberikan reward setiap kali pengguna membuang botol plastik. Sistem ini menggunakan kecerdasan buatan untuk mengidentifikasi merek botol, mengukur dimensi, dan menghitung volume untuk memastikan keaslian dan kualitas sampah yang dikumpulkan.
+Setorin is a smart recycling platform that combines bottle validation, user rewards, and connected-bin control.
 
-## 🌐 Live Demo
+[Live demo](https://setorin.app)
 
-**🚀 Deployed Application:** [https://setorin.app](https://setorin.app)
+## Overview
 
-## 📋 Table of Contents
+Setorin turns recyclable bottle drop-offs into a tracked workflow:
 
-- [🎯 Tujuan Proyek](#-tujuan-proyek)
-- [✨ Fitur Utama](#-fitur-utama)
-  - [🤖 AI-Powered Validation](#-ai-powered-validation)
-  - [💰 Reward System](#-reward-system)
-  - [🌐 Real-time Dashboard](#-real-time-dashboard)
-  - [📱 IoT Integration](#-iot-integration)
-- [🏗️ Arsitektur & Tech Stack](#️-arsitektur--tech-stack)
-  - [Frontend Stack](#frontend-stack)
-  - [Backend Stack](#backend-stack)
-  - [IoT & Hardware](#iot--hardware)
-  - [DevOps & Tools](#devops--tools)
-- [📁 Struktur Proyek](#-struktur-proyek)
-- [🚀 Instalasi & Menjalankan Aplikasi](#-instalasi--menjalankan-aplikasi)
-  - [Prerequisites](#prerequisites)
-  - [Quick Start dengan Docker](#quick-start-dengan-docker)
-  - [Manual Installation](#manual-installation)
-    - [Backend Setup](#backend-setup)
-    - [Frontend Setup](#frontend-setup)
-    - [IoT Simulator Setup](#iot-simulator-setup)
-  - [Service Ports](#service-ports)
-  - [Environment Configuration](#environment-configuration)
-    - [Backend](#backend)
-    - [Frontend](#frontend)
-- [📊 Monitoring & Analytics](#-monitoring--analytics)
-  - [Admin Dashboard Features](#admin-dashboard-features)
-  - [Performance Metrics](#performance-metrics)
-- [🔧 Troubleshooting](#-troubleshooting)
-  - [Common Issues](#common-issues)
-    - [Docker Issues](#docker-issues)
-    - [API Connection Issues](#api-connection-issues)
-    - [WebSocket Issues](#websocket-issues)
-    - [Camera Issues](#camera-issues)
-- [🙏 Acknowledgments](#-acknowledgments)
+1. A user submits a bottle through the web application.
+2. The backend validates the item with a YOLO-based model and OpenCV measurements.
+3. The system records the result and updates the user's reward points.
+4. The smart-bin flow can be monitored through WebSocket events and an ESP32 simulator.
 
-## 🎯 Tujuan Proyek
+The repository contains the web application, FastAPI backend, AI validation flow, database integration, and IoT simulation components.
 
-Setorin bertujuan untuk:
-- **Mendorong partisipasi masyarakat** dalam program daur ulang melalui sistem reward
-- **Memastikan kualitas sampah** yang dikumpulkan melalui validasi AI
-- **Memberikan pengalaman pengguna yang seamless** dengan teknologi modern
-- **Memonitor aktivitas real-time** melalui dashboard admin yang komprehensif
+## Features
 
-## ✨ Fitur Utama
+### Bottle validation
 
-### 🤖 AI-Powered Validation
-- **Deteksi Merek Botol**: Menggunakan YOLO model untuk mengidentifikasi merek botol (Aqua, Le Mineral, dll.)
-- **Pengukuran Dimensi**: OpenCV untuk mengukur diameter, tinggi, dan menghitung volume
-- **Validasi Kualitas**: Memastikan botol memenuhi standar kualitas yang ditentukan
+- Bottle brand detection with a YOLO model
+- Dimension and volume estimation with OpenCV
+- Validation rules for bottle quality and eligibility
 
-### 💰 Reward System
-- **Poin Otomatis**: Pemberian poin berdasarkan volume dan jenis botol
-- **Tracking Poin**: Sistem monitoring poin real-time
-- **Penarikan Reward**: Integrasi dengan bank transfer dan e-wallet
+### Rewards
 
-### 🌐 Real-time Dashboard
-- **Admin Panel**: Monitoring lengkap aktivitas pengguna dan sistem
-- **Analytics**: Statistik dan laporan penggunaan
-- **User Management**: Pengelolaan data pengguna dan transaksi
+- Point calculation for validated submissions
+- User balance and withdrawal flows
+- Admin controls for managing points and withdrawals
 
-### 📱 IoT Integration
-- **Smart Bin Control**: Kontrol tutup tong sampah via WebSocket
-- **Real-time Events**: Monitoring status perangkat IoT
+### Assistant
 
-## 🏗️ Arsitektur & Tech Stack
+- RAG-based Robin assistant
+- Gemini model integration
+- Knowledge-base material for recycling-related questions
 
-### Frontend Stack
-- **Framework**: Next.js 14+ (App Router)
-- **Styling**: Tailwind CSS + Custom CSS Variables
-- **Authentication**: Google OAuth 2.0
-- **State Management**: React Context API
-- **Real-time**: WebSocket Client
-- **UI Components**: Custom React Components
+### Dashboard
 
-### Backend Stack
-- **Framework**: FastAPI (Python)
-- **Database**: MongoDB dengan Motor (async driver)
-- **Authentication**: JWT + Google OAuth
-- **AI/ML**: Roboflow API (YOLO model), OpenCV
-- **Real-time**: WebSocket dengan FastAPI
-- **Validation**: Pydantic models
+- User and transaction management
+- Scan activity and system monitoring
+- Usage and reward analytics
 
-### IoT & Hardware
-- **Protocol**: WebSocket
-- **Simulator**: ESP32 virtual simulator
-- **Communication**: JSON-based commands
-- **Hardware**: ESP32 microcontroller
+### Connected-bin flow
 
-### DevOps & Tools
-- **Containerization**: Docker & Docker Compose
-- **Database**: MongoDB
-- **Testing**: Pytest
-- **Linting**: ESLint, Ruff
+- WebSocket communication between services
+- ESP32 control integration
+- Local simulator for development without physical hardware
 
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Next.js       │    │    FastAPI      │    │    MongoDB      │
-│   Frontend      │◄──►│    Backend      │◄──►│    Database     │
-│   (Port 3000)   │    │   (Port 8000)   │    │   (Port 27017)  │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         │                       ▼                       │
-         │              ┌─────────────────┐              │
-         │              │   Roboflow API  │              │
-         │              │   (YOLO Model)  │              │
-         │              └─────────────────┘              │
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│  Google OAuth   │    │    OpenCV       │    │    WebSocket    │
-│  Authentication │    │  Measurement    │    │  ESP32 Simulator│
-│                 │    │                 │    │   (Port 8080)   │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+## Architecture
+
+```mermaid
+flowchart LR
+    Client[Next.js web app] <--> API[FastAPI backend]
+    API --> DB[(MongoDB)]
+    API --> Vision[YOLO and OpenCV]
+    API <--> Realtime[WebSocket events]
+    Realtime <--> Device[ESP32 or simulator]
+    API --> Assistant[RAG assistant]
 ```
 
----
+The frontend handles user and admin flows. The backend owns authentication, validation, rewards, persistence, and real-time communication. The IoT simulator provides a local stand-in for the connected bin.
 
-## 📁 Struktur Proyek
+## Technology
 
-```
-smartbin/
-├── app/                          # Next.js Frontend
-│   ├── admin/                   # Admin Dashboard Pages
-│   │   ├── education/          # Educational Content Management
-│   │   ├── monitoring/         # System Monitoring
-│   │   ├── users/              # User Management
-│   │   └── withdrawals/        # Withdrawal Management
-│   ├── api/                     # API Routes (Next.js)
-│   ├── auth/                    # Authentication Pages
-│   ├── components/              # Reusable React Components
-│   ├── contexts/                # React Context Providers
-│   ├── hooks/                   # Custom React Hooks
-│   └── page.js                  # Home Page
-├── backend/                     # FastAPI Backend
-│   ├── src/
-│   │   ├── backend/
-│   │   │   ├── core/           # Configuration & Settings
-│   │   │   ├── db/             # Database Connection
-│   │   │   ├── domain/         # Domain Models
-│   │   │   ├── models/         # Data Models
-│   │   │   ├── repositories/   # Data Access Layer
-│   │   │   ├── routers/        # API Route Handlers
-│   │   │   ├── schemas/        # Pydantic Schemas
-│   │   │   ├── services/       # Business Logic
-│   │   │   └── tests/          # Unit Tests
-│   └── main.py                 # FastAPI Application Entry
-├── iot_simulator/              # ESP32 Simulator
-│   └── websocket_server.py     # WebSocket Server
-├── public/                     # Static Assets
-├── docker-compose.yml          # Docker Compose Configuration
-├── Dockerfile.frontend         # Frontend Docker Config
-├── package.json                # Frontend Dependencies
-└── requirements.txt            # Backend Dependencies
+| Area | Tools |
+| --- | --- |
+| Frontend | Next.js, React, Tailwind CSS |
+| Backend | FastAPI, Pydantic |
+| AI and computer vision | YOLO, Roboflow, OpenCV |
+| Data | MongoDB, Motor |
+| Assistant | RAG, LangChain, Gemini |
+| Real-time and hardware | WebSocket, ESP32 |
+| Development | Docker Compose, Pytest, ESLint, Ruff |
+
+## Repository layout
+
+```text
+.
+|-- app/                 # Next.js frontend and API-facing UI
+|-- backend/             # FastAPI application and backend tests
+|-- iot_simulator/       # Local WebSocket simulator for the smart bin
+|-- prisma/              # Database-related project files
+|-- public/              # Frontend assets
+|-- testing/             # Test and integration material
+|-- docs/                # Supporting project documentation
+|-- docker-compose.yml   # Local multi-service environment
++-- Dockerfile.frontend  # Frontend container configuration
 ```
 
-## 🚀 Instalasi & Menjalankan Aplikasi
+## Getting started
 
-### *Prerequisites*
-- **Docker & Docker Compose** (versi terbaru)
-- **Git** untuk cloning repository
-- **Roboflow API Key** (untuk AI validation)
+### Prerequisites
 
-### *Quick Start* dengan Docker
+- Docker and Docker Compose
+- Git
+- A Roboflow API key for bottle validation
+- Google OAuth credentials if authentication is enabled locally
+
+### Run with Docker Compose
 
 ```bash
-# 1. Clone repository
-git clone <repository-url>
-cd smartbin
-
-# 2. Setup environment variables
-cp .env.example .env
-# Edit .env dan isi ROBOFLOW_API_KEY Anda
-
-# 3. Build dan start semua services
+git clone https://github.com/pablonification/Setorin-AICCompfest2025.git
+cd Setorin-AICCompfest2025
 docker compose up --build
 ```
 
-### Manual Installation
+Configure the required frontend and backend environment variables for your local deployment before starting the services. Keep credentials in local environment files and never commit them.
 
-#### Backend Setup
+The default service ports are:
+
+| Service | Port |
+| --- | --- |
+| Frontend | 3000 |
+| Backend | 8000 |
+| MongoDB | 27017 |
+| Redis | 6379 |
+| IoT simulator | 8080 |
+
+### Run services manually
+
+Frontend:
+
 ```bash
-cd backend
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# atau
-venv\Scripts\activate     # Windows
-
-# Install dependencies
-pip install "fastapi>=0.116.1" "uvicorn[standard]>=0.35.0" motor pymongo redis python-dotenv requests httpx opencv-python-headless numpy Pillow python-multipart websockets PyJWT python-jose[cryptography] pytest pytest-asyncio inference-sdk langchain langchain-community langgraph chromadb langchain-google-genai
-
-# Configure your environment variables
-
-# Run backend
-uvicorn src.backend.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-#### Frontend Setup
-```bash
-# Install dependencies
 npm install
-
-# Setup environment
-cp .env.local.example .env.local
-# Configure your environment variables
-
-# Run development server
 npm run dev
 ```
 
-#### IoT Simulator Setup
+Backend and API details are documented in [backend/README.md](backend/README.md).
+
+To start the IoT simulator:
+
 ```bash
 cd iot_simulator
 python websocket_server.py
 ```
 
-### Service Ports
+## Configuration
 
-| Service | Port | URL | Deskripsi |
-|---------|------|-----|-----------|
-| **Frontend** | 3000 | http://localhost:3000 | UI & Camera Interface |
-| **Backend** | 8000 | http://localhost:8000 | REST API + WebSocket |
-| **MongoDB** | 27017 | - | Database |
-| **Redis** | 6379 | - | Cache (opsional) |
-| **IoT Simulator** | 8080 | ws://localhost:8080 | WebSocket ESP32 |
+The application uses separate frontend and backend configuration for:
 
-### Environment Configuration
+- MongoDB connection and database settings
+- Roboflow model access
+- JWT and Google OAuth authentication
+- Frontend API URL
+- IoT WebSocket URL
+- Reward and withdrawal thresholds
 
-#### Backend
+Use placeholder values locally and keep production credentials outside the repository.
+
+## Development checks
+
+Common checks include:
+
 ```bash
-# Database
-MONGODB_URI=mongodb://localhost:27017
-MONGODB_DB_NAME=smartbin
-
-# AI/ML Services
-ROBOFLOW_API_KEY=your_roboflow_api_key_here
-ROBOFLOW_MODEL_ID=klasifikasi-per-merk/3
-
-# Authentication
-JWT_SECRET_KEY=your_jwt_secret_key
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-ADMIN_EMAILS=admin@setorin.com
-
-# IoT Configuration
-IOT_WS_URL=ws://localhost:8080
-MIN_WITHDRAWAL_POINTS=20000
+npm run lint
+pytest
 ```
 
-#### Frontend
-```bash
-NEXT_PUBLIC_BROWSER_API_URL=http://localhost:8000
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id
-NEXT_PUBLIC_GOOGLE_REDIRECT_URI=http://localhost:3000/auth/callback
-```
+Run the checks relevant to the service you change before opening a pull request.
 
+## Documentation
 
+- [Backend setup and API notes](backend/README.md)
+- [RAG knowledge base](docs/AI_RAG_KB.md)
+- [Point system](docs/Point_System.md)
+- [ESP32 integration](docs/ESP32_SmartBin_Integration.md)
+- [Smart-bin design](docs/ESP32_SmartBin_Design.md)
 
-## 📊 Monitoring & Analytics
+## Current scope
 
-### Admin Dashboard Features
-- **Real-time User Activity**: Monitor scanning activity
-- **System Health**: WebSocket connections, IoT status
-- **Analytics**: Usage statistics, popular brands
-- **User Management**: Profile management, point adjustments
-- **Withdrawal Processing**: Approve/reject requests
-
-### Performance Metrics
-- **Scan Success Rate**: Percentage of valid scans
-- **Average Processing Time**: AI validation speed
-- **User Engagement**: Daily active users, scan frequency
-- **Reward Distribution**: Points earned vs redeemed
-
-## 🔧 Troubleshooting
-
-### Common Issues
-
-#### Docker Issues
-```bash
-# Reset Docker environment
-docker compose down --volumes --remove-orphans --rmi all
-docker system prune -a --volumes -f
-
-# Rebuild specific service
-docker compose build --no-cache backend
-docker compose up backend
-```
-
-#### API Connection Issues
-```bash
-# Check if backend is running
-curl http://localhost:8000/health
-
-# Check MongoDB connection
-docker compose exec mongodb mongo --eval "db.stats()"
-```
-
-#### WebSocket Issues
-```bash
-# Test WebSocket connection
-websocat ws://localhost:8000/ws/status
-
-# Check IoT simulator
-curl -X POST ws://localhost:8080 \
-  -H "Content-Type: application/json" \
-  -d '{"cmd": "open"}'
-```
-
-#### Camera Issues
-- Pastikan browser memiliki akses ke kamera
-- Coba akses `https://localhost:3000` untuk HTTPS
-- Check browser console untuk error messages
-
-## 🙏 Acknowledgments
-
-- **Roboflow** for providing AI model hosting
-- **OpenCV** community for computer vision tools
-- **FastAPI** team for excellent Python framework
-- **Next.js** team for React framework
-- **MongoDB** for NoSQL database solution
-
-
----
-
-*Built with ❤️ for a cleaner and more sustainable future*
-
-
+- Bottle validation depends on the configured Roboflow model and API access.
+- Hardware behavior can be exercised locally through the IoT simulator.
+- Google OAuth and reward withdrawals require the corresponding service configuration.
+- The deployed application may expose only the features enabled in its production environment.
