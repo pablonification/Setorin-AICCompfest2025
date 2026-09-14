@@ -3,6 +3,7 @@
 Setorin is a smart recycling platform that combines bottle validation, user rewards, and connected-bin control.
 
 [Live demo](https://setorin.app)
+[Demo video](https://www.youtube.com/watch?v=x2Dh_3mkYQM)
 
 ## Overview
 
